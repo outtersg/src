@@ -202,7 +202,7 @@ void tourner(int s, int e)
 								if(pos[z]) /* Si, avant de recevoir la fermeture, on a obtenu des données sans retour à la ligne en queue, on les affiche. */
 								{
 									mem[z][pos[z]] = '\n';
-									mem[z][pos[z + 1]] = 0;
+									mem[z][pos[z] + 1] = 0;
 									tracer(z, &mem[z][0]);
 								}
 								FD_CLR(f[z], &voulus);
