@@ -1,0 +1,74 @@
+#!/bin/bash
+# Copyright (c) 2005 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+shopt -s nullglob
+
+SCRIPTS="`command -v "$0"`" ; SCRIPTS="`dirname "$SCRIPTS"`" ; echo "$SCRIPTS" | grep -q "^/" || SCRIPTS="`pwd`/$SCRIPTS"
+SCRIPT="$SCRIPTS/`basename "$0"`"
+
+mkdir /tmp/$$ || exit 1
+cd /tmp/$$
+
+decomposer()
+{
+	# Prière de définir un shopt -s nullglob auparavant. Sinon notre test de
+	# présence d'un fichier comportant au moins un caractère entre nos deux
+	# bornes ne marche pas (! -z …). Or, pour le cas précis du 7f (backspace),
+	# ce test ne doit pas laisser passer.
+	# Méthode crade pour décomposer de l'UTF: on demande au système de fichiers
+	# de Mac OS X de nous créer un fichier, et on le relit par un glob() qui va
+	# nous donner sa représentation interne, en NFD.
+	nom=`echo "$1" | HexToAsc | iconv -f utf-16 -t utf-8`
+	rm -f ./\ *\ 
+	touch "./ $nom " || ( echo -n "$1" && return 1 )
+	[ ! -z ./\ ?*\  ] && [ -f "./ $nom " ] && ls ./\ ?*\  | iconv -f utf-8 -t utf-16 | hexdump -v -e '/1 "%2.2x"' | sed -e 's/^.*002e002f0020//' -e 's/^\(.*\)0020.*$/\1/' && return 0 # Expression sed partant du principe que sed essaie de bouffer le plus possible le plus tôt possible.
+	echo -n "$1"
+	return 1
+}
+
+# Prend en entrée standard un .keylayout, et le resort en ayant transformé
+# toutes les NFC en NFD (UTF-8 Composé -> Décomposé, du genre e accent aigu
+# devient e suivi d'un accent aigu séparé). Utile pour Mac OS X, sur lequel le
+# système de fichiers est en NFD mais le clavier par défaut en NFC.
+traiter()
+{
+	# On se prépare un script à appeler, à partir de nos propres tripes.
+	
+	(
+	cat <<- TERMINE
+	#!/bin/sh
+	shopt -s nullglob
+	
+	TERMINE
+	sed -e '/^decomposer()$/,/^}$/!d' < "$SCRIPT"
+	cat <<- TERMINE
+	
+	decomposer \$1 | sed -e 's/\(....\)/\&#x\1;/g' | tr -d '\012'
+	TERMINE
+	) > ./convertir
+	chmod u+x ./convertir
+	
+	awk '/&#x....;/{oui=1;chaine=$0;while(match(chaine,/&#x....;/)){printf "%s",substr(chaine,1,RSTART-1);system("./convertir "substr(chaine,RSTART+3,RLENGTH-4));chaine=substr(chaine,RSTART+RLENGTH)}print chaine}{if(oui)oui=0;else print $0}'
+}
+
+traiter
+
+rm -R /tmp/$$
