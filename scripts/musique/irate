@@ -1,0 +1,19 @@
+#!/bin/sh
+
+while true ; do
+	read -n 1 toto
+	case "$toto" in
+		i)
+			echo "<Command type=\"currenttrack\"/>"
+			;;
+		n|s)
+			echo "<Command type=\"skip\"/>"
+			echo "<Command type=\"currenttrack\"/>"
+			;;
+		p)
+			;;
+		*)
+			echo "<Command type=\"rateplaying\" rate=\"$toto\"/>"
+			;;
+	esac
+done | nc localhost 12473
