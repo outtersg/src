@@ -1,0 +1,63 @@
+#!/bin/sh
+
+set -e
+
+if [ -z "$1" ] ; then
+	nom="`basename "$0"`"
+	cat << TERMINE
+# $nom
+# Assistant à darcs push pour le FTP
+# © 2005 Guillaume Outters
+
+Utilisation: export DARCS_APPLY_FTP="$0" && darcs push -a ftp://compte:mdp@serveur/chemin
+Requiert lftp, et que le répertoire distant ait été initialisé de la façon
+suivante:
+  cd /tmp && mkdir vide && cd vide && darcs init && lftp -c "open ftp://compte:mdp@serveur;mirror -R . <répertoire distant>"
+TERMINE
+	exit 1
+fi
+
+mkdir /tmp/$$
+
+cd /tmp/$$
+
+echo "Composition des rustines…" >&2
+
+### Découpage en fichiers multiples ###
+
+awk 'BEGIN{a=0}/^\[/{++a;fichier="'"/tmp/$$/"'"a".rustine"}{if(fichier){print $0 > fichier}}/^}/{close(fichier);fichier=0}'
+
+### Compression et nommage des fichiers ###
+
+for fichier in *.rustine ; do
+	# Règle de nommage de la rustine (cf. make_filename dans PatchInfo.lhs):
+	# date (aaaammjjhhmmss)
+	# 5 premiers caractères du sha1 de l'auteur
+	# sha1 de (nom de la rustine, auteur, date, chacune des lignes de
+	#   commentaire, 't' si la rustine est une inverse sinon 'f', le tout collé
+	#   (sans retour à la ligne ni espace entre)).
+	# À FAIRE: si on peut sous darcs avoir certains de ces éléments multilignes,
+	# voir comment ça se présente dans le fichier rustine et s'adapter.
+	date="`awk 'NR == 2{sub(/^.*\*\*/,"");print $0;exit}' < "$fichier"`"
+	auteur="`awk 'NR == 2{sub(/\*\*[^*]*$/,"");print $0;exit}' < "$fichier"`"
+	nom="`awk '{print substr($0,2,length-1);exit}' < "$fichier"`"
+	#echo "$date ($auteur): $nom"
+	gzip < "$fichier" > "$date-`echo -n "$auteur" | openssl sha1 | cut -c 1-5`-`( echo -n "$nom$auteur$date" ; awk '/^\]/{exit}NR == 3,/^\]/{printf("%s",substr($0,2,length-1))}' < "$fichier" ; echo -n f ) | openssl sha1`.gz"
+	# Question: je considère toujours 'inv' false (le f ajouté en dernière
+	# minute). Il ne faudrait sans doute pas.
+done
+
+### Recopie sur le serveur ###
+
+# À FAIRE: implémenter la création de fichiers-verrous sur le serveur FTP. Pour
+# le moment on croise les doigts pour qu'un seul développeur y touche à la fois.
+
+echo "Récupération de la dernière version du serveur…" >&2
+lftp -c 'open '"$1"' ; cd _darcs ; get inventory'
+for fichier in *.rustine ; do
+	awk '/^\]/{print "]";exit}{print $0}' < "$fichier"
+done >> inventory
+echo "Envoi des modifications…" >&2
+lftp -c 'open '"$1"' ; cd _darcs ; put inventory ; cd patches ; mput *.gz'
+
+rm -Rf /tmp/$$
