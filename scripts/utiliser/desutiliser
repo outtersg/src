@@ -1,0 +1,7 @@
+#!/bin/sh
+
+while [ $# -gt 0 ] ; do
+	rm -R "/usr/local/$1"
+	find /usr/local -type l -exec ls -l {} \; | grep "/usr/local/$1" | sed -e 's:^[^/]*::' -e 's/ ->.*$//' | tr '\012' '\000' | xargs -0 rm
+	shift
+done
