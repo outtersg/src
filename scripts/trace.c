@@ -217,16 +217,6 @@ int main(int argc, char ** argv)
 	switch(fils = fork())
 	{
 		case 0: /* Petit nouveau. */
-			close(0);
-			for(z = 2; --z >= 0;)
-				close(tube[z][1]);
-			tourner(tube[0][0], tube[1][0]);
-			exit(1);
-		case -1: /* Oups! */
-			err = errno;
-			tracerf(1, "impossible de nous cloner: %s\n", strerror(err));
-			exit(1);
-		default:
 			for(z = 2; --z >= 0;)
 			{
 				close(tube[z][0]);
@@ -234,6 +224,16 @@ int main(int argc, char ** argv)
 				dup(tube[z][1]);
 			}
 			break;
+		case -1: /* Oups! */
+			err = errno;
+			tracerf(1, "impossible de nous cloner: %s\n", strerror(err));
+			exit(1);
+		default:
+			close(0);
+			for(z = 2; --z >= 0;)
+				close(tube[z][1]);
+			tourner(tube[0][0], tube[1][0]);
+			exit(1);
 	}
 	
 	/* Heureux papa, ou cloneur raté! */
