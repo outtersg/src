@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Récupération d'un patch d'une branche différente
+# © Guillaume Outters 2004
+
+Utilisation: $nom [[[<grange>/]<module>--]<branche>--]<version>--<révision>
+TERMINE
+	exit 1
+fi
+
+version_actuelle=`tla tree-version`
+revision_fournie=`echo "$1" | sed -e 's/^.*--//'`
+version_fournie=`echo "$1" | sed -e 's/'--"$revision_fournie"'$//'`
+version_complete=`tlacompleterev "$version_actuelle" "$version_fournie"`
+#tla set-tree-version "$version_complete" && tla cat-log "$revision_fournie" > /tmp/$$.temp && tla set-tree-version "$version_actuelle" && cat /tmp/$$.temp > `tla make-log`
+tla replay "$version_complete--$revision_fournie" && tla cat-archive-log "$version_complete--$revision_fournie" | sed -e '/^Summary:/p' -e '1,/^Summary:/d' > `tla make-log`
