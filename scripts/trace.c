@@ -27,6 +27,7 @@
 #include <syslog.h>
 #include <stdarg.h>
 #include <sys/errno.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 
 int g_dest;
@@ -247,7 +248,9 @@ void tourner(int s, int e)
 		}
 	}
 fini:
-	exit(0);
+	/* On fait un effort pour se faire passer pour le fils */
+	if(wait(&z) == -1 || !WIFEXITED(z)) exit(1);
+	exit(WEXITSTATUS(z));
 }
 
 int main(int argc, char ** argv)
