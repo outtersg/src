@@ -35,11 +35,43 @@ mkdir /tmp/$$
 
 cd /tmp/$$
 
+### Fonctions ###
+
+# Prend en entrée standard une suite de rustines, et en case une par fichier.
+# Paramètres:
+#   $1: suffixe des fichiers
+semer()
+{
+	awk 'BEGIN{a=0}/^\[/{++a;fichier="'"/tmp/$$/"'"sprintf("%8.8d",a)".'"$1"'"}{if(fichier){print $0 > fichier}}/^}/{close(fichier);fichier=0}'
+}
+
+nomRustine()
+{
+	awk '{print substr($0,2,length-1);exit}'
+}
+
+auteurRustine()
+{
+	awk 'NR == 2{sub(/\*\*[^*]*$/,"");print $0;exit}'
+}
+
+dateRustine()
+{
+	awk 'NR == 2{sub(/^.*\*\*/,"");print $0;exit}'
+}
+
+# Paramètres:
+#   $1: fichier contenant la rustine
+sha1Rustine()
+{
+	( echo -n "`nomRustine < "$1"``auteurRustine < "$1"``dateRustine < "$1"`" ; awk '/^\]/{exit}NR == 3,/^\]/{printf("%s",substr($0,2,length-1))}' < "$1" ; echo -n f ) | openssl sha1
+}
+
 echo "Composition des rustines…" >&2
 
 ### Découpage en fichiers multiples ###
 
-awk 'BEGIN{a=0}/^\[/{++a;fichier="'"/tmp/$$/"'"sprintf("%8.8d",a)".rustine"}{if(fichier){print $0 > fichier}}/^}/{close(fichier);fichier=0}'
+semer rustine
 
 ### Compression et nommage des fichiers ###
 
@@ -52,11 +84,7 @@ for fichier in *.rustine ; do
 	#   (sans retour à la ligne ni espace entre)).
 	# À FAIRE: si on peut sous darcs avoir certains de ces éléments multilignes,
 	# voir comment ça se présente dans le fichier rustine et s'adapter.
-	date="`awk 'NR == 2{sub(/^.*\*\*/,"");print $0;exit}' < "$fichier"`"
-	auteur="`awk 'NR == 2{sub(/\*\*[^*]*$/,"");print $0;exit}' < "$fichier"`"
-	nom="`awk '{print substr($0,2,length-1);exit}' < "$fichier"`"
-	#echo "$date ($auteur): $nom"
-	gzip < "$fichier" > "$date-`echo -n "$auteur" | openssl sha1 | cut -c 1-5`-`( echo -n "$nom$auteur$date" ; awk '/^\]/{exit}NR == 3,/^\]/{printf("%s",substr($0,2,length-1))}' < "$fichier" ; echo -n f ) | openssl sha1`.gz"
+	gzip < "$fichier" > "`dateRustine < "$fichier"`-`auteurRustine < "$fichier" | tr -d '\012' | openssl sha1 | cut -c 1-5`-`sha1Rustine "$fichier"`.gz"
 	# Question: je considère toujours 'inv' false (le f ajouté en dernière
 	# minute). Il ne faudrait sans doute pas.
 done
@@ -68,8 +96,18 @@ done
 
 echo "Récupération de la dernière version du serveur…" >&2
 lftp -c 'open '"$1"' ; cd _darcs ; get inventory'
+# On regarde dans l'inventory ce qui est déjà là. Pour je-ne-sais quelle étrange
+# raison, on a droit en entrée standard à l'ensemble des patches. Peut-être une
+# erreur dans la récupération de l'inventory qui fait que darcs croit devoir
+# tout envoyer. Mais si on suit sa volonté, on va se retrouver avec deux fois
+# certaines rustines, ce qui n'est pas bon du tout.
+semer deja < inventory
+for fichier in *.deja ; do
+	sha1Rustine "$fichier"
+done >> liste
+nActuels=`wc -l < liste`
 for fichier in *.rustine ; do
-	awk '/^\]/{print "]";exit}{print $0}' < "$fichier"
+	[ `( cat liste ; sha1Rustine "$fichier" ) | sort -u | wc -l` -ne $nActuels ] && echo Ajout de "`nomRustine < "$fichier"`" >&2 && awk '/^\]/{print "]";exit}{print $0}' < "$fichier"
 done >> inventory
 echo "Envoi des modifications…" >&2
 lftp -c 'open '"$1"' ; cd _darcs ; put inventory ; cd patches ; mput *.gz'
