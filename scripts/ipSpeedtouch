@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Speedtouch « amélioré », négociation auto du PPP, accessible en 10.0.0.138
+# sans mot de passe par son interface locale.
+
+cat > /tmp/$$.chopeMonIP.lex <<- TERMINE
+	%S PAS_LOIN VOUS_MARCHEZ_DESSUS
+	%{
+		int g_cEstEncoreLoin;
+	%}
+	%%
+	default { g_cEstEncoreLoin = 2; BEGIN(PAS_LOIN); }
+	<PAS_LOIN>\<TD[^>]*\> { if(--g_cEstEncoreLoin == 0) BEGIN(VOUS_MARCHEZ_DESSUS); }
+	<VOUS_MARCHEZ_DESSUS>\<\/TD { BEGIN(0); }
+	<VOUS_MARCHEZ_DESSUS>. { fprintf(yyout, "%c", yytext[0]); }
+	<*>. {}
+	%%
+	int yywrap() { return 1; }
+	int main(int argc, char ** argv) { yylex(); return 0; }
+TERMINE
+( cd /tmp && lex $$.chopeMonIP.lex && cc -o $$.chopeMonIP lex.yy.c )
+curl -s http://10.0.0.138/cgi/router/ | /tmp/$$.chopeMonIP
+rm /tmp/$$.chopeMonIP /tmp/lex.yy.c /tmp/$$.chopeMonIP.lex
