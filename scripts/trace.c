@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#define SYSLOG_NAMES
 #include <syslog.h>
 #include <stdarg.h>
 #include <sys/errno.h>
@@ -31,16 +32,40 @@
 int g_dest;
 int g_syslog;
 
+char * nomDe(char ** argv)
+{
+	char * r;
+	if((r = strrchr(argv[0], '/'))) return(++r); else return(argv[0]);
+}
+
+#define COLONNES 80
 void auSecours(char ** argv)
 {
 	char * nom;
-	if((nom = strrchr(argv[0], '/'))) ++nom ; else nom = argv[0];
+	CODE * code;
+	int pos;
+	nom = nomDe(argv);
 	fprintf(stderr, "# %s\n", nom);
 	fprintf(stderr, "# Trace multiplexée\n");
 	fprintf(stderr, "# © 2005 Guillaume Outters\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Utilisation: %s [<fichier>] [-s] <commande> [<param>*]\n", nom);
-	fprintf(stderr, "  -s                            passe par syslog\n");
+	fprintf(stderr, "Utilisation: %s [<fichier>] [-s|-S <catégorie>] <commande> [<param>*]\n", nom);
+	fprintf(stderr, "  -s                            passe par syslog (catégorie user)\n");
+	fprintf(stderr, "  -S <catégorie>                passe par une catégorie syslog précisée:");
+	pos = COLONNES;
+	for(code = &facilitynames[0]; code->c_name; ++code)
+	{
+		if(pos + 1 + strlen(code->c_name) + 1 > COLONNES)
+		{
+			fprintf(stderr, "\n                                ");
+			pos = 32;
+		}
+		else
+			fprintf(stderr, " ");
+		fprintf(stderr, "%s%c", code->c_name, code[1].c_name ? ',' : '.');
+		pos += 1 + strlen(code->c_name) + 1;
+	}
+	fprintf(stderr, "\n");
 	fprintf(stderr, "  <fichier>                     fichier de traces. Les erreurs y sont\n");
 	fprintf(stderr, "                                distinguées des traces en étant préfixées d'un\n");
 	fprintf(stderr, "                                # .\n");
@@ -93,17 +118,28 @@ int lireParametres(char ** argv)
 	char ** debut = argv;
 	
 	g_dest = -2;
-	g_syslog = 0;
+	g_syslog = -1;
 	
 	while(*++argv)
 	{
 		if(strcmp(*argv, "-h") == 0 || strcmp(*argv, "--help") == 0)
 			break; /* On retombe dans le cas « pas trouvé ce qu'il fallait » donc aide. */
-		else if(strcmp(*argv, "-s") == 0)
+		else if(strcmp(*argv, "-s") == 0 || strcmp(*argv, "-S") == 0)
 		{
+			if(g_syslog != -1) auSecours(debut);
 			if(g_dest == -2) /* Si l'on arrive avant qu'un fichier ait été donné, il n'y aura pas de fichier, un point c'est tout. */
 				g_dest = -1;
-			g_syslog = 1;
+			if((*argv)[1] == 'S')
+			{
+				if(*++argv == NULL) auSecours(debut);
+				CODE * code;
+				for(code = facilitynames; code->c_name; ++code)
+					if(strcmp(code->c_name, *argv) == 0)
+						break;
+				if(!code->c_name) auSecours(debut);
+			}
+			else
+				g_syslog = LOG_USER;
 		}
 		else if(g_dest == -2)
 		{
@@ -112,7 +148,11 @@ int lireParametres(char ** argv)
 			ftruncate(g_dest, 0);
 		}
 		else
+		{
+			if(g_syslog != -1)
+				openlog(nomDe(debut), 0, g_syslog);
 			return argv - debut;
+		}
 	}
 	auSecours(debut); /* On n'est pas passé par notre else, donc il manque au moins un argument donnant la commande à lancer et filtrer. */
 }
