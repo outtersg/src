@@ -1,0 +1,69 @@
+#!/bin/sh
+set -e
+
+# À FAIRE: pourquoi reste-t-il dans la version 0.2 un A_FAIRE.txt?
+
+. `which avd1`
+
+cat > /tmp/$$/e << TERMINE
+#!/bin/sh
+
+cat > \$1
+TERMINE
+chmod a+x /tmp/$$/e
+export EDITOR=/tmp/$$/e
+
+export PROJET=alboretum
+export SILO=/tmp/temp
+export AUTEUR=emu@lliug.net
+
+# 0.1 0
+avd1 0.1 0
+# 0.2 <> 0.1-0
+avd1 0.2 0
+# 0.2-1
+cat << TERMINE | avd1 -e 0.2 1
+(commentaire)
+- Commentaire un peu trop ambitieux.
+TERMINE
+# 0.2-2
+avd1 0.2 2
+# 0.1-1
+avd1 0.1 1
+# 0.1-1 -> 0.2-3
+recuperer 0.1 "BOGUE" 0.2 3
+# 0.2-[4 .. 9]
+avd1 0.2 4 9
+# Le 9 n'était pas passé, on a donc son commentaire en 9 et son contenu en 10.
+commentaire 0.2 9 | avd1 -e 0.2 10
+# 0.2-[11 .. 17]
+avd1 0.2 11 17
+# Pareil avec 2 et 18. Sauf que là on souhaite garder trace de ma colère face à
+# arch qui m'avait fait perdre des données.
+( commentaire 0.2 2 ; commentaire -t 0.2 18 ) | avd1 -e 0.2 18
+# 0.2-[19 .. 46]
+avd1 0.2 19 46
+# Le 47 n'avait pas de titre
+( echo "BOGUE: ID mal implémentés" ; commentaire -t 0.2 47 ) | avd1 -e 0.2 47
+# 0.2-[48 .. 65]
+avd1 0.2 48 65
+# 0.3 <> 0.2-65
+avd1 0.3 0
+# 0.2-66
+avd1 0.2 66
+# 0.2-66 -> 0.3-1
+recuperer 0.2 "BOGUE: ActionAListe en fait trop" 0.3 1
+# 0.3-2
+avd1 0.3 2
+# Le 3 n'a pas de titre
+( echo "éléments graphiques pour le paramétrage" ; commentaire -t 0.3 3 ) | avd1 -e 0.3 3
+# 0.3-[4 .. 56]
+avd1 0.3 4 56
+# 0.4-[0 .. 42]
+avd1 0.4 0 42
+# 0.4-2 -> 0.3-57
+recuperer 0.4 "adaptation pour Opera" 0.3 57
+# 0.4-9 -> 0.3-57
+recuperer 0.4 "BOGUE: classiquemax: affichage des liens rapides vers d'autres pages" 0.3
+
+rm -Rf /tmp/$$
