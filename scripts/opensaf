@@ -1,0 +1,27 @@
+#!/bin/bash
+
+adresses=`for i in "$@" ; do echo -n \"$i\",\  ; done`\"\"
+osascript << TERMINE
+tell application "Safari"
+	activate
+	if the (count of windows) is less than 1 then
+		make new document at the beginning of documents
+	end if
+end tell
+
+on ouvrir(adresse)
+	tell application "System Events"
+		tell process "Safari"
+			click menu item "Nouvel onglet" of menu "Fichier" of menu bar item "Fichier" of menu bar 1
+		end tell
+	end tell
+	tell application "Safari"
+		set the URL of document 1 to adresse
+	end tell
+end ouvrir
+
+set adresses to { $adresses }
+repeat with i from 1 to the count of adresses - 1
+	my ouvrir(item i of adresses)
+end repeat
+TERMINE
