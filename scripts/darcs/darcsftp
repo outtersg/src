@@ -25,7 +25,7 @@ echo "Composition des rustines…" >&2
 
 ### Découpage en fichiers multiples ###
 
-awk 'BEGIN{a=0}/^\[/{++a;fichier="'"/tmp/$$/"'"a".rustine"}{if(fichier){print $0 > fichier}}/^}/{close(fichier);fichier=0}'
+awk 'BEGIN{a=0}/^\[/{++a;fichier="'"/tmp/$$/"'"sprintf("%8.8d",a)".rustine"}{if(fichier){print $0 > fichier}}/^}/{close(fichier);fichier=0}'
 
 ### Compression et nommage des fichiers ###
 
