@@ -69,6 +69,15 @@ traiter()
 	awk '/&#x....;/{oui=1;chaine=$0;while(match(chaine,/&#x....;/)){printf "%s",substr(chaine,1,RSTART-1);system("./convertir "substr(chaine,RSTART+3,RLENGTH-4));chaine=substr(chaine,RSTART+RLENGTH)}print chaine}{if(oui)oui=0;else print $0}'
 }
 
+if [ "x$1" = x-c ] ; then # Conversion
+	shift
+	while [ $# -gt 0 ] ; do
+		decomposer `echo -n "$1" | iconv -t utf-16 | hexdump -v -e '/1 "%2.2x"' | cut -c 5-` # Le cut parce qu'iconv nous renvoie un BOM en en-tête d'UTF-16.
+		shift
+	done
+	exit 0
+fi
+
 traiter
 
 rm -R /tmp/$$
