@@ -1,0 +1,9 @@
+#!/bin/bash
+
+taille=0
+until [ "x$1" = x ]
+do
+	taille=$(($taille+`/bin/ls -lL "$1" | sed -e 's/^[^ ]*[ ]*[^ ]*[ ]*[^ ]*[ ]*[^ ]*[ ]*//' | cut -d ' ' -f 1`))
+	shift
+done
+echo $taille
