@@ -201,8 +201,12 @@ void tourner(int s, int e)
 							case -1: /* Le résultat est le même, bien que la méthode pour y arriver soit moins orthodoxe. */
 								if(pos[z]) /* Si, avant de recevoir la fermeture, on a obtenu des données sans retour à la ligne en queue, on les affiche. */
 								{
+									#if PLUS_AUCUN_RESPECT
 									mem[z][pos[z]] = '\n';
 									mem[z][pos[z] + 1] = 0;
+									#else
+									mem[z][pos[z]] = 0;
+									#endif
 									tracer(z, &mem[z][0]);
 								}
 								FD_CLR(f[z], &voulus);
