@@ -137,6 +137,7 @@ int lireParametres(char ** argv)
 					if(strcmp(code->c_name, *argv) == 0)
 						break;
 				if(!code->c_name) auSecours(debut);
+				g_syslog = code->c_val;
 			}
 			else
 				g_syslog = LOG_USER;
