@@ -74,10 +74,26 @@ void auSecours(char ** argv)
 	exit(1);
 }
 
-void tracer(int type, char * message)
+/* Trace et sort un bloc mémoire. La trace s'arrête sur caractère nul. Si le
+ * paramètre 'taille' est inférieur ou égal à 0, la chaîne sortie aussi;
+ * sinon un caractère nul est inséré (puis retiré) en message[taille] pour que
+ * la trace trouve où s'arrêter. Attention donc à réserver un octet de plus au
+ * cas où. */
+/* ATTENTION: bien lire la description ci-dessus, sous peine d'un débordement de
+ * de mémoire. */
+void tracer(int type, char * message, int taille)
 {
-	int taille;
-	taille = strlen(message);
+	char c;
+	if(taille <= 0)
+	{
+		taille = strlen(message);
+		c = 0;
+	}
+	else
+	{
+		c = message[taille];
+		message[taille] = 0;
+	}
 	write(type + 1, message, taille);
 	if(g_syslog != -1)
 		syslog(type ? LOG_ERR : LOG_INFO, message);
@@ -86,6 +102,7 @@ void tracer(int type, char * message)
 		if(type) write(g_dest, "# ", 2);
 		write(g_dest, message, taille);
 	}
+	if(c) message[taille] = c;
 }
 
 void tracerf(int type, char * format, ...)
@@ -96,12 +113,12 @@ void tracerf(int type, char * format, ...)
 	vasprintf(&con, format, args);
 	if(con)
 	{
-		tracer(type, con);
+		tracer(type, con, -1);
 		free(con);
 	}
 	else /* On trace nos paramètres un par un, c'est mieux que rien. */
 	{
-		tracer(type, format);
+		tracer(type, format, -1);
 		/* À FAIRE: parcourir le format et pour chaque %…x reconnu, afficher le
 		 * paramètre correspondant en faisant gaffe à ne pas avoir à allouer de
 		 * mémoire (par exemple pour un %d, le transformer en %.8d et avoir
@@ -169,7 +186,6 @@ void tourner(int s, int e)
 	int debut, p, fin;
 	int z, y;
 	int n;
-	char c;
 	
 	f[0] = s;
 	f[1] = e;
@@ -200,15 +216,7 @@ void tourner(int s, int e)
 							case 0: /* Eh ben on en est arrivé à bout, finalement… */
 							case -1: /* Le résultat est le même, bien que la méthode pour y arriver soit moins orthodoxe. */
 								if(pos[z]) /* Si, avant de recevoir la fermeture, on a obtenu des données sans retour à la ligne en queue, on les affiche. */
-								{
-									#if PLUS_AUCUN_RESPECT
-									mem[z][pos[z]] = '\n';
-									mem[z][pos[z] + 1] = 0;
-									#else
-									mem[z][pos[z]] = 0;
-									#endif
-									tracer(z, &mem[z][0]);
-								}
+									tracer(z, &mem[z][0], pos[z]);
 								FD_CLR(f[z], &voulus);
 								for(y = 2; --y >= 0;)
 									if(FD_ISSET(f[y], &voulus))
@@ -222,20 +230,14 @@ void tourner(int s, int e)
 								{
 									if(mem[z][p] == '\n')
 									{
-										c = mem[z][p + 1];
-										mem[z][p + 1] = 0;
-										tracer(z, &mem[z][debut]);
-										mem[z][debut = p + 1] = c;
+										tracer(z, &mem[z][debut], p + 1 - debut);
+										debut = p + 1;
 									}
 								}
 								if(debut > 0 && debut < p) /* S'il nous reste un début de ligne, on se le recale en début de mémoire pour compléter la prochaine fois. */
 									memmove(&mem[z][0], &mem[z][debut], p - debut);
 								else if(debut == 0 && fin == TAILLE_MAX) /* Si on a déniché la perle rare en une ligne contenant TAILLE_MAX caractères sans retour à la ligne, on l'affiche avant d'entrer en dépassement de mémoire. */
-								{
-									mem[z][p] = 0;
-									tracer(z, &mem[z][0]);
-									debut = p;
-								}
+									tracer(z, &mem[z][0], debut = p);
 								pos[z] = p - debut;
 								break;
 						}
