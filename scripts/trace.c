@@ -126,7 +126,7 @@ void tourner(int s, int e)
 	char mem[2][TAILLE_MAX + 2]; /* Le +2 pour pouvoir y ajouter, si nécessaire, un retour à la ligne et un caractère nul. */
 	int pos[2];
 	int debut, p, fin;
-	int z;
+	int z, y;
 	int n;
 	char c;
 	
@@ -165,10 +165,10 @@ void tourner(int s, int e)
 									tracer(z, &mem[z][0]);
 								}
 								FD_CLR(f[z], &voulus);
-								for(z = 2; --z >= 0;)
-									if(FD_ISSET(f[z], &voulus))
+								for(y = 2; --y >= 0;)
+									if(FD_ISSET(f[y], &voulus))
 										break;
-								if(z < 0)
+								if(y < 0)
 									goto fini;
 								break;
 							default: /* Des données! */
