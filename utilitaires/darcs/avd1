@@ -1,0 +1,113 @@
+#!/bin/bash
+set -e
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Met sous Darcs un patch arch
+# © 2004 Guillaume Outters
+
+Utilisation: $nom [-e] [-a auteur] [<projet>] [<version du projet>] <numéro du patch>
+  -e: éditer le commentaire manuellement (par \$EDITOR)
+Il est possible d'utiliser les variables PROJET, VERSION et AUTEUR à la place
+des paramètres correspondants, et la variable SILO pour donner un SILO différent
+de \$HOME/Library/Application Support/darcs.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	#PROJET=
+	#VERSION=
+	#RUSTINE=
+	EDITER=non
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			-e) EDITER=oui ;;
+			-a) shift ; AUTEUR="$1" ;;
+			*)
+				for i in PROJET VERSION RUSTINE ; do
+					if eval test -z \$$i ; then
+						eval $i=\""$1"\"
+						break
+					fi
+				done
+				;;
+		esac
+		shift
+	done
+}
+analyserParametres "$@"
+
+[ -z "$RUSTINE" -o -z "$VERSION" -o -z "$PROJET" ] && auSecours
+
+mkdir -p /tmp/$$
+
+[ -z "$SILO" ] && SILO="$HOME/Library/Application Support/darcs"
+cd "$SILO"
+case "$RUSTINE" in
+	0)
+		# Branche depuis la version précédente, si possible
+		precedente=$(echo "$VERSION" | sed -e 's/[^.]*$//')$(($(echo "$VERSION" | sed -e 's/^.*\.//') - 1))
+		if [ -d "$PROJET-$precedente" ] ; then
+			darcs get "$PROJET-$precedente" "$PROJET-$VERSION"
+		else
+			mkdir "$PROJET-$VERSION"
+			cd "$PROJET-$VERSION"
+			darcs init
+		fi
+		machin=base
+		;;
+	*)
+		machin=patch
+		;;
+esac
+
+### Récupération sous arch des données ###
+
+cd /tmp
+rm -Rf $PROJET--dev--$VERSION--*
+tla get $PROJET--dev--$VERSION--$machin-$RUSTINE > /dev/null 2>&1
+cd $PROJET--dev--$VERSION--$machin-$RUSTINE
+( find . -type f | egrep -v '{arch}|.arch-ids' ; echo --exclude ; echo .arch-ids ) | tr '\012' '\000' | xargs -0 tar pcf - | ( cd "$SILO/$PROJET-$VERSION" && tar xpf - )
+
+### Recopie dans le répertoire darcs ###
+
+cd "$SILO/$PROJET-$VERSION"
+find . -name .arch-ids -exec rm -Rf {} \;
+
+### Enregistrement des changements ###
+
+# Les trois lignes suivantes sont remplacées par une méthode plus propre, où on
+# analyse les opérations réalisées par arch dans son archive-log.
+#( cd _darcs/current && find . | sort ) > /tmp/$$/avant
+#find . | grep -v "^./_darcs/" | grep -v "^./_darcs$" | sort > /tmp/$$/apres
+#diff /tmp/$$/avant /tmp/$$/apres | grep '^> ' | cut -c 3- | tr '\012' '\000' | xargs -0 darcs add
+tla cat-archive-log $PROJET--dev--$VERSION--$machin-$RUSTINE 2> /dev/null | enroule > /tmp/$$/descr.arch
+deplacer()
+{
+	while [ $# -gt 0 ] ; do
+		[ -f "$1" -o -d "$1" ] && darcs mv "$1" "$2"
+		shift
+		shift
+	done
+}
+# Déplacements
+deplacer `sed -e '/^Renamed-files: /!d' -e 's/^Renamed-files: //'  < /tmp/$$/descr.arch`
+# Ajout des nouveaux fichiers et leurs dossiers
+sed -e '/^New-files: /!d' -e 's/^New-files: //'  < /tmp/$$/descr.arch | tr ' ' '\012' > /tmp/$$/2
+touch /tmp/$$/1
+until diff -q /tmp/$$/1 /tmp/$$/2 ; do
+	mv /tmp/$$/2 /tmp/$$/1
+	( cat /tmp/$$/1 ; sed -e 's=/[^/]*$==' < /tmp/$$/1 ) | sort -u > /tmp/$$/2
+done
+darcs add `cat /tmp/$$/1`
+sed -e '/^Summary: /!d' -e 's/^Summary: //'  < /tmp/$$/descr.arch > /tmp/$$/descr.darcs
+sed -e '1,/^$/d'  < /tmp/$$/descr.arch >> /tmp/$$/descr.darcs
+[ $EDITER = oui ] && $EDITOR /tmp/$$/descr.darcs
+darcs record --logfile=/tmp/$$/descr.darcs -a --author="$AUTEUR"
+
+rm -Rf /tmp/$$
