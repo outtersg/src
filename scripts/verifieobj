@@ -1,0 +1,15 @@
+#!/bin/sh
+
+d=`pwd`/lib/$2
+cd "$1/$2"
+
+if test ! -d $d ; then
+	mkdir $d
+fi
+
+for f in `ls *.c *.cpp` ; do
+	if test ! -f $d/$f.o
+	then touch -t 195001010000 $d/$f.o
+	fi
+done
+
