@@ -1,0 +1,5 @@
+#!/bin/sh
+
+kextunload -m com.apple.driver.AppleADBMouse
+kextload /System/Library/Extensions/AppleADBMouse.kext
+
