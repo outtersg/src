@@ -21,6 +21,87 @@
 
 set -e
 
+mkdir -p /tmp/$$
+
+### Fonctions utilisables à l'extérieur ###
+
+machin()
+{
+	[ "$1" = 0 ] && echo base && return 0
+	echo patch
+}
+
+commentaire_brut()
+{
+	tla cat-archive-log $PROJET--dev--$1--`machin "$2"`-$2 2> /dev/null | enroule
+}
+
+commentaire_filtrage_texte()
+{
+	sed -e '1,/^$/d'
+}
+
+commentaire_filtrage_resume()
+{
+	sed -e '/^Summary: /!d' -e 's/^Summary: //'
+}
+
+# Obtention des commentaires d'une rustine
+# Paramètres:
+# commentaire [-r|-t] <version> <rustine>
+#   -r: résumé uniquement
+#   -t: texte uniquement
+
+commentaire()
+{
+	local mode=
+	case "$1" in
+		-r|-t) mode="$1" ; shift ;;
+	esac
+	commentaire_brut "$@" | case "$mode" in
+		-r) commentaire_filtrage_resume ;;
+		-t) commentaire_filtrage_texte ;;
+		*)
+			tee /tmp/$$/descr.arch | commentaire_filtrage_resume
+			commentaire_filtrage_texte < /tmp/$$/descr.arch
+			;;
+	esac
+}
+
+# Récupération d'une rustine d'une autre branche
+# Paramètres:
+# recuperer <version d'origine> <nom de rustine> <version de destination> <numero arch de destination>
+
+recuperer()
+{
+	( cd "$SILO/$PROJET-$3" && darcs pull -a -p ".*$2.*" "$SILO/$PROJET-$1" )
+	# Et on maintient arch à jour
+	[ ! -z "$4" ] && local rep=`ls -tdr /tmp/$PROJET--dev--$3--* 2> /dev/null | tail -1` && ( cd "$rep" && tla replay "$PROJET--dev--$3--`machin $4`-$4" > /dev/null 2>&1 )
+}
+
+### Lutte serrée ###
+
+# J'ai déjà eu le cas dans une même rustine arch d'un fichier A/B, dont le
+# répertoire était déplacé une première fois (le mettant en C/B), puis lui-même
+# encore bougé (C/D/B). Pour me le signifier, arch m'a indiqué les
+# déplacements A vers C puis A/B vers C/D/B. Conclusion, il faut mémoriser le
+# chemin parcouru par un fichier pour pouvoir effectuer le déplacement réel
+# (séquentiel) sous darcs.
+# On utilise un fichier, tenu à jour par les opérations de déplacement, qui
+# donne une ligne sur deux un truc déplacé et la suivante son nouvel
+# emplacement.
+# À FAIRE: tester comment il aurait enregistré la suppression de B au final.
+# S'il indique que c'est A/B qui disparaît, il faudra rappeler cette fonction
+# aussi à la suppression.
+
+touch /tmp/$$/deplacements
+cheminReel()
+{
+	awk 'BEGIN{l="'"$1"'"}{if(alternance==0){alternance=1;if(substr(l"/",1,length($0)+1)==$0"/"){traduire=1;l=substr(l,length($0)+1,length(l))}else{traduire=0}}else{alternance=0;if(traduire)l=$0"/"l;}}END{print l}' < /tmp/$$/deplacements
+}
+
+### Corps du programme ###
+
 auSecours()
 {
 	nom=`basename "$0"`
@@ -29,7 +110,7 @@ auSecours()
 # Met sous Darcs un patch arch
 # © 2004 Guillaume Outters
 
-Utilisation: $nom [-e] [-a auteur] [<projet>] [<version du projet>] <numéro du patch>
+Utilisation: $nom [-e] [-a auteur] [[<projet>] <version du projet>] <numéro du patch>
   -e: éditer le commentaire manuellement (par \$EDITOR)
 Il est possible d'utiliser les variables PROJET, VERSION et AUTEUR à la place
 des paramètres correspondants, et la variable SILO pour donner un SILO différent
@@ -43,13 +124,14 @@ analyserParametres()
 	#PROJET=
 	#VERSION=
 	#RUSTINE=
+	FIN=
 	EDITER=non
 	while [ $# -gt 0 ] ; do
 		case "$1" in
 			-e) EDITER=oui ;;
 			-a) shift ; AUTEUR="$1" ;;
 			*)
-				for i in PROJET VERSION RUSTINE ; do
+				for i in PROJET VERSION RUSTINE FIN ; do
 					if eval test -z \$$i ; then
 						eval $i=\""$1"\"
 						break
@@ -59,12 +141,23 @@ analyserParametres()
 		esac
 		shift
 	done
+	[ "x$FIN" = x ] && FIN="$RUSTINE"
+	return 0
 }
+
+### Point d'appel habituel ###
+
+avd1()
+{
+
+local PROJET="$PROJET"
+local VERSION="$VERSION"
+local RUSTINE="$RUSTINE"
 analyserParametres "$@"
 
 [ -z "$RUSTINE" -o -z "$VERSION" -o -z "$PROJET" ] && auSecours
 
-mkdir -p /tmp/$$
+while [ "$RUSTINE" -le "$FIN" ] ; do
 
 init_uniquement=non
 [ -z "$SILO" ] && SILO="$HOME/Library/Application Support/darcs"
@@ -112,27 +205,6 @@ TERMINE
 	lex avd.filtre.lex && cc -o avd.filtre lex.yy.c && rm avd.filtre.lex lex.yy.c
 fi
 
-### Lutte serrée ###
-
-# J'ai déjà eu le cas dans une même rustine arch d'un fichier A/B, dont le
-# répertoire était déplacé une première fois (le mettant en C/B), puis lui-même
-# encore bougé (C/D/B). Pour me le signifier, arch m'a indiqué les
-# déplacements A vers C puis A/B vers C/D/B. Conclusion, il faut mémoriser le
-# chemin parcouru par un fichier pour pouvoir effectuer le déplacement réel
-# (séquentiel) sous darcs.
-# On utilise un fichier, tenu à jour par les opérations de déplacement, qui
-# donne une ligne sur deux un truc déplacé et la suivante son nouvel
-# emplacement.
-# À FAIRE: tester comment il aurait enregistré la suppression de B au final.
-# S'il indique que c'est A/B qui disparaît, il faudra rappeler cette fonction
-# aussi à la suppression.
-
-touch /tmp/$$/deplacements
-cheminReel()
-{
-	awk 'BEGIN{l="'"$1"'"}{if(alternance==0){alternance=1;if(substr(l"/",1,length($0)+1)==$0"/"){traduire=1;l=substr(l,length($0)+1,length(l))}else{traduire=0}}else{alternance=0;if(traduire)l=$0"/"l;}}END{print l}' < /tmp/$$/deplacements
-}
-
 ### Récupération sous arch des données ###
 
 cd /tmp
@@ -140,8 +212,8 @@ rep=`ls -tdr $PROJET--dev--$VERSION--* 2> /dev/null | tail -1` || true # Le || t
 statut=0
 if [ "$rep" = "" ] ; then
 	tla get "$PROJET--dev--$VERSION--$machin-$RUSTINE" > /dev/null
-	[ $init_uniquement = oui ] && exit 0
-	cd "$PROJET--dev--$VERSION--$machin-$RUSTINE" || exit $?
+	[ $init_uniquement = oui ] && RUSTINE=$(($RUSTINE + 1)) && continue
+	cd "$PROJET--dev--$VERSION--$machin-$RUSTINE"
 	# Petite magouille pour comprendre depuis l'inventory, de ce qui a été
 	# ajouté, ce qui est du fichier et ce qui est du dossier.
 	tla inventory --both > /tmp/$$/infos.2
@@ -153,7 +225,7 @@ else
 	tla replay "$PROJET--dev--$VERSION--$machin-$RUSTINE" | egrep -v '{arch}|.arch-ids'
 fi 2> /tmp/$$/infos.erreurs > /tmp/$$/infos || statut=$? # Si on a une erreur, on ne veut pas sortir tout de suite, il faut qu'on puisse afficher le message.
 /tmp/avd.filtre < /tmp/$$/infos.erreurs >&2 # On ne peut le coller directement à la suite de la ligne précédente, sans quoi le cd qui y est fait tombe dans un sous-shell.
-[ "$statut" -ne 0 ] && exit $statut
+[ "$statut" -ne 0 ] && return $statut
 sed -e '/^[AM][^/]/!d' -e 's/^[^ ]* *//' < /tmp/$$/infos | tr '\012' '\000' | xargs -0 tar pcf /tmp/$$/fichiers.tar
 
 ### Enregistrement des changements ###
@@ -189,17 +261,30 @@ done
 
 ### Constitution du commentaire ###
 
-tla cat-archive-log $PROJET--dev--$VERSION--$machin-$RUSTINE 2> /dev/null | enroule > /tmp/$$/descr.arch
-
-sed -e '/^Summary: /!d' -e 's/^Summary: //'  < /tmp/$$/descr.arch > /tmp/$$/descr.darcs
-sed -e '1,/^$/d'  < /tmp/$$/descr.arch >> /tmp/$$/descr.darcs
+commentaire "$VERSION" "$RUSTINE" > /tmp/$$/descr.darcs
 [ $EDITER = oui ] && $EDITOR /tmp/$$/descr.darcs
 
 ### Enregistrement ###
 
 darcs record --logfile=/tmp/$$/descr.darcs -a --author="$AUTEUR"
 
+### Suivante, si nécessaire ###
+
+RUSTINE=$(($RUSTINE + 1))
+
+done
+
+return 0
+
+}
+
+# À FAIRE: un mode où avd1 peut être appelé à la main
+
+if false ; then
+
 ### Ménage ###
 
 #mv /tmp/$$ /tmp/traces.$PROJET--dev--$VERSION--$machin-$RUSTINE
 rm -Rf /tmp/$$
+
+fi
