@@ -224,11 +224,9 @@ void tourner(int s, int e)
 										mem[z][debut = p + 1] = c;
 									}
 								}
-								if(debut < p) /* S'il nous reste un début de liggne, on se le recale en début de mémoire pour compléter la prochaine fois. */
-								{
+								if(debut < p) /* S'il nous reste un début de ligne, on se le recale en début de mémoire pour compléter la prochaine fois. */
 									memmove(&mem[z][0], &mem[z][debut], p - debut);
-									pos[z] = p - debut;
-								}
+								pos[z] = p - debut;
 								break;
 						}
 					}
