@@ -1,0 +1,34 @@
+#!/bin/sh
+
+if [ $# -lt 3 ]
+then
+	echo "Utilisation: envoi <login:mot de passe> <ftp://serveur/emplacement/> <fichiers…>"
+	exit 1
+fi
+
+cat > /tmp/envoi.1 << TERMINE
+#!/bin/bash
+
+i=3
+until [ \$i = 0 ]
+do
+	echo "\$1"
+	if curl -u "\$mdp" -T "\$1" "\$serveur"
+	then
+		exit 0
+	fi
+	i=\$((\$i-1))
+done
+echo \$1 >> /tmp/Transfert\ raté
+TERMINE
+chmod u+x /tmp/envoi.1
+
+export mdp="$1"
+shift
+export serveur="$1"
+shift
+while [ "x$1" != "x" ]
+do
+	/tmp/envoi.1 "$1"
+	shift
+done
