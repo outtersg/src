@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# D'après une idée originale publiée sur <http://www.macosxhints.com>
+# Create Mail messages with attachments from Terminal
+# Tue, Oct 12 '04 at 10:55AM • from: Anonymous
+
+osascript -e 'tell application "Mail" to open { '"`for i in "$@" ; do echo "POSIX file \\\"$i\\\"," | tr '\012' ' ' ; done | sed -e 's/, $//'`"' }'
