@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# À FAIRE: gérer plusieurs arguments
+
+dd if=$1 bs=$2 count=1
+printf $3
+size=`printf $3 | wc -c`
+dd if=$1 bs=$(($2+$size)) skip=1
+
