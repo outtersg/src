@@ -79,7 +79,7 @@ void tracer(int type, char * message)
 	int taille;
 	taille = strlen(message);
 	write(type + 1, message, taille);
-	if(g_syslog)
+	if(g_syslog != -1)
 		syslog(type ? LOG_ERR : LOG_INFO, message);
 	if(g_dest >= 0)
 	{
