@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2003 Guillaume Outters
+ * Copyright (c) 2002-2005 Guillaume Outters
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,6 @@ DEBUT_LIGNE ^([\t \/])*
 %{
 
 /*----------------------------------------------------------------------------*/
-/* BOGUE: Le code ne doit pas être collé en début de ligne
- * sous peine d'être ignoré. */
 
 #include <sys/stat.h>
 #include <sys/syslimits.h>
@@ -60,7 +58,6 @@ void faire()
 	/*printf("%d", g_commenter);*/
 	if(g_commenter & 1)
 	{
-		fprintf(stderr, "Je commente\n");
 		fwrite(g_prefixe, 1, strlen(g_prefixe), yyout);
 		/* On vire d'yytext tous les espaces situés avant notre préfixe,
 		 * en faisant attention à conserver le même nombre de
@@ -163,6 +160,7 @@ void commencer(int definie)
 }
 
 <FAIRE>{DEBUT_LIGNE} { faire(); }
+<FAIRE>^. { faire(); }
 
 %%
 
