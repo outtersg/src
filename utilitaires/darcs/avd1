@@ -1,4 +1,24 @@
 #!/bin/bash
+# Copyright (c) 2004 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 set -e
 
 auSecours()
@@ -46,14 +66,18 @@ analyserParametres "$@"
 
 mkdir -p /tmp/$$
 
+init_uniquement=non
 [ -z "$SILO" ] && SILO="$HOME/Library/Application Support/darcs"
 cd "$SILO"
 case "$RUSTINE" in
 	0)
 		# Branche depuis la version précédente, si possible
+		# À FAIRE: ne le faire que si cat-archive-log indique
+		# Continuation-of.
 		precedente=$(echo "$VERSION" | sed -e 's/[^.]*$//')$(($(echo "$VERSION" | sed -e 's/^.*\.//') - 1))
 		if [ -d "$PROJET-$precedente" ] ; then
 			darcs get "$PROJET-$precedente" "$PROJET-$VERSION"
+			init_uniquement=oui # Une branche arch ne contient pas de modif.
 		else
 			mkdir "$PROJET-$VERSION"
 			cd "$PROJET-$VERSION"
@@ -66,48 +90,116 @@ case "$RUSTINE" in
 		;;
 esac
 
+### Filtrage des erreurs arch ###
+
+if [ ! -x /tmp/avd.filtre ] ; then
+	cd /tmp
+	cat > avd.filtre.lex << TERMINE
+%s HOP
+
+%%
+
+\n\*{32}\nNO\ CHECKSUMS\ FOUND\ FOR\ REVISION\n { BEGIN(HOP); }
+<HOP>\n.*\*{32}\n\n { BEGIN(0); }
+<HOP>^..*$ {}
+<HOP>\n {}
+
+%%
+
+int yywrap() { return 1; }
+int main(int argc, char ** argv) { yylex(); return 0; }
+TERMINE
+	lex avd.filtre.lex && cc -o avd.filtre lex.yy.c && rm avd.filtre.lex lex.yy.c
+fi
+
+### Lutte serrée ###
+
+# J'ai déjà eu le cas dans une même rustine arch d'un fichier A/B, dont le
+# répertoire était déplacé une première fois (le mettant en C/B), puis lui-même
+# encore bougé (C/D/B). Pour me le signifier, arch m'a indiqué les
+# déplacements A vers C puis A/B vers C/D/B. Conclusion, il faut mémoriser le
+# chemin parcouru par un fichier pour pouvoir effectuer le déplacement réel
+# (séquentiel) sous darcs.
+# On utilise un fichier, tenu à jour par les opérations de déplacement, qui
+# donne une ligne sur deux un truc déplacé et la suivante son nouvel
+# emplacement.
+# À FAIRE: tester comment il aurait enregistré la suppression de B au final.
+# S'il indique que c'est A/B qui disparaît, il faudra rappeler cette fonction
+# aussi à la suppression.
+
+touch /tmp/$$/deplacements
+cheminReel()
+{
+	awk 'BEGIN{l="'"$1"'"}{if(alternance==0){alternance=1;if(substr(l"/",1,length($0)+1)==$0"/"){traduire=1;l=substr(l,length($0)+1,length(l))}else{traduire=0}}else{alternance=0;if(traduire)l=$0"/"l;}}END{print l}' < /tmp/$$/deplacements
+}
+
 ### Récupération sous arch des données ###
 
 cd /tmp
-rm -Rf $PROJET--dev--$VERSION--*
-tla get $PROJET--dev--$VERSION--$machin-$RUSTINE > /dev/null 2>&1
-cd $PROJET--dev--$VERSION--$machin-$RUSTINE
-( find . -type f | egrep -v '{arch}|.arch-ids' ; echo --exclude ; echo .arch-ids ) | tr '\012' '\000' | xargs -0 tar pcf - | ( cd "$SILO/$PROJET-$VERSION" && tar xpf - )
-
-### Recopie dans le répertoire darcs ###
-
-cd "$SILO/$PROJET-$VERSION"
-find . -name .arch-ids -exec rm -Rf {} \;
+rep=`ls -tdr $PROJET--dev--$VERSION--* 2> /dev/null | tail -1` || true # Le || true pour éviter qu'on ne termine sur un échec (le shell est en -e).
+statut=0
+if [ "$rep" = "" ] ; then
+	tla get "$PROJET--dev--$VERSION--$machin-$RUSTINE" > /dev/null
+	[ $init_uniquement = oui ] && exit 0
+	cd "$PROJET--dev--$VERSION--$machin-$RUSTINE" || exit $?
+	# Petite magouille pour comprendre depuis l'inventory, de ce qui a été
+	# ajouté, ce qui est du fichier et ce qui est du dossier.
+	tla inventory --both > /tmp/$$/infos.2
+	tla inventory > /tmp/$$/infos.1
+	diff /tmp/$$/infos.[12] | sed -e '/^> /!d' -e 's=^> [^ ]*[ ]*=A/ ='
+	sed -e 's=^[^ ]*[ ]*=A =' < /tmp/$$/infos.1
+else
+	cd "$rep"
+	tla replay "$PROJET--dev--$VERSION--$machin-$RUSTINE" | egrep -v '{arch}|.arch-ids'
+fi 2> /tmp/$$/infos.erreurs > /tmp/$$/infos || statut=$? # Si on a une erreur, on ne veut pas sortir tout de suite, il faut qu'on puisse afficher le message.
+/tmp/avd.filtre < /tmp/$$/infos.erreurs >&2 # On ne peut le coller directement à la suite de la ligne précédente, sans quoi le cd qui y est fait tombe dans un sous-shell.
+[ "$statut" -ne 0 ] && exit $statut
+sed -e '/^[AM][^/]/!d' -e 's/^[^ ]* *//' < /tmp/$$/infos | tr '\012' '\000' | xargs -0 tar pcf /tmp/$$/fichiers.tar
 
 ### Enregistrement des changements ###
 
-# Les trois lignes suivantes sont remplacées par une méthode plus propre, où on
-# analyse les opérations réalisées par arch dans son archive-log.
-#( cd _darcs/current && find . | sort ) > /tmp/$$/avant
-#find . | grep -v "^./_darcs/" | grep -v "^./_darcs$" | sort > /tmp/$$/apres
-#diff /tmp/$$/avant /tmp/$$/apres | grep '^> ' | cut -c 3- | tr '\012' '\000' | xargs -0 darcs add
-tla cat-archive-log $PROJET--dev--$VERSION--$machin-$RUSTINE 2> /dev/null | enroule > /tmp/$$/descr.arch
-deplacer()
-{
-	while [ $# -gt 0 ] ; do
-		[ -f "$1" -o -d "$1" ] && darcs mv "$1" "$2"
-		shift
-		shift
-	done
-}
-# Déplacements
-deplacer `sed -e '/^Renamed-files: /!d' -e 's/^Renamed-files: //'  < /tmp/$$/descr.arch`
-# Ajout des nouveaux fichiers et leurs dossiers
-sed -e '/^New-files: /!d' -e 's/^New-files: //'  < /tmp/$$/descr.arch | tr ' ' '\012' > /tmp/$$/2
-touch /tmp/$$/1
-until diff -q /tmp/$$/1 /tmp/$$/2 ; do
-	mv /tmp/$$/2 /tmp/$$/1
-	( cat /tmp/$$/1 ; sed -e 's=/[^/]*$==' < /tmp/$$/1 ) | sort -u > /tmp/$$/2
+cd "$SILO/$PROJET-$VERSION"
+
+cat /tmp/$$/infos | while read ligne ; do # Le bon vieux coup de while read < … qui part en boucle infinie.
+	contenu=`echo "$ligne" | sed -e 's/^[^ ]*[ ]*//'`
+	if echo "$ligne" | grep -q '^A' ; then # Ajouts
+		if echo "$ligne" | grep -q '^A/' ; then # Dossier
+			mkdir -p "$contenu"
+		else # Dans le .tar
+			tar xpf /tmp/$$/fichiers.tar "$contenu"
+		fi
+		darcs add "$contenu"
+	elif echo "$ligne" | grep -q '^.>' ; then # Déplacements
+		# À FAIRE: blinder. Enfin vu qu'arch n'accepte pas d'espace dans les
+		# noms, ça n'est sans doute pas la peine…
+		echo "$contenu" | sed -e 's/[	 ][ 	]*/\
+/' -e 's=^./==' | tee /tmp/$$/deplacements.temp | ( read origine ; read destination ; darcs mv `cheminReel "$origine"` "$destination" )
+		cat /tmp/$$/deplacements.temp >> /tmp/$$/deplacements
+	elif echo "$ligne" | grep -q '^D' ; then # Suppressions
+		# À FAIRE: regarder comment ça se passe pour les répertoires (le
+		# répertoire est-il retiré avant ou après ses fichiers?
+		darcs remove "$contenu"
+		rm -R "$contenu"
+	fi
 done
-darcs add `cat /tmp/$$/1`
+
+# Modifications
+
+[ -f /tmp/$$/fichiers.tar ] && tar xpf /tmp/$$/fichiers.tar # On a parfois des rustines vides, qui ne génèrent pas de tar.
+
+### Constitution du commentaire ###
+
+tla cat-archive-log $PROJET--dev--$VERSION--$machin-$RUSTINE 2> /dev/null | enroule > /tmp/$$/descr.arch
+
 sed -e '/^Summary: /!d' -e 's/^Summary: //'  < /tmp/$$/descr.arch > /tmp/$$/descr.darcs
 sed -e '1,/^$/d'  < /tmp/$$/descr.arch >> /tmp/$$/descr.darcs
 [ $EDITER = oui ] && $EDITOR /tmp/$$/descr.darcs
+
+### Enregistrement ###
+
 darcs record --logfile=/tmp/$$/descr.darcs -a --author="$AUTEUR"
 
+### Ménage ###
+
+#mv /tmp/$$ /tmp/traces.$PROJET--dev--$VERSION--$machin-$RUSTINE
 rm -Rf /tmp/$$
