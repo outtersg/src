@@ -46,19 +46,26 @@ commentaire_filtrage_resume()
 	sed -e '/^Summary: /!d' -e 's/^Summary: //'
 }
 
+commentaire_filtrage_date()
+{
+	sed -e '/^Standard-date: /!d' -e 's/[^0-9]//g'
+}
+
 # Obtention des commentaires d'une rustine
 # Paramètres:
 # commentaire [-r|-t] <version> <rustine>
 #   -r: résumé uniquement
 #   -t: texte uniquement
+#   -d: date (à la place des résumé et/ou texte)
 
 commentaire()
 {
 	local mode=
 	case "$1" in
-		-r|-t) mode="$1" ; shift ;;
+		-r|-t|-d) mode="$1" ; shift ;;
 	esac
 	commentaire_brut "$@" | case "$mode" in
+		-d) commentaire_filtrage_date ;;
 		-r) commentaire_filtrage_resume ;;
 		-t) commentaire_filtrage_texte ;;
 		*)
@@ -66,6 +73,7 @@ commentaire()
 			commentaire_filtrage_texte < /tmp/$$/descr.arch
 			;;
 	esac
+	return 0
 }
 
 # Récupération d'une rustine d'une autre branche
@@ -266,7 +274,8 @@ commentaire "$VERSION" "$RUSTINE" > /tmp/$$/descr.darcs
 
 ### Enregistrement ###
 
-darcs record --logfile=/tmp/$$/descr.darcs -a --author="$AUTEUR"
+#darcs record --logfile=/tmp/$$/descr.darcs -a --author="$AUTEUR"
+( commentaire -d "$VERSION" "$RUSTINE" ; echo "$AUTEUR" ; cat /tmp/$$/descr.darcs ) | darcs record --pipe -a | grep -v 'What is the date' || true
 
 ### Suivante, si nécessaire ###
 

@@ -5,6 +5,8 @@ set -e
 
 . `which avd1`
 
+rm -Rf /tmp/alboretum--dev--*
+
 cat > /tmp/$$/e << TERMINE
 #!/bin/sh
 
@@ -14,7 +16,8 @@ chmod a+x /tmp/$$/e
 export EDITOR=/tmp/$$/e
 
 export PROJET=alboretum
-export SILO=/tmp/temp
+[ -z "$SILO" ] && SILO=/tmp
+export SILO
 export AUTEUR=emu@lliug.net
 
 # 0.1 0
