@@ -9,12 +9,26 @@ if [ -z "$1" ] ; then
 # Assistant à darcs push pour le FTP
 # © 2005 Guillaume Outters
 
-Utilisation: export DARCS_APPLY_FTP="$0" && darcs push -a ftp://compte:mdp@serveur/chemin
-Requiert lftp, et que le répertoire distant ait été initialisé de la façon
-suivante:
-  cd /tmp && mkdir vide && cd vide && darcs init && lftp -c "open ftp://compte:mdp@serveur;mirror -R . <répertoire distant>"
+Utilisation: $nom [-i] ftp://compte:mdp@serveur/chemin
+  -i: initialiser pour Darcs
+L'utilisation habituelle de l'utilitaire est:
+$0 -i ftp://compte:mdp@serveur/chemin
+export DARCS_APPLY_FTP="$0"
+darcs push -a ftp://compte:mdp@serveur/chemin
 TERMINE
 	exit 1
+fi
+
+if [ "x$1" = x-i ] ; then
+	shift
+	mkdir -p /tmp/$$
+	cd /tmp/$$
+	darcs init
+	serveur="`echo "$1" | cut -d / -f 1-3`"
+	dossier="`echo "$1" | cut -d / -f 4-`"
+	lftp -c "open $1;mkdir -p $dossier;mirror -R . $dossier"
+	rm -R /tmp/$$
+	exit 0
 fi
 
 mkdir /tmp/$$
