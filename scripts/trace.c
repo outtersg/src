@@ -228,8 +228,14 @@ void tourner(int s, int e)
 										mem[z][debut = p + 1] = c;
 									}
 								}
-								if(debut < p) /* S'il nous reste un début de ligne, on se le recale en début de mémoire pour compléter la prochaine fois. */
+								if(debut > 0 && debut < p) /* S'il nous reste un début de ligne, on se le recale en début de mémoire pour compléter la prochaine fois. */
 									memmove(&mem[z][0], &mem[z][debut], p - debut);
+								else if(debut == 0 && fin == TAILLE_MAX) /* Si on a déniché la perle rare en une ligne contenant TAILLE_MAX caractères sans retour à la ligne, on l'affiche avant d'entrer en dépassement de mémoire. */
+								{
+									mem[z][p] = 0;
+									tracer(z, &mem[z][0]);
+									debut = p;
+								}
 								pos[z] = p - debut;
 								break;
 						}
