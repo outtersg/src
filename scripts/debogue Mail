@@ -1,0 +1,12 @@
+#!/bin/sh
+
+cat > /tmp/$$.temp << TERMINE
+br *0x869db264
+command 1
+silent
+set \$pc=\$pc+1
+c
+end
+r
+TERMINE
+gdb -x /tmp/$$.temp /Applications/Mail.app/Contents/MacOS/Mail
