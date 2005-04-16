@@ -61,7 +61,7 @@ traiter()
 	sed -e '/^decomposer()$/,/^}$/!d' < "$SCRIPT"
 	cat <<- TERMINE
 	
-	decomposer \$1 | sed -e 's/\(....\)/\&#x\1;/g' | tr -d '\012'
+	echo \$1 | HexToAsc | iconv -f utf-16 | iconv -t utf-8-mac | iconv -f utf-8 -t utf-16 | hexdump -v -e '/1 "%2.2x"' | cut -c 5- | sed -e 's/\(....\)/\&#x\1;/g' | tr -d '\012'
 	TERMINE
 	) > ./convertir
 	chmod u+x ./convertir
