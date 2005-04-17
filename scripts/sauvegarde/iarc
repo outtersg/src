@@ -1,0 +1,39 @@
+#!/bin/bash
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Archivage d'iPhoto
+# © 2005 Guillaume Outters
+
+Utilisation: $nom [g|r]
+  g             préparer la gravure: cherche un disque vierge et le remplit au
+                maximum.
+  r             récupérer: met de côté le contenu actuel iPhoto, et le remplace
+                par celui de disques insérés au fur et à mesure.
+TERMINE
+	exit 1
+}
+
+listeDestinations()
+{
+	
+}
+
+sauvegarder()
+{
+	sauvephotos -m iphoto iphoto "$dest"
+}
+
+restaurer()
+{
+	
+}
+
+case "$1" in
+	g) shift ; sauvegarder "$@" ;;
+	r) shift ; restaurer "$@" ;;
+	*) auSecours ;;
+esac
