@@ -1,0 +1,24 @@
+#!/bin/bash
+
+n=30
+
+cd /tmp
+cat > dec.lex <<TERMINE
+%S td
+%%
+
+\<TD\> { BEGIN(td); }
+<td>\<\/TD\> { fprintf(yyout, "\\n"); BEGIN(0); }
+<td>. { fprintf(yyout, "%c", yytext[0]); }
+. {}
+\\n {}
+
+%%
+
+yywrap() { return 1; }
+int main(int argc, char ** argv) { yylex(); }
+TERMINE
+lex dec.lex
+cc -o dec lex.yy.c
+
+for i in `jot $((n / 2 + 1)) 0 $n` ; do curl "http://indignations.org/signatures.php?start=${i}000&num1=${i}000#signataires" ; done | ./dec > liste
