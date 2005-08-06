@@ -1,0 +1,85 @@
+#!/bin/sh
+# Copyright (c) 2005 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+VOLUME=4
+AVANT_SECOURS=900
+SECOURS='mpg123 /Users/gui/mp3/Aretha\ Franklin/Think.mp3'
+
+if [ $# -lt 1 ] ; then
+	nom=`basename "$0"`
+	cat >&2 <<- TERMINE
+	# $nom
+	# Réveil-matin
+	# © 2005 Guillaume Outters
+	
+	Utilisation: $nom [[[AAAA]MM]JJ]hhmm
+	TERMINE
+	#Utilisation: $nom [[[[[[[[[a]a]a]a]m]m]j]j]hhmm # Plus permissive, mais pas acceptée par reveil.c.
+	exit 1
+fi
+
+# Au réveil, on ne veut pas que l'ordi replonge.
+
+demandePasse=`defaults -currentHost read com.apple.screensaver askForPassword`
+# On récupère les différents réglages de durée avant la mise en veille (un par
+# config: secteur, batterie…).
+i=0
+for nom in "AC Power" "Battery Power"
+do
+	exHiber[$i]=`defaults read /Library/Preferences/SystemConfiguration/com.apple.PowerManagement "$nom" | sed -e '/System Sleep Timer/!d' -e 's/.*=//' -e 's/[^0-9]*$//'`
+	true $((++i))
+done
+menage()
+{
+	defaults -currentHost write com.apple.screensaver askForPassword $demandePasse
+	sudo pmset -c sleep ${exHiber[0]}
+	sudo pmset -b sleep ${exHiber[1]}
+	exit 0
+}
+trap menage INT
+trap menage TERM
+defaults -currentHost write com.apple.screensaver askForPassword 0
+sudo pmset sleep 30
+# Le askForPassword n'influe pas sur le truc, il me manque sans doute une
+# notification. Donc pour le moment…
+# À FAIRE: réussir à influer.
+echo "Attention, pensez à désactiver le mot de passe en sortie de veille sans quoi l'ordi replongera aussitôt." >&2
+
+# Voilà pour le réveil.
+
+sudo reve "$1"
+
+taille=`echo -n "$1" | wc -c`
+depuis=`expr 12 - $taille + 1`
+while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$1" ] ; do
+	sleep 10
+done
+
+osascript -e 'tell application "iTunes" to activate'
+osascript -e 'tell application "System Events" to set volume '"$VOLUME"
+osascript -e 'tell application "System Events" to set volume without output muted'
+osascript -e 'tell application "iTunes" to play'
+
+# Parfois iTunes bloque sur un Ogg…
+sleep "$AVANT_SECOURS"
+echo "$SECOURS" | sh
+
+menage
