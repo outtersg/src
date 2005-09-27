@@ -1,0 +1,60 @@
+#!/bin/bash
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Sauvegarde des photos Canon de perso/Photos
+# © Guillaume Outters 2004
+
+Utilisation: $nom <série> [<destination>]
+  <série>:       nom de la série d'enregistrement. Les séries sont totalement
+                 indépendantes, permettant d'avoir deux sauvegardes sur deux
+                 supports de contenance différente.
+  <destination>: dossier dans lequel faire la sauvegarde. Généralement la racine
+                 d'un CD-R. Si elle n'est pas précisée, sera affichée la place
+                 requise pour la prochaine sauvegarde.
+TERMINE
+	exit 1
+}
+
+totaliser()
+{
+	local total=0
+	while read encorePlus ; do
+		total=$(($total + `echo "$encorePlus" | cut -f 1`))
+		echo $total
+	done | tail -1
+}
+
+recherche_mp3()
+{
+	cd "$HOME/mp3"
+	find . \( -type f -o -type l \) -print0
+}
+
+recherche_guillaume()
+{
+	cd ~/perso/Photos
+	find . \( -name '???_????.JPG' -or -name '???_????.CRW' -or -name \*.xml \) -and -type f -and -print0
+}
+
+recherche_iphoto()
+{
+	cd "$HOME/Pictures/iPhoto Library"
+	find . \! -regex ".*/Thumbs/.*" \! -regex ".*/Originals/.*" \! -regex "\./Thumb.*\.data" -type f -print0
+}
+
+[ "$1" = "" ] && auSecours
+
+recherche=recherche_guillaume
+[ "x$1" = x-m ] && shift && recherche="recherche_$1" && shift
+$recherche > /tmp/temp.$$.liste
+if [ "$2" != "" ] ; then
+	sauvemod -0 "$1" "$2"
+else
+	total=`sauvemod -0 -print0 "$1" | xargs -0 du -c | grep '	total$' | totaliser` # Curieusement, bash ne permet pas de machin | while read encorePlus ; do total=… ; done: le total du while semble coincé dans la boucle. On passe donc par cet artifice.
+	mega=$(($total / 2048))
+	echo "$total blocs (≈ $mega Mo)"
+fi < /tmp/temp.$$.liste
