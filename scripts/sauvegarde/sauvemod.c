@@ -587,13 +587,13 @@ int traiter(char * chemin, char * date, char * suiteDest, int tailleSuiteDest, u
 	
 	/* À la moindre erreur on arrête pour que la prochaine sauvegarde reparte au
 	 * premier fichier non sauvegardé. */
+	if(strlen(chemin) > tailleSuiteDest) ERR(err);
 	strcpy(suiteDest, chemin);
 	chaine = strrchr(suiteDest - 1, '/'); /* On sait que juste avant suiteDest on a un '/', qui servira de butoir si nécessaire. */
 	*chaine = 0;
 	if(attendre(g_argsMkdir) != 0) ERR(err);
 	g_argsCp[2] = chemin;
 	if(attendre(g_argsCp) != 0) ERR(err);
-	if((comp = strlen(chemin)) > tailleSuiteDest) ERR(err);
 	if(strcmp(dest->dateDernier, date) != 0)
 	{
 		comp = 1;
