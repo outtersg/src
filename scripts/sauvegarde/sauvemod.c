@@ -18,7 +18,7 @@ cc -o ~/bin/sauvemod ~/src/scripts/sauvegarde/sauvemod.c -I ~/src/c -framework C
 #define FEB }
 
 #define PREPERR int _erreur = 0;
-#define ERR(x) { fprintf(stderr, "### %d\n", __LINE__);/*if(errno) fprintf(stderr, "### %d: %s\n", __LINE__, strerror(errno));*/ _erreur = 1; goto x; }
+#define ERR(x) { if(errno) fprintf(stderr, "### %d: %s\n", __LINE__, strerror(errno)); _erreur = 1; goto x; }
 #define SIERR if(_erreur)
 
 typedef char * Chaine;
@@ -362,7 +362,7 @@ int lancer(char ** args, int entree, int sortie)
 			}
 			if(monEntree[1] >= 0)
 				close(monEntree[1]);
-			execvp(args[0], args);
+			if(execvp(args[0], args) != 0) ERR(eExec);
 			_exit(1);
 			break;
 		case -1:
@@ -374,6 +374,8 @@ int lancer(char ** args, int entree, int sortie)
 	}
 	
 	/* Ménage */
+	
+	EB(eExec)
 	
 	SIERR { if(monEntree[0] >= 0) close(monEntree[0]); if(monEntree[1] >= 0) close(monEntree[1]); }
 	EB(eEntree)
