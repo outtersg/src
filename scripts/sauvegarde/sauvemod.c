@@ -855,7 +855,6 @@ int main(int argc, char ** argv)
 	char * chemin;
 	int etat;
 	int comp;
-	char derniereDate[TAILLE_DATE + 1];
 	char dest[PATH_MAX + 1];
 	char * suiteDest;
 	int tailleSuiteDest;
@@ -930,7 +929,6 @@ int main(int argc, char ** argv)
 		suiteDest = NULL;
 	
 	etat = g_ensemble->dateDernier ? AVANT : APRES;
-	derniereDate[0] = 0;
 	while(lire(&g_lecture, &date, &chemin) > 0)
 		switch(etat)
 		{
