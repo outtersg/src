@@ -194,7 +194,6 @@ int lireDico(CFDictionaryRef dico, char * nom, char ** dest)
 		*dest = NULL;
 	}
 	EB(eMem)
-	CFRelease(chaine);
 	EB(ePasLa)
 	CFRelease(nom2);
 	EB(eChaine)
@@ -234,7 +233,6 @@ int lireDicoTableauChaine(CFDictionaryRef dico, char * nom, unTableauChaine * de
 	
 	EB(ePasBon)
 	
-	/*CFRelease(tableau);*//* BOGUE: il faut retenir le tableau si on veut le relâcher! */
 	EB(ePasLa)
 	
 	CFRelease(nom2);
