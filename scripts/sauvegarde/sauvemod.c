@@ -725,6 +725,7 @@ int traiterListe(char ** chemins, char ** dates, int faire, unEnsemble * dest)
 		
 		if(r < 0) // Erreur!
 		{
+			errno = ECANCELED;
 			n = -1;
 			break;
 		}
@@ -802,6 +803,7 @@ int traiter(char * chemin, char * date, char * suiteDest, int tailleSuiteDest, u
 			g_ptrDates[g_machinCourant] = &g_dates[g_machinCourant][0];
 			g_ptrChemins[g_machinCourant] = &g_chemins[g_machinCourant][0];
 			comp = comp < 0 ? -1 : comp == g_machinCourant ? 0 : 1;
+			if(comp == 1) errno = ECANCELED; // En fait il faudrait adopter la même norme pour traiter(), et ensuite ne plus afficher de message d'erreur pour un retour > 0 (échec de l'opération, mais on s'y attendait).
 			g_machinCourant = 0;
 			return comp;
 		}
