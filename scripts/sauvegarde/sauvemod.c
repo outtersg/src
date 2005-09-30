@@ -4,6 +4,7 @@ cc -o ~/bin/sauvemod ~/src/scripts/sauvegarde/sauvemod.c -I ~/src/c -framework C
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/errno.h>
 #include <sys/syslimits.h>
@@ -42,6 +43,8 @@ unEnsemble * unEnsemble_nouveau()
 	
 	if(!(retour = (unEnsemble *)malloc(sizeof(unEnsemble)))) ERR(eMem);
 	if(!(retour->derniers = unTableauChaine_nouveau())) ERR(eDerniers);
+	retour->emplacement = NULL;
+	retour->dateDernier = NULL;
 	return retour;
 	
 	unTableauChaine_detruire(retour->derniers);
