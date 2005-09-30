@@ -86,6 +86,7 @@ char g_entreeFournie;
 char g_entreeSepareeParDesNuls;
 char g_sepSortie;
 char g_reinitialiserSource;
+char g_traiterListes; // Sauvegarde fichier par fichier, ou par lots.
 
 char * g_argsFind[] = { "find", ".", "-type", "f", "-print0", NULL };
 char * g_argsSort[] = { "sort", "-n", "-k", "1", NULL };
@@ -93,6 +94,10 @@ char * g_argsDatef[] = { "xargs", "datef", NULL };
 char * g_argsDatef0[] = { "xargs", "-0", "datef", NULL };
 char * g_argsMkdir[] = { "mkdir", "-p", ".", NULL };
 char * g_argsCp[] = { "cp", "-Rp", ".", ".", NULL }; /* À FAIRE: et pour les ressources? *//* Le -R pour qu'il ne suive pas les liens symboliques */
+/* Copie massive qui doit prendre en entrée des chemins séparés par des
+ * caractères nuls, et renvoyer le nombre d'éléments qu'elle a pu copier
+ * (donc un code de sortie de 0 n'est pas terrible!). */
+char * g_argsExode[] = { "cpcd", "-0", ".", NULL }; /* À FAIRE: et pour les ressources? *//* Le -R pour qu'il ne suive pas les liens symboliques */
 
 #define TAILLE_DATE 23 /* 4a2m2j2h2m2s3m3µ3n  */
 	
@@ -142,6 +147,7 @@ int analyserParams(char ** argv)
 	g_entreeSepareeParDesNuls = 0;
 	g_sepSortie = '\n';
 	g_reinitialiserSource = 0;
+	g_traiterListes = 1;
 	while(*++argv)
 	{
 		if(strcmp(*argv, "-0") == 0)
@@ -328,6 +334,7 @@ int ecrirePrefsEnsemble(unEnsemble * ensemble)
 
 /* Lance un sous-process et balance sa sortie vers un descripteur de fichier
  * particulier; renvoie le descripteur de fichier qui permet d'écrire dessus. */
+/* COPIE: lancer2() */
 
 int lancer(char ** args, int entree, int sortie)
 {
@@ -373,6 +380,89 @@ int lancer(char ** args, int entree, int sortie)
 	
 	SIERR return -1;
 	return monEntree[1] >= 0 ? monEntree[1] : 1;
+}
+
+/* Lance un process en branchant ses E/S sur des machins passés en paramètres;
+ * renvoie le pid lancé. */
+/* COPIE: lancer() */
+
+int lancer2(char ** args, int * ptrEntree, int * ptrSortie)
+{
+	PREPERR
+	pid_t fils;
+	int entree, sortie;
+	int tubes[4]; // 0: fils de père; 1: père à fils; 2: père de fils; 3: fils à père.
+	int i;
+	
+	for(i = 4; --i >= 0;)
+		tubes[i] = -1;
+	if(ptrEntree)
+	{
+		if((entree = *ptrEntree) < 0)
+		{
+			if(pipe(&tubes[0]) != 0) ERR(eEntree);
+			*ptrEntree = tubes[1];
+			entree = tubes[0];
+		}
+	}
+	else
+		entree = -1;
+	if(ptrSortie)
+	{
+		if((sortie = *ptrSortie) < 0)
+		{
+			if(pipe(&tubes[2]) != 0) ERR(eEntree);
+			*ptrSortie = tubes[2];
+			sortie = tubes[3];
+		}
+	}
+	else
+		sortie = -1;
+	switch((fils = fork()))
+	{
+		case 0:
+			if(sortie != 1)
+			{
+				close(1); /* La sortie standard de ce process… */
+				if(sortie >= 0)
+				{
+					dup(sortie); /* … doit aller dans notre tube. */
+					close(sortie);
+				}
+			}
+			if(entree != 0)
+			{
+				close(0);
+				if(entree >= 0)
+				{
+					dup(entree);
+					close(entree);
+				}
+			}
+			if(tubes[1] >= 0)
+				close(tubes[1]);
+			if(tubes[2] >= 0)
+				close(tubes[2]);
+			if(execvp(args[0], args) != 0) ERR(eExec);
+			_exit(1);
+			break;
+		case -1:
+			return -1;
+		default:
+			close(entree);
+			close(sortie);
+			break;
+	}
+	
+	/* Ménage */
+	
+	EB(eExec)
+	
+	EB(eEntree)
+	SIERR { for(i = 4; --i >= 0;) if(tubes[i] >= 0) close(tubes[i]); }
+	
+	SIERR return -1;
+	return fils;
 }
 
 int attendre(char ** args)
@@ -577,11 +667,149 @@ re:
 	return 1;
 }
 
-int traiter(char * chemin, char * date, char * suiteDest, int tailleSuiteDest, unEnsemble * dest)
+int traiterListe(char ** chemins, char ** dates, int faire, unEnsemble * dest)
 {
 	PREPERR
+	char ** ptrptr;
+	char ** pplent;
+	char ** ppfin;
+	int balance;
+	int exode;
+	int r;
+	int n;
 	char * chaine;
 	int comp;
+	
+	if(!faire)
+	{
+		for(ptrptr = chemins; *ptrptr; ++ptrptr)
+			fprintf(stdout, "%s%c", *ptrptr, g_sepSortie);
+		return ptrptr - chemins;
+	}
+	
+	/* On n'écrit jamais plus de 127 choses à la fois, car le processus doit
+	 * nous renvoyer par son code de sortie le nombre de choses écrites, dont on
+	 * ne peut récupérer que les 8 derniers bits par WEXITSTATUS. */
+	
+	n = 0;
+	pplent = chemins;
+	while(*pplent)
+	{
+		balance = -1;
+		if((exode = lancer2(g_argsExode, &balance, NULL)) < 0) ERR(eExode);
+		
+		for(ptrptr = pplent; *ptrptr && ptrptr < &pplent[127]; ++ptrptr)
+			write(balance, *ptrptr, strlen(*ptrptr) + 1);
+		
+		close(balance);
+		balance = -1;
+		
+		waitpid(exode, &r, 0);
+		if(WIFEXITED(r))
+			r = WEXITSTATUS(r);
+		else
+			r = -1;
+		
+		if(r > (ptrptr - pplent)) // Mythomane, va!
+			r = ptrptr - pplent;
+		ppfin = &pplent[r];
+		for(; pplent < ppfin; ++pplent)
+			fprintf(stdout, "%s%c", *pplent, g_sepSortie);
+		
+		/* Ménage */
+		
+		if(balance >= 0) close(balance);
+		EB(eExode)
+		
+		if(r < 0) // Erreur!
+		{
+			n = -1;
+			break;
+		}
+		n += r;
+		if(ppfin < ptrptr) // On n'est pas allé jusqu'au bout.
+			break;
+	}
+	
+	/* On fait avancer notre Ensemble jusqu'au dernier qui a pu être copié */
+	
+	if(n > 0)
+	{
+		if(strcmp(dest->dateDernier, dates[n - 1]) != 0)
+		{
+			comp = 1;
+			unEnsemble_viderDerniers(dest);
+		}
+		else
+			comp = 0;
+		for(r = n; --r >= 0 && strcmp(dates[r], dates[n - 1]) == 0;) {}
+		while(++r < n)
+			if(unEnsemble_ajouterDernier(dest, chemins[r]) != 0) ERR(eCopie);
+		if(comp)
+			strcpy(dest->dateDernier, dates[n - 1]);
+		
+		EB(eCopie)
+		
+		SIERR(unEnsemble_viderDerniers(dest));
+	}
+	
+	SIERR return -1;
+	return n;
+}
+
+#define TAILLE_LISTE 64 /* Pas plus de 127, chercher dans le source pourquoi. */
+static char g_dates[TAILLE_LISTE + 1][TAILLE_DATE + 1];
+static char g_chemins[TAILLE_LISTE + 1][PATH_MAX + 1];
+static char * g_ptrDates[TAILLE_LISTE + 1];
+static char * g_ptrChemins[TAILLE_LISTE + 1];
+static int initChemins()
+{
+	int z;
+	for(z = TAILLE_LISTE; --z >= 0;)
+	{
+		g_ptrDates[z] = &g_dates[z][0];
+		g_ptrChemins[z] = &g_chemins[z][0];
+	}
+	g_ptrDates[TAILLE_LISTE] = NULL;
+	g_ptrChemins[TAILLE_LISTE] = NULL;
+	return 0;
+}
+
+int traiter(char * chemin, char * date, char * suiteDest, int tailleSuiteDest, unEnsemble * dest)
+{
+	static int g_machinCourant = -1;
+	
+	int comp;
+	
+	/* Si on travaille par lots, on accumule */
+	
+	if(g_traiterListes)
+	{
+		if(g_machinCourant < 0)
+			g_machinCourant = initChemins();
+		if(chemin)
+		{
+			strcpy(&g_chemins[g_machinCourant][0], chemin);
+			strcpy(&g_dates[g_machinCourant][0], date);
+		}
+		if(!chemin || (++g_machinCourant >= TAILLE_LISTE))
+		{
+			g_ptrChemins[g_machinCourant] = NULL;
+			g_ptrDates[g_machinCourant] = NULL; // Clôture de la liste.
+			comp = traiterListe(g_ptrChemins, g_ptrDates, suiteDest != NULL, dest); // Écriture.
+			g_ptrDates[g_machinCourant] = &g_dates[g_machinCourant][0];
+			g_ptrChemins[g_machinCourant] = &g_chemins[g_machinCourant][0];
+			comp = comp < 0 ? -1 : comp == g_machinCourant ? 0 : 1;
+			g_machinCourant = 0;
+			return comp;
+		}
+		return 0;
+	}
+	
+	/* Fonctionnement un par un */
+	
+	PREPERR
+	char * chaine;
 	
 	fprintf(stdout, "%s%c", chemin, g_sepSortie);
 	if(!suiteDest) return 0;
@@ -631,6 +859,8 @@ int main(int argc, char ** argv)
 	char dest[PATH_MAX + 1];
 	char * suiteDest;
 	int tailleSuiteDest;
+	
+	signal(SIGPIPE,SIG_IGN); // Parfois nos fils quitteront en catimini, ne leur en voulons pas, ils sont jeunes, c'est comme ça.
 	
 	if(!(g_ensemble = unEnsemble_nouveau())) ERR(eEnsemble);
 	if(analyserParams(argv) != 0) auSecours(argv[0]);
@@ -688,6 +918,7 @@ int main(int argc, char ** argv)
 	{
 		g_argsMkdir[2] = dest;
 		g_argsCp[3] = dest;
+		g_argsExode[2] = dest;
 		strcpy(dest, g_destination);
 		tailleSuiteDest = strlen(dest);
 		suiteDest = &dest[tailleSuiteDest];
@@ -723,7 +954,9 @@ int main(int argc, char ** argv)
 			case APRES:
 ap:				if(traiter(chemin, date, suiteDest, tailleSuiteDest, g_ensemble) != 0) ERR(ePendant);
 				break;
-		}
+	}
+	
+	traiter(NULL, NULL, suiteDest, tailleSuiteDest, g_ensemble); // En cas de traitement par paquets: on scelle le dernier paquet et on l'expédie.
 	
 	EB(ePendant)
 	
