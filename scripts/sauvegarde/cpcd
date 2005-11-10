@@ -1,0 +1,98 @@
+#!/bin/bash
+
+tailleDispoPremierPeriph()
+{
+	drutil trackinfo -xml | python -c '
+import sys
+import xml.dom.minidom
+doc = xml.dom.minidom.parse(sys.stdin)
+r = doc
+for point in [ "trackinfodoc", "trackinfofordevice", "trackInfoList", "trackinfo" ]:
+	for r2 in r.childNodes:
+		if r2.nodeType == doc.ELEMENT_NODE and r2.localName == point:
+			r = r2
+			break
+	else:
+		sys.exit(0)
+oui = 0
+taille = None
+for r2 in r.childNodes:
+	if r2.nodeType == doc.ELEMENT_NODE:
+		if r2.localName == "blank":
+			oui = 1
+		elif r2.localName == "freeSpace":
+			taille = r2.attributes["blockCount"]
+if oui and taille:
+	try:
+		sys.stdout.write("%d"%(int(taille.nodeValue)*4)) # Blocs de 2K
+	except:
+		pass
+'
+}
+
+# Deux inconvénients à drutil:
+# - il n'a pas d'option noeject, donc à chaque vérification il faut réinsérer le
+#   disque (et il peut y avoir plusieurs vérifs avant de le remplir).
+# - Le seul moyen de savoir si ça tient est de simuler une gravure. Donc c'est
+#   lent.
+# Pour compenser un peu, on va essayer de trouver la taille dispo sur le disque,
+# et ne pas faire le test complet si elle est largement supérieure à la place
+# dont on a besoin.
+verif_drutil()
+{
+	local taille="`tailleDispoPremierPeriph`"
+	[ "$((taille + 0))" -gt 0 -a "`du -s "$1" | awk '{print $1}'`" -lt $((taille * 92 / 100)) ] && return 0
+	drutil burn -test "$1"
+	return $?
+}
+
+options=()
+[ "x$1" = x-0 ] && shift && options=(-d $'\000')
+dest="$1"
+
+# On recopie le plus possible, en traçant tout dans un tableau.
+
+mkdirp()
+{
+	[ -d "$1" ] && return 0
+	[ "x$1" = x. -o "x$1" = x/ ] && return 1
+	[ -d "`dirname "$1"`" ] || mkdirp "`dirname "$1"`" || return 1
+	mkdir "$1" || return 1
+	dossiers[${#dossiers[@]}]="$1"
+}
+
+dossiers=()
+fichiers=()
+while read "${options[@]}" ligne
+do
+	dossier="$dest/`dirname "$ligne"`"
+	mkdirp "$dossier" || break
+	ln "$ligne" "$dest/$ligne" || break
+	fichiers[${#fichiers[@]}]="$dest/$ligne"
+done
+
+verif=verif_drutil
+
+# Puis on fait le ménage si ça ne tient pas.
+# La commande drutil échoue immédiatement en cas de problème; on a donc intérêt
+# à partir de la fin jusqu'à ce que ça finisse par rentrer, plutôt que de tenter
+# des écritures en mode test jusqu'à ce que ça ne passe plus.
+
+until $verif "$dest" > /dev/tty 2>&1
+do
+	if [ "${#fichiers[@]}" = 0 ] # On a retiré tous les fichiers qu'on avait rajoutés, mais ça plante encore. Essayons de virer les dossiers
+	then
+		n="${#dossiers[@]}"
+		while [ "$n" -gt 0 ]
+		do
+			rm -df "${dossiers[$((--n))]}"
+		done
+		$verif "$dest" && exit 0
+		exit -1
+	fi
+	n="$((${#fichiers[@]} - 1))"
+	rm -f "${fichiers[$n]}"
+	unset "fichiers[$n]"
+done
+
+exit "${#fichiers[@]}"
