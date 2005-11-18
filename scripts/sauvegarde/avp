@@ -1,0 +1,26 @@
+#!/bin/bash
+set -e
+
+# Astérix vers Panoramix
+
+PANO=10.0.0.9
+PREFIXE=asterix
+
+dest="$PREFIXE.`date +%Y-%m-%d`"
+dernier="`echo 'cd $HOME/sauvegarde && mkdir -p "'"$PREFIXE"'". && touch -t 197910100826 "'"$PREFIXE"'". && ls -d1 "'"$PREFIXE"'".* | grep -v "'"$PREFIXE"'.[^0-9]" | tail -1' | ssh "$PANO" sh`"
+num="`echo 'cd $HOME/sauvegarde ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=0 ; until mkdir '"$dest"'.$((++c)) 2> /dev/null ; do true ; done ; echo $c' | ssh "$PANO" sh`"
+[ "$num" = "" ] || dest="$dest.$num"
+cd "$HOME" && rsync --delete --exclude-from=- --link-dest="../$dernier" -az ./ "$PANO:sauvegarde/$dest/" <<- TERMINE
+- /tmp/autres/
+- /tmp/200*/
+- /Library/Caches/
+- /Library/Safari/Icons/
+- /.Trash/
+TERMINE
+echo 'cd $HOME/sauvegarde && rm -f "'"$PREFIXE"'.dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'.dernier"' | ssh "$PANO" sh
+
+exit 0
+
+# Pour relier une sauvegarde faite en autonome:
+( cd asterix.2005-11-15 && find . -type f | while read i ; do [ -f "$i" -a -f "../asterix.2005-11-14/$i" -a `cksum "$i" | awk '{print $1}'` = `cksum "../asterix.2005-11-14/$i" | awk '{print $1}'` ] && echo "$i" && sudo rm "$i" && ln "../asterix.2005-11-14/$i" "$i" ; done )
+
