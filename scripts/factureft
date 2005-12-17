@@ -1,0 +1,1 @@
+cat 6.txt | sort -n -k 3 | tr -dC 'a-zA-Z0-9,: .\012' | grep -v '[^0-9]0 *$' | sed -E 's/^.*([0-9]{10}).*[^0-9]([0-9]*,[0-9]*).*$/\1 \2/' | awk '{if(dernier != $1){if(dernier)print dernier" "cumul;cumul=0;dernier=$1}cumul+=$2}'
