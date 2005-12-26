@@ -23,6 +23,8 @@ VOLUME=4
 AVANT_SECOURS=900
 SECOURS='mpg123 /Users/gui/mp3/Aretha\ Franklin/Think.mp3'
 
+SCRIPTS="`command -v "$0"`" ; while [ -L "$SCRIPTS" ] ; do SCRIPTS="`ls -l "$SCRIPTS"`" ; SCRIPTS="${SCRIPTS##*-> }" ; done ; SCRIPTS="`dirname "$SCRIPTS"`" ; echo "$SCRIPTS" | grep -q "^/" || SCRIPTS="`pwd`/$SCRIPTS"
+
 if [ $# -lt 1 ] ; then
 	nom=`basename "$0"`
 	cat >&2 <<- TERMINE
@@ -65,7 +67,7 @@ echo "Attention, pensez à désactiver le mot de passe en sortie de veille sans 
 
 # Voilà pour le réveil.
 
-sudo reve "$1"
+sudo "$SCRIPTS/reve" "$1"
 
 taille=`echo -n "$1" | wc -c`
 depuis=`expr 12 - $taille + 1`
