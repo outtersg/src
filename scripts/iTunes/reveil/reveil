@@ -38,6 +38,8 @@ if [ $# -lt 1 ] ; then
 	exit 1
 fi
 
+[ $# -gt 1 ] && AVANT_SECOURS="$2"
+
 # Au réveil, on ne veut pas que l'ordi replonge.
 
 demandePasse=`defaults -currentHost read com.apple.screensaver askForPassword`
