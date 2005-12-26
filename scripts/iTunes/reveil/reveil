@@ -51,19 +51,17 @@ do
 done
 menage()
 {
-	defaults -currentHost write com.apple.screensaver askForPassword $demandePasse
+	defaults -currentHost write com.apple.screensaver askForPassword -int $demandePasse
 	sudo pmset -c sleep ${exHiber[0]}
 	sudo pmset -b sleep ${exHiber[1]}
+	"$SCRIPTS/notif"
 	exit 0
 }
 trap menage INT
 trap menage TERM
-defaults -currentHost write com.apple.screensaver askForPassword 0
+defaults -currentHost write com.apple.screensaver askForPassword -int 0
 sudo pmset sleep 30
-# Le askForPassword n'influe pas sur le truc, il me manque sans doute une
-# notification. Donc pour le moment…
-# À FAIRE: réussir à influer.
-echo "Attention, pensez à désactiver le mot de passe en sortie de veille sans quoi l'ordi replongera aussitôt." >&2
+"$SCRIPTS/notif" # On prévient que les préfs d'économiseur ont changé.
 
 # Voilà pour le réveil.
 
