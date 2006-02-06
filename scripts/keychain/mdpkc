@@ -1,0 +1,62 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Auteur: Guillaume Outters
+
+import sys
+import objc
+import struct
+import re
+import os
+
+def protocole(nom):
+	return struct.unpack('L', '%-4.4s'%nom)[0]
+
+def decouper(url):
+	decoupage = re.search('^([a-z0-9]*)://([a-z.0-9]*)@([a-z.0-9]*)$', url)
+	if decoupage:
+		return decoupage.groups()
+	return None
+
+decoupage = decouper(sys.argv[1])
+if not decoupage:
+	sys.stderr.write("""# mdpkc
+# Accès à la Keychain depuis Python
+# © 2004 Guillaume Outters
+
+Utilisation: mdpkc <protocole>://<identifiant>@<serveur>
+""")
+	sys.exit(1)
+
+objc.loadBundle("Keychain", globals(), bundle_path='/Library/Frameworks/Keychain.framework')
+Keychain = objc.lookUpClass('Keychain')
+KeychainItem = objc.lookUpClass('KeychainItem')
+KeychainSearch = objc.lookUpClass('KeychainSearch')
+Access = objc.lookUpClass('Access')
+AccessControlList = objc.lookUpClass('AccessControlList')
+NSArray = objc.lookUpClass('NSArray')
+
+k = Keychain.defaultKeychain()
+if not k.isUnlocked():
+	k.unlock()
+try:
+	recherche = KeychainSearch.keychainSearchWithKeychain_(k)
+except AttributeError, ex:
+	recherche = KeychainSearch.keychainSearchWithKeychains_(NSArray.arrayWithObject_(k))
+recherche.setServer_(decoupage[2])
+recherche.setAccount_(decoupage[1])
+recherche = recherche.anySearchResults()
+if not recherche.count():
+	a = Access.accessEmptyWithName_(sys.argv[1])
+	entree = k.addNewItemWithClass_access_(protocole('inet'), a)
+	entree.setServer_(decoupage[2])
+	mdp = os.popen('stty -echo ; echo -n "Mot de passe pour '+sys.argv[1]+'? " >&2 ; read mdp ; stty echo ; echo $mdp ; echo >&2').read().strip()
+	entree.setLabel_(decoupage[2]+' ('+decoupage[1]+')')
+	entree.setDataString_(mdp)
+	entree.setPath_('/')
+	entree.setProtocol_(protocole(decoupage[0]))
+	entree.setAccount_(decoupage[1])
+	print mdp
+else:
+	val = recherche.objectAtIndex_(0).dataAsString()
+	if val:
+		print val
