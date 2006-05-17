@@ -1,0 +1,100 @@
+#!/bin/bash
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Retirage de liens entre dossiers
+# © 2006 Guillaume Outters
+
+Utilisation: $nom <dossier> <référence>
+Tout fichier de <dossier> qui est déjà dans <référence> avec le même cksum est
+supprimé et remplacé par un lien en dur vers celui de <référence>.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	original=
+	copie=
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			-h|--help) auSecours ;;
+			*)
+				for i in original copie
+				do
+					if eval test -z \"\$$i\"
+					then
+						eval $i=\""$1"\"
+						break
+					fi
+				done
+				;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+
+[ -z "$original" -o -z "$copie" ] && auSecours
+
+acombiner()
+{
+	[ "`ls -i "$1" | cut -d ' ' -f 1`" != "`ls -i "$2" | cut -d ' ' -f 1`" -a "`ls -l "$1" | awk '{print $5}'`" = "`ls -l "$2" | awk '{print $5}'`" -a "`cksum "$1" | cut -d ' ' -f 1`" = "`cksum "$2" | cut -d ' ' -f 1`" ]
+}
+
+faireEnShell()
+{
+while read f
+do
+	[ -f "$copie/$f" -a -f "$original/$f" ] && acombiner "$copie/$f" "$original/$f" && rm -f "$original/$f" && ln "$copie/$f" "$original/$f" # On revérifie la présence dans original, car si notre find sort des fichiers avec des LF, on se plantera sinon.
+done
+}
+
+faireEnPerl()
+{
+perl -e '
+sub acombiner
+{
+	(undef, $ino1, undef, undef, undef, undef, undef, $size1, undef, undef, undef, undef, undef) = stat("$_[0]");
+	(undef, $ino2, undef, undef, undef, undef, undef, $size2, undef, undef, undef, undef, undef) = stat("$_[1]");
+	return(0) if($ino1 == $ino2);
+	return(0) if($size1 != $size2);
+	$_ = `cksum "$_[0]"`;
+	chomp();
+	$f2 = "$_[1]";
+	split(/ /);
+	$somme1 = $_[0];
+	$_ = `cksum "$f2"`;
+	chomp();
+	split(/ /);
+	return($somme1 == $_[0]);
+}
+
+$original="$ARGV[0]";
+$copie="$ARGV[1]";
+
+while(<STDIN>)
+{
+	chomp();
+	$f = "$_";
+	-f "$copie/$f" && -f "$original/$f" && acombiner("$copie/$f", "$original/$f") && unlink("$original/$f") && link("$copie/$f", "$original/$f");
+}
+' "$@"
+}
+
+( cd "$original" && find . -type f ) | faireEnPerl "$original" "$copie" # Le shell consomme beaucoup trop en fork.
+
+exit $?
+
+# Pour faire ça sur un répertoire de sauvegardes de ouf:
+
+ancien=
+ls -trd [Pp]anoramix.2* | while read nouveau
+do
+[ -z "$ancien" ] || ~gui/src/scripts/sauvegarde/lner "$ancien" "$nouveau"
+ancien="$nouveau"
+done
