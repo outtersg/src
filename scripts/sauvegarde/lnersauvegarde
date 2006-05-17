@@ -1,0 +1,14 @@
+#!/bin/bash
+
+une()
+{
+	[ -z "$d" ] || ~gui/src/scripts/sauvegarde/lner "$1" "$d"
+	d="$1"
+}
+
+if [ $# -gt 0 ]
+then
+for n in "$@" ; do une "$n" ; done
+else
+ls -d panoramix.200* | while read n ; do une "$n" ; done
+fi
