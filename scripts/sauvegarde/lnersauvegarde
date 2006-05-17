@@ -8,7 +8,13 @@ une()
 
 if [ $# -gt 0 ]
 then
-for n in "$@" ; do une "$n" ; done
+	i=$#
+	declare -a t
+	for n in "$@"
+	do
+		t[$((--i))]="$n"
+	done
+	for n in "${t[@]}" ; do une "$n" ; done
 else
-ls -d panoramix.200* | while read n ; do une "$n" ; done
+ls -d panoramix.200* | rev | while read n ; do une "$n" ; done
 fi
