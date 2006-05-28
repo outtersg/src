@@ -1,0 +1,66 @@
+#!/bin/bash
+# tqvs: tel quel vers sauvegarde. Passe par une image disque, c'est le seul
+# moyen de conserver les attributs Finder aussi bien que cp -Rp.
+
+DEST=panoramix.local
+MOI=asterix
+
+set -e
+
+SCRIPTS="`command -v "$0"`" ; SCRIPTS="`dirname "$SCRIPTS"`" ; echo "$SCRIPTS" | grep -q "^/" || SCRIPTS="`pwd`/$SCRIPTS"
+SCRIPT="$SCRIPTS/`basename "$0"`"
+
+mkdir -p /tmp/$$
+
+baffe()
+{
+	echo "Veuillez ne travailler qu'avec des chemins relatifs depuis $HOME" >&2
+	exit 1
+}
+
+monter()
+{
+	periph="`hdid "$1" | tee /tmp/$$/sauvegarde.temp | grep Apple_partition_scheme | cut -d ' ' -f 1`"
+	montage="`cat /tmp/$$/sauvegarde.temp | grep Apple_HFS | awk 'NR == 1' | cut -f 3-`"
+}
+
+compresser()
+{
+	for i in "$@"
+	do
+		[ -e "$HOME/$i" ] || baffe
+	done
+	cd "$HOME"
+	
+	t="`du -sck "$@" | tail -1 | awk '{print $1}'`"
+	
+	fichier="`hdiutil create /tmp/$$/image -megabytes "$((t*115/100))" -type SPARSE -fs HFS+ | grep "created: " | cut -d ' ' -f 2-`"
+	monter "$fichier"
+	for i in "$@"
+	do
+		mkdir -p "$montage/`dirname "$i"`"
+		cp -Rp "$i" "$montage/`dirname "$i"`"
+	done
+	hdiutil detach "$montage"
+	
+	ssh "$DEST" "mkdir -p /tmp/$$"
+	scp "$fichier" "$SCRIPT" "$DEST":/tmp/$$/
+	ssh "$DEST" "/tmp/$$/`basename $SCRIPT` -d $fichier"
+}
+
+decompresser()
+{
+	monter "$1"
+	[ -z "$montage" ] && echo "Problème" >&2 && exit 1
+	cd "$montage" && cp -Rp ./* "$HOME/sauvegarde/$MOI.dernier/"
+	hdiutil detach "$montage"
+}
+
+if [ "x$1" = x-d ]
+then
+	decompresser "$2"
+else
+	compresser "$@"
+fi
+
+rm -R /tmp/$$
