@@ -1,0 +1,147 @@
+#!/bin/bash
+# Copyright (c) 2005 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Création de compte utilisateur Mac OS X
+# © 2005 Guillaume Outters
+
+Utilisation: $nom [-r <volume>] [-c] [-d <dossier>] [-n <id>] <nom Unix> <nom affiché>
+  -r <volume>                   travailler sur un volume autre que celui de
+                                démarrage.
+  -c                            compte caché (n'apparaît pas dans la liste de
+                                login).
+  -d <dossier>                  dossier racine de l'utilisateur.
+  -n <id>                       utiliser <id> comme uid et gid.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	local i
+	compte=
+	nom=
+	dispo=
+	racine=
+	cache=non
+	emplacement=
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			-c) cache=oui ;;
+			-d) shift ; emplacement="$1" ;;
+			-r) shift ; racine="$1" ;;
+			-n) shift ; dispo="$1" ;;
+			*)
+				for i in compte nom
+				do
+					if eval test -z \$$i
+					then
+						eval $i=\""$1"\"
+						break
+					fi
+				done
+				;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+
+[ -z "$nom" ] && auSecours
+
+if [ "x$racine" = x ]
+then 
+	contact="nicl /"
+else
+	base="$racine/var/db/netinfo/local.nidb"
+	contact="nicl -raw $base"
+fi
+
+if [ ! -d "$racine/var/db/netinfo/local.nidb" ]
+then
+	echo "$racine/ ne ressemble pas à un Mac OS X." >&2
+	exit 1
+fi
+
+[ -z "$emplacement" ] && emplacement="/Users/$compte"
+[[ "$emplacement" = /* ]] || emplacement="`pwd`/$emplacement"
+
+$contact read "/users/$compte" > /dev/null 2>&1 && echo "Le compte $compte existe déjà." >&2 && exit 0
+
+dernierNum()
+{
+	if [ "$racine" = "" ]
+	then
+		( nidump group / | cut -d : -f 3 ; nidump passwd / | cut -d : -f 3 )
+	else
+		$contact list /users | awk '{print "/users/"$2}' | while read existant
+		do
+			$contact read "$existant" uid
+		done | sed -e 's/^uid: //'
+		$contact list /groups | awk '{print "/groups/"$2}' | while read existant
+		do
+			$contact read "$existant" gid
+		done | sed -e 's/^gid: //'
+	fi | sort -n | tail -1
+}
+
+if [ "x$dispo" = x ]
+then
+	dispo="`dernierNum`"
+	true $((++dispo))
+else
+	$contact read "/users/uid=$dispo" > /dev/null 2>&1 && echo "L'uid $dispo est déjà pris." >&2 && exit 1
+	$contact read "/users/gid=$dispo" > /dev/null 2>&1 && echo "Le gid $dispo est déjà pris." >&2 && exit 1
+fi
+
+$contact create "/groups/$compte"
+$contact append "/groups/$compte" gid $dispo
+$contact append "/groups/$compte" passwd "*"
+
+$contact create "/users/$compte"
+$contact append "/users/$compte" home "$emplacement"
+$contact append "/users/$compte" gid $dispo
+$contact append "/users/$compte" uid $dispo
+$contact append "/users/$compte" shell /bin/bash
+$contact append "/users/$compte" authentication_authority ";ShadowHash;"
+$contact append "/users/$compte" realname "$nom"
+$contact append "/users/$compte" _writers_picture "$compte"
+$contact append "/users/$compte" picture ""
+# On doit mettre à jour aussi le passwd à *: sinon getpwnam renvoie des passes
+# vides, et cela suffit dans pam_unix.so pour que l'utilisateur puisse se
+# connecter avec un passe vide par n'importe quelle méthode (cf. pam.d: su, ssh,
+# login, sudo).
+$contact append "/users/$compte" passwd "*"
+
+[ $cache = oui ] && defaults write "$racine/Library/Preferences/com.apple.loginwindow" HiddenUsersList -array-add "$compte"
+
+if [ -d "$racine$emplacement" ]
+then
+	true
+else
+	cp -Rp "$racine/System/Library/User Template/French.lproj" "$racine$emplacement"
+	chown -R $dispo:$dispo "$racine$emplacement"
+fi
