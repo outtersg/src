@@ -1,0 +1,78 @@
+#!/bin/bash
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Crée les liens vers les photos d'un albo
+# © 2006 Guillaume Outters
+
+Utilisation: pbpaste | $nom
+L'entrée standard peut avoir été récupérée par le mode liste de l'alboretum. Une
+arborescence identique est en place dans le répertoire courant (arrivages/…),
+où simplement les répertoires en bout de chaîne (le dirname des chemins passés
+sur l'entrée standard) est un lien vers un répertoire contenant les photos au
+nommage similaire.
+Pour chaque photo, le script ira chercher dans la cible la photo originale.
+La liste de liens sera composée avec un nommage les laissant ordonnées.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	original=
+	copie=
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			-h|--help) auSecours ;;
+			*)
+				for i in dest
+				do
+					if eval test -z \"\$$i\"
+					then
+						eval $i=\""$1"\"
+						break
+					fi
+				done
+				;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+
+[ -z "$dest" ] && auSecours
+
+echo "Recherche des photos… " >&2
+
+declare -a liste
+while read photo
+do
+	# Composition de l'expression qui nous permettra de retrouver la photo
+	# originale.
+	
+	nom="`basename "$photo"`"
+	nom="${nom%.*}"
+	nom="${nom#*_}"
+	nom="*$nom.*"
+	
+	printf "%s: " "$nom"
+	find "`dirname "$photo"`/." -name "$nom" | tee /tmp/temp.$$.alboversliens | wc -l | tr -d '\012'
+	fichier="`head -1 < /tmp/temp.$$.alboversliens`"
+	echo "	$fichier"
+	liste[${#liste[@]}]="$fichier"
+done > /dev/null # On se fiche un peu de ce qu'il se passe, après tout.
+
+echo "Création des liens…" >&2
+
+n="${#liste[@]}"
+nchiffres="${#n}"
+
+mkdir -p "$dest"
+while [ $((--n)) -ge 0 ]
+do
+	ln "${liste[$n]}" "$dest/`printf "%${nchiffres}.${nchiffres}d.jpg" "$n"`"
+done
