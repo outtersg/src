@@ -8,7 +8,10 @@ auSecours()
 # Crée les liens vers les photos d'un albo
 # © 2006 Guillaume Outters
 
-Utilisation: pbpaste | $nom
+Utilisation: pbpaste | $nom [-c] [-s] <dest>
+  -c                            Conserve comme nom de lien celui de la photo.
+  -s                            Crée des liens symboliques.
+  <dest>                        Destination des liens.
 L'entrée standard peut avoir été récupérée par le mode liste de l'alboretum. Une
 arborescence identique est en place dans le répertoire courant (arrivages/…),
 où simplement les répertoires en bout de chaîne (le dirname des chemins passés
@@ -24,9 +27,13 @@ analyserParametres()
 {
 	original=
 	copie=
+	conserver=
+	symboliques=
 	while [ $# -gt 0 ] ; do
 		case "$1" in
 			-h|--help) auSecours ;;
+			-c) conserver=oui ;;
+			-s) symboliques=oui ;;
 			*)
 				for i in dest
 				do
@@ -71,8 +78,13 @@ echo "Création des liens…" >&2
 n="${#liste[@]}"
 nchiffres="${#n}"
 
+[ -z "$symboliques" ] || options=(-s)
 mkdir -p "$dest"
 while [ $((--n)) -ge 0 ]
 do
-	ln "${liste[$n]}" "$dest/`printf "%${nchiffres}.${nchiffres}d.jpg" "$n"`"
+	fichier="`basename "${liste[$n]}"`"
+	[ -z "$conserver" ] && fichier="`printf "%${nchiffres}.${nchiffres}d.jpg" "$n"`"
+	chemin="${liste[$n]}"
+	[ -z "$symboliques" ] || chemin="`symlink-resolve.sh "$chemin"`"
+	ln "${options[@]}" "$chemin" "$dest/$fichier"
 done
