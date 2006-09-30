@@ -1,0 +1,56 @@
+#!/bin/bash
+
+declare -a options
+declare r_local
+declare r_distant
+declare compte
+declare effacer
+
+analyserParametres()
+{
+	effacer=""
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			--o)
+				shift
+				while [ $# -gt 0 ] ; do
+					options[${#options[*]}]="$1"
+					shift
+				done
+				;;
+			-o)
+				shift
+				options[${#options[*]}]="$1"
+				;;
+			--bourrin)
+				effacer="-e"
+				;;
+			*)
+				for i in r_local compte r_distant ; do
+					if eval test -z \$$i ; then
+						eval $i="$1"
+						break
+					fi
+				done
+				;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+
+if [ -z "$r_distant" ] ; then
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Remise à niveau d'un site chez Free
+# © Guillaume Outters 2004
+
+Utilisation: $nom <répertoire local> <compte Free> <répertoire distant>
+TERMINE
+	exit 1
+fi
+
+mdp=`mdpkc ftp://$compte@$compte.free.fr || ( read -s -p "Passe? " mdp && echo "$mdp" )`
+lftp -c "set net:idle 20s;open -u $compte:$mdp $compte.free.fr;mkdir -p \"$r_distant\";mirror -RL ${options[@]} $effacer \"$r_local\" \"$r_distant\""
