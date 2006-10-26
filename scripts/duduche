@@ -1,0 +1,11 @@
+#!/bin/bash
+
+sudo du -axk / > /tmp/du.temp
+rm /tmp/du[0-9]*
+awk '{if(--n<0){n=100000;++f;if(nf)close(nf);nf="/tmp/du"sprintf("%04.4d",f)}{print>nf}}' < /tmp/du.temp
+for i in /tmp/du[0-9]*
+do
+	sort -n < "$i" > "$i.2"
+done
+sort -nm /tmp/du*.2 > /tmp/du
+rm /tmp/du.temp /tmp/du[0-9]*
