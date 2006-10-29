@@ -19,9 +19,12 @@ analyserParametres()
 {
 	original=
 	copie=
+	fichiers=non
+	options=()
 	while [ $# -gt 0 ] ; do
 		case "$1" in
 			-h|--help) auSecours ;;
+			-f) options[${#options[@]}]=-f ; fichiers=oui ;;
 			*)
 				for i in original copie
 				do
@@ -74,19 +77,34 @@ sub acombiner
 	return($somme1 == $_[0]);
 }
 
+$fichiers=0;
+shift and $fichiers=1 if("$ARGV[0]" eq "-f");
 $original="$ARGV[0]";
 $copie="$ARGV[1]";
 
+if($fichiers == 1)
+{
+	-f "$copie" && -f "$original" && acombiner("$copie", "$original") && unlink("$original") && link("$copie", "$original");
+}
+else
+{
 while(<STDIN>)
 {
 	chomp();
 	$f = "$_";
 	-f "$copie/$f" && -f "$original/$f" && acombiner("$copie/$f", "$original/$f") && unlink("$original/$f") && link("$copie/$f", "$original/$f");
 }
-' "$@"
+}
+' -- "$@"
 }
 
+echo "$original"
+if [ $fichiers = oui ]
+then
+	faireEnPerl "${options[@]}" "$original" "$copie"
+else
 ( cd "$original" && find . -type f ) | faireEnPerl "$original" "$copie" # Le shell consomme beaucoup trop en fork.
+fi
 
 exit $?
 
@@ -98,3 +116,9 @@ do
 [ -z "$ancien" ] || ~gui/src/scripts/sauvegarde/lner "$ancien" "$nouveau"
 ancien="$nouveau"
 done
+
+# Pour rabibocher des mp3 qui sont copies d'autres:
+
+reference=/Users/gui/asterix/mp3/
+copie=/Users/Shared/musique
+find "$reference"  -type f -ls | sed -e 's/^[^ ]*  *[^ ]*  *[^ ]*  *[^ ]*  *[^ ]*  *[^ ]* *//' -e 's/  *[^ ]*  *[^ ]*  *[^ ]* / /' | while read t f ; do find "$copie" -size ${t}c > /tmp/$$ && while read a ; do echo "$a" ; /tmp/lner -f "$a" "$f" ; done < /tmp/$$ ; done
