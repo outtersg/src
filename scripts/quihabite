@@ -1,0 +1,90 @@
+#!/bin/bash
+
+c()
+{
+	curl -s -d @/tmp/$id.formu.temp "$@" http://www.pagesjaunes.fr/pb.cgi | tee /tmp/$id.temp
+}
+
+recupChamps()
+{
+	p=()
+	grep -q form_suite < /tmp/$id.temp && p=(-e 1,/form_suite/d -e /\\/FORM/,\$d)
+	sed "${p[@]}" -e '/^.*input[^>]*hidden[^>]*name="\([^"]*\)"[^>]*value="\([^"]*\)".*$/!d' -e '//s//\1=\2/' -e 's/+/%2B/g' -e 's#/#%2F#g' -e 's/ /+/g' -e 's/(/%28/g' -e 's/)/%29/g' < /tmp/$id.temp | tr '\012' '&' > /tmp/$id.formu.temp
+}
+
+page()
+{
+	echo Page $n >& 2
+	if [ -z "$1" ]
+	then
+		c
+	else
+		c -d FRM_ADRESSE="$1" -d FRM_LOCALITE=Versailles
+	fi | tee /tmp/$id.page.$((n++)).temp | traiter
+	recupChamps
+}
+
+preparerTraitement()
+{
+	[ -x /tmp/$id.traite.temp ] && return
+	cat << TERMINE > /tmp/$id.traite.temp.lex
+%S AN N NN AA A AL L AAT AT T PFUIT
+
+%%
+
+table\ class=fdinscr { BEGIN(AN); }
+<AN>tr { BEGIN(N); }
+<N>\<b\> { BEGIN(NN); }
+<NN>[ ]*\<\/b\> { BEGIN(AA); } 
+<NN>. { ECHO; } 
+<AA>\<tr { BEGIN(A); }
+<A>\<td { BEGIN(AL); }
+<AL>\<b\>\<\/b\> {}
+<AL>\<b\> { fputc('	', yyout); BEGIN(L); }
+<L>\<\/b\> { BEGIN(AAT); }
+<L>. { ECHO; }
+<AAT>\<td { BEGIN(AT); }
+<AT>\<b\>\<\/b\> {}
+<AT>\<b\> { fputc('	', yyout); BEGIN(T); }
+<T>\<\/b\> { BEGIN(PFUIT); }
+<T>. { ECHO; }
+<N,AA,A,AL,L,AT,T,PFUIT>\/table { fputs("\\n", yyout); BEGIN(0); }
+.|\\n {}
+
+%%
+
+int yywrap() { return 1; }
+int main(int argc, char ** argv)
+{
+	yylex();
+	return 0;
+}
+TERMINE
+	( cd /tmp && lex $id.traite.temp.lex && cc -o $id.traite.temp lex.yy.c )
+}
+
+traiter()
+{
+	/tmp/$id.traite.temp | sed -e 's/&eacute;/é/g' -e 's/N&#176;/n°/g' -e 's/&ocirc;/ô/g' -e 's/&egrave;/è/g' -e 's/&egrave;/ê/g' -e 's/&ccedil;/ç/g' -e 's/&agrave;/à/g' -e 's/&euml;/ë/g' -e 's/&acirc;/â/g' -e 's/&uuml;/ü/g' -e 's/&iuml;/ï/g' -e 's/&ecirc;/ê/g'
+}
+
+id=$$
+[ "x$1" = x-c ] && shift && id="$1" && shift
+
+preparerTraitement
+
+n=0
+while [ -e /tmp/$id.page.$((++n)).temp ] ; do true ; done
+if [ ! -z "$1" ]
+then
+	c > /dev/null
+	recupChamps < /tmp/$id.temp
+	page "$@"
+else
+	[ -f /tmp/$id.temp ] || cat /tmp/$id.page.$((n-1)).temp > /tmp/$id.temp
+	[ -f /tmp/$id.formu.temp ] || recupChamps
+fi
+while grep -q NUMERO_PAQUET < /tmp/$id.formu.temp
+do
+	page
+done
