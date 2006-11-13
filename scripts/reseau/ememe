@@ -1,0 +1,55 @@
+#!/bin/bash
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Réémission de message
+# © 2006 Guillaume Outters
+
+Utilisation: $nom <nom> <adrél>
+  <nom>                         nom de la personne. Attention, le programme ne
+                                gère pas encore les caractères accentués!
+  <adrél>                       adresse du destinataire.
+Le message doit être fourni sur l'entrée standard.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	personne=
+	adresse=
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			-h|--help) auSecours ;;
+			*)
+				for i in personne adresse
+				do
+					if eval test -z \"\$$i\"
+					then
+						eval $i=\""$1"\"
+						break
+					fi
+				done
+				;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+
+[ -z "$personne" -o -z "$adresse" ] && auSecours
+
+personne="`
+python << TERMINE
+# -*- coding: utf-8 -*-
+import locale
+from email.Header import Header
+print Header('$personne'.decode(locale.getdefaultlocale()[1]), 'iso-8859-1').encode()
+TERMINE
+`"
+
+( echo EHLO 82.240.30.31 ; sleep 1 ; echo "MAIL FROM: <guillaume.outters@free.fr>" ; sleep 1 ; echo "RCPT TO: <$adresse>" ; sleep 1 ; echo DATA ; sleep 1 ; awk '{if(corps){print;next}}/^$/{corps=1}/^  /{if(!vire)print;next}{vire=0}/^Delivered-To: /{vire=1}/^To: /{print "To: '"$personne <$adresse>"', "substr($0,5);next}{if(!vire)print}' ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | nc smtp.free.fr smtp
