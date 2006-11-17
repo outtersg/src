@@ -17,22 +17,19 @@ TERMINE
 	exit 1
 }
 
+declare -a personnes adresses
 analyserParametres()
 {
-	personne=
-	adresse=
 	while [ $# -gt 0 ] ; do
 		case "$1" in
 			-h|--help) auSecours ;;
 			*)
-				for i in personne adresse
-				do
-					if eval test -z \"\$$i\"
-					then
-						eval $i=\""$1"\"
-						break
-					fi
-				done
+				if [ "${#personnes[@]}" -eq "${#adresses[@]}" ]
+				then
+					personnes[${#personnes[@]}]="$1"
+				else
+					adresses[${#adresses[@]}]="$1"
+				fi
 				;;
 		esac
 		shift
@@ -41,15 +38,19 @@ analyserParametres()
 
 analyserParametres "$@"
 
-[ -z "$personne" -o -z "$adresse" ] && auSecours
+[ "${#adresses[@]}" -lt 1 ] && auSecours
 
-personne="`
+n=${#adresses[@]}
+while [ $((--n)) -ge 0 ]
+do
+personnes[$n]="`
 python << TERMINE
 # -*- coding: utf-8 -*-
 import locale
 from email.Header import Header
-print Header('$personne'.decode(locale.getdefaultlocale()[1]), 'iso-8859-1').encode()
+print Header('${personnes[n]}'.decode(locale.getdefaultlocale()[1]), 'iso-8859-1').encode()
 TERMINE
 `"
+done
 
-( echo EHLO 82.240.30.31 ; sleep 1 ; echo "MAIL FROM: <guillaume.outters@free.fr>" ; sleep 1 ; echo "RCPT TO: <$adresse>" ; sleep 1 ; echo DATA ; sleep 1 ; awk '{if(corps){print;next}}/^$/{corps=1}/^  /{if(!vire)print;next}{vire=0}/^Delivered-To: /{vire=1}/^To: /{print "To: '"$personne <$adresse>"', "substr($0,5);next}{if(!vire)print}' ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | nc smtp.free.fr smtp
+( echo EHLO 82.240.30.31 ; sleep 1 ; echo "MAIL FROM: <guillaume.outters@free.fr>" ; sleep 1 ; for adresse in ${adresses[@]} ; do echo "RCPT TO: <$adresse>" ; sleep 1 ; done ; echo DATA ; sleep 1 ; awk '{if(corps){print;next}}/^$/{corps=1}/^  /{if(!vire)print;next}{vire=0}/^Delivered-To: /{vire=1}/^To: /{print "To: '"`n=${#adresses[@]} ; while [ $((--n)) -ge 0 ] ; do echo -n "${personnes[$n]} <${adresses[$n]}>,\\n  " ; done`"'"substr($0,5);next}{if(!vire)print}' ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | nc smtp.free.fr smtp
