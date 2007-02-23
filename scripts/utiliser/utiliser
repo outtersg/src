@@ -33,15 +33,37 @@ allerUtiliser()
 utiliser()
 {
 	local ou="$1"
+	local a
 	shift
 	until [ $# = 0 ]
 	do
+		# On commence par virer les liens qu'une de nos précédentes versions
+		# auraient placés, et pour les liens déjà utilisés par un autre
+		# logiciel, on les remplace si possible par un dossier qu'on va se
+		# partager.
+		if [ -L "$prefixe/$1" ]
+		then
+			a="`ls -l "$prefixe/$1"`" # Vers où ça pointe pour l'heure?
+			a="${a##*-> }"
+			if [ "${a%%-*([^-])+([0-9])*([^-])*(-*([^-]))}" = "${ou%%-*([^-])+([0-9])*([^-])*(-*([^-]))}" ] # Même racine, mettons version plus ancienne, on écrase.
+			then
+				rm "$prefixe/$1"
+			elif [ -d "$prefixe/`dirname "$1"`/$a" ] # La destination est un répertoire, on peut l'utiliser.
+			then
+				rm "$prefixe/$1"
+				mkdir "$prefixe/$1"
+				a="`echo "$a" | sed -e 's#\.\./##g'`"
+				echo "On ménage $a…" >&2
+				( allerUtiliser "$a" )
+			else
+				echo "$1 déjà occupé par $a" >&2
+			fi
+		fi
 		if [ -d "$1" -a -d "$prefixe/$1" -a ! -L "$prefixe/$1" ]
 		then
 			utiliser "../$ou" "$1"/*
-		elif [ \( ! -e "$prefixe/$1" \) -o -L "$prefixe/$1" ]
+		elif [ \( ! -e "$prefixe/$1" \) ]
 		then
-			[ -L "$prefixe/$1" ] && rm "$prefixe/$1"
 			ln -s "$ou/$1" "$prefixe/$1"
 		else
 			echo Impossible d\'écraser $1
