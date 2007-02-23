@@ -1,12 +1,11 @@
 #!/bin/bash
 
 shopt -s nullglob
+shopt -s extglob
 
 prefixe=/usr/local
-dossier="$prefixe/$1"
-export dossier
 
-if [ \( "x$1" = x \) -o ! -d "$dossier" ]
+if [ \( "x$1" = x \) -o ! -d "$prefixe/$1" ]
 then
 	echo '# Utiliser'
 	echo '# Crée des liens de /usr/local/<x> vers /usr/local/<biblio>/<x>'
@@ -15,7 +14,21 @@ then
 	echo 'Utilisation: '"$0"' <biblio>'
 	exit 1
 fi
-cd "$dossier"
+
+allerUtiliser()
+{
+	local i
+	local j
+	i="${1%/}"
+	cd "$prefixe/${i%%/*}"
+	j="${1//@/a}"
+	#j="${j////@}" # Bash 3.0
+	j="`echo "$j" | tr / @`"
+	j="${j%%*([^@])}"
+	j="${j//+([^@])/..}"
+	i="$i/"
+	utiliser "${j//@//}${1%%/*}" "${i#*/}"*
+}
 
 utiliser()
 {
@@ -37,5 +50,4 @@ utiliser()
 	done
 }
 
-utiliser "$1" *
-
+allerUtiliser "$1"
