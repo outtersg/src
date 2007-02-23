@@ -10,7 +10,7 @@ if [ \( "x$1" = x \) -o ! -d "$dossier" ]
 then
 	echo '# Utiliser'
 	echo '# Crée des liens de /usr/local/<x> vers /usr/local/<biblio>/<x>'
-	echo '# © Guillaume Outters 2003-2004'
+	echo '# © Guillaume Outters 2003-2004,2007'
 	echo
 	echo 'Utilisation: '"$0"' <biblio>'
 	exit 1
