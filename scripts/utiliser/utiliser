@@ -1,0 +1,41 @@
+#!/bin/bash
+
+shopt -s nullglob
+
+prefixe=/usr/local
+dossier="$prefixe/$1"
+export dossier
+
+if [ \( "x$1" = x \) -o ! -d "$dossier" ]
+then
+	echo '# Utiliser'
+	echo '# Crée des liens de /usr/local/<x> vers /usr/local/<biblio>/<x>'
+	echo '# © Guillaume Outters 2003-2004'
+	echo
+	echo 'Utilisation: '"$0"' <biblio>'
+	exit 1
+fi
+cd "$dossier"
+
+utiliser()
+{
+	local ou="$1"
+	shift
+	until [ $# = 0 ]
+	do
+		if [ -d "$1" -a -d "$prefixe/$1" -a ! -L "$prefixe/$1" ]
+		then
+			utiliser "../$ou" "$1"/*
+		elif [ \( ! -e "$prefixe/$1" \) -o -L "$prefixe/$1" ]
+		then
+			[ -L "$prefixe/$1" ] && rm "$prefixe/$1"
+			ln -s "$ou/$1" "$prefixe/$1"
+		else
+			echo Impossible d\'écraser $1
+		fi
+		shift
+	done
+}
+
+utiliser "$1" *
+
