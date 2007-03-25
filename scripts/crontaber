@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -e
+
+auSecours()
+{
+	nom="`basename "$0"`"
+	cat >&2 << TERMINE
+# $nom
+# Ajout propre au crontab
+# © 2007 Guillaume Outters
+
+Utilisation: $nom [- <expr>] [<heure> <chose>]
+  <expr>                        expression à sortir du crontab (ex.: ligne que
+                                remplace celle qu'on ajoute), passable sous
+                                grep.
+  <heure>                       heure façon crontab, avec des tirets à la place
+                                des espaces ou tabulations.
+  <chose>                       ligne à ajouter.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	retirer=
+	heure=
+	chose=
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-h) auSecours ;;
+			-) shift ; retirer="$1" ;;
+			*)
+				for i in heure chose
+				do
+					eval test -z \""\$$i"\" && eval $i=\""$1"\" && break
+				done
+				;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+[ -z "$chose" -a -z "$retirer" ] && auSecours
+
+S=/tmp/temp.$$.crontaber
+C=/tmp/temp.$$.crontabage
+touch "$S" "$C"
+chmod 700 "$S"
+chmod 600 "$C"
+(
+	retirer="${retirer//\"/\\\"}"
+	chose="${chose//\"/\\\"}"
+	heure="`echo "$heure" | sed -E -e 's/[^0-9*]+/	/g' -e 's/$/	*	*	*	*	*/' -e 's/^([^	]+	[^	]+	[^	]+	[^	]+	[^	]+).*$/\1/'`"
+	cat << TERMINE
+#!/bin/bash
+sleep 2 # Si on va trop vite à modifier le fichier, le mtime est égal au ctime, et crontab croit qu'on n'a pas touché au fichier.
+(
+	if [ -z "$retirer" ]
+	then
+		cat
+	else
+		grep -v "$retirer"
+	fi < "\$1"
+	[ -z "$chose" ] || echo "$heure	$chose"
+) > "$C" && cat "$C" > "\$1"
+TERMINE
+) > "$S"
+export EDITOR="$S"
+crontab -e
+rm -f "$S" "$C"
