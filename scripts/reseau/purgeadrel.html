@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="fr">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	</head>
+	<body id="body">
+		<form action="#" method="post">
+			1. Coller ici la liste d'adresses:<br/>
+			<textarea id="s" onkeypress="setTimeout('purger()', 0);" cols="128" rows="16">
+			
+			</textarea>
+			<br/>
+			2. <input type="button" onclick="purger()" name="rien" value="Purger"/>
+			<br/>
+			<textarea id="d" cols="128" rows="16">
+			
+			</textarea>
+			<br/>
+			3. Sélectionner tout le résultat et le copier, pour inclusion en destinataires.
+			<script type="text/javascript">
+				<!--
+				function trace(x)
+				{
+					if(!(d = document.getElementById('trace')))
+					{
+						d = document.createElement('pre');
+						d.id = 'trace';
+						d.style.height = '300px';
+						d.style.override = 'scroll';
+						document.getElementById('body').appendChild(d);
+					}
+					if(d.childNodes.length)
+						d.removeChild(d.childNodes[0]);
+					d.appendChild(document.createTextNode(x));
+				}
+				function purger1(s)
+				{
+					var r = '';
+					
+					for(d = 0, p = 0, o = 0, r = ''; p < s.length; ++p)
+					{
+						switch(s.charAt(p))
+						{
+							case '>':
+							case '<':
+							case ',':
+							case ' ':
+								if(o == 1)
+									r += (r ? ', ' : '')+s.substring(d, p);
+								o = 0;
+								d = p + 1;
+								break;
+							case '@':
+								o = 1;
+								break;
+						}
+					}
+					if(o == 1)
+						r += (r ? ', ' : '')+s.substring(d, p);
+					
+					return r;
+				}
+				
+				function purger2()
+				{
+					r = new RegEx();
+					var t = r.t;
+					/* Les t et n sont pour opéraTion et opéraNde */
+					car = new t.pas(new Array());
+					dtext = new t.etoile(new t.pas(new t.ou(new Array('[', ']', '\\', '\n'/* À FAIRE: exclure les 128-255 */))));
+					qtext = new t.etoile(new t.pas(new t.ou(new Array('"', '\\', '\n'/* À FAIRE: exclure les 128-255 */))));
+					specials = new t.ou(new Array('(', ')', '<', '>', '@', ',', ';', ':', '\\', "'", '.', '[', ']'));
+					ctl = new t.ctl();
+					atom = new t.etoile(new t.pas(new t.ou(new Array(specials, ' ', ctl))));
+					quotedpair = new t.et(new Array('\\', car));
+					quotedstring = new t.et(new Array('"', new t.etoile(new t.ou(new Array(qtext, quotedpair))), '"'));
+					word = new t.ou(new Array(atom, quotedstring));
+					phrase = new t.et(new Array(word, new t.etoile(word)));
+					localpart = new t.et(new Array(word, new t.etoile(new t.et(new Array('.', word)))));
+					domainliteral = new t.et(new Array('[', new t.ou(new Array(dtext, quotedpair)), ']'));
+					domainref = atom;
+					subdomain = new t.ou(new Array(domainref, domainliteral));
+					domain = new t.et(new Array(subdomain, new t.etoile(new t.et(new Array('.', subdomain)))));
+					addrspec = new t.et(new Array(localpart, '@', domain));
+					route = ''; /* À FAIRE: celui-là je ne le comprend pas dans la RFC */
+					routeaddr = new t.et(new Array('<', new t.zou(route), addrspec, '>'));
+					mailbox = new t.ou(new Array(addrspec, new t.et(new Array(phrase, routeaddr))));
+					group = new t.et(new Array(phrase, ':', new t.ou(new Array(mailbox, new t.etoile(new t.et(new Array(',', mailbox))))), ';'));
+					adresse = new t.ou(new Array(mailbox, group));
+					from = new t.et(new Array(adresse, new t.etoile(new t.et(new Array(',', adresse)))));
+					r.compiler(from);
+				}
+				
+				function Marqueur(e)
+				{
+					this.e = e;
+				}
+				Marqueur.prototype.comme = function(m)
+				{
+					/* À FAIRE: quand on aura implémenté la mémoire d'état dans
+					 * les marqueurs, comparer cette mémoire. */
+					return true;
+				};
+				Marqueur.prototype.cloner = function()
+				{
+					var r = new Marqueur(this.e);
+					/* À FAIRE: autres champs. */
+					return r;
+				};
+				
+				function printr(v)
+				{
+					var compteur = { n: 0 };
+					var r = printrInterne(v, '', compteur);
+					printrInterne(v, -1); // Pour que le prochain printr puisse repartir de 0.
+					return r;
+				}
+				var glo = 5;
+				function printrInterne(v, alinea, compteur)
+				{
+					switch(typeof v)
+					{
+						case 'number':
+						case 'string':
+							return alinea+v+"\n";
+						case 'object':
+							if(alinea < 0)
+							{
+								v.dejaAffiche = undefined;
+								return;
+							}
+							else if(v.dejaAffiche)
+								return alinea+"/* "+v.dejaAffiche+" */\n";
+							v.dejaAffiche = ++compteur.n;
+							var i, r;
+							if(v instanceof Array)
+							{
+								r = alinea+"[ /* "+compteur.n+" */\n";
+								for(i = 0; i < v.length; ++i)
+								{
+									r += printrInterne(v[i], alinea+"\t", compteur);
+									if(r.length == 17 && --glo > 0)
+									alert(v.dejaAffiche+' ' +i+': '+r);
+								}
+								if(glo < 5 && glo >= 0)
+									alert('fin '+v+' '+v.dejaAffiche);
+								r += alinea+"]\n";
+							}
+							else
+							{
+								r = alinea+"{ /* "+compteur.n+"*/\n";
+								for(i in v)
+									if(i != 'dejaAffiche')
+									{
+										if(glo < 5 && glo >= 0)
+											alert('glo '+v.dejaAffiche+' '+i);
+										r += alinea+"\t("+i+")\n"+printrInterne(v[i], alinea+"\t\t", compteur);
+									}
+								r += alinea+"}\n";
+							}
+							return r;
+					}
+				}
+				
+				function RegEx()
+				{
+					var t =
+					{
+						car:
+						{
+						},
+						stop:
+						{
+						},
+						etoile:
+						{
+							recupererDuFils: function(i, m)
+							{
+								
+							}
+						},
+						ou:
+						{
+							recupererDuFils: function(i, m)
+							{
+								
+							}
+						},
+						zou: // zéro ou un
+						{
+							recupererDuFils: function(i, m)
+							{
+								
+							}
+						},
+						pas:
+						{
+							recupererDuFils: function(i, m)
+							{
+								
+							}
+						},
+						ctl:
+						{
+						},
+						et:
+						{
+							recupererDuFils: function(i, m)
+							{
+								
+							}
+						}
+					};
+					this.t = {};
+					for(i in t)
+					{
+						this.t[i] = function(p)
+						{
+							if(!(p instanceof Array))
+								p = new Array(p); // Tous les objets prennent en paramètre un tableau, c'est plus simple pour la suite.
+							this.n = p;
+						};
+						this.t[i].prototype = t[i];
+						this.t[i].prototype.nom = i;
+					}
+				};
+				RegEx.prototype.compiler = function(e)
+				{
+					this.e = this.sousCompiler(e);
+				};
+				RegEx.prototype.sousCompiler = function(e)
+				{
+					var i;
+					/* La compilation transforme chaque nœud en un bidule
+					 * contenant:
+					 * - n: opérandes
+					 * - p: père
+					 * - i: indice dans le père
+					 * - m: marqueurs (lors d'un traitement)
+					 */
+					if(typeof e == 'string')
+						if(e.length > 1)
+						{
+							var t = new Array();
+							for(i = e.length; --i >= 0;)
+								t[i] = e[i];
+							e = this.sousCompiler(this.t.et(t));
+						}
+						else
+							e = new this.t.car(e);
+					else if(typeof e == 'object')
+						if(e instanceof Array)
+							e = new this.t.et(e);
+						else
+							e = new this.t[e.nom](e.n); // On clone pour que chaque instance d'une opération utilisée à plusieurs endroits de la regex ait sa propre liste de marqueurs.
+					trace(printr(e));
+					if(e.n)
+						for(i = 0; i < e.n.length; ++i)
+						{
+							e.n[i] = this.sousCompiler(e.n[i]);
+							e.n[i].p = e;
+							e.n[i].i = i;
+						}
+					e.m = new Array();
+					return e;
+				};
+				RegEx.prototype.videArboMarqueurs = function(e)
+				{
+					e.m = new Array();
+					for(i = e.n.length; --i >= 0;)
+						this.videArboMarqueurs(e.n[i]);
+				};
+				/* Place un marqueur à devant une expression, sauf s'il y est
+				 * déjà. */
+				RegEx.prototype.placer = function(m, e)
+				{
+					for(i = e.m.length; --i >= 0;)
+						if(e.m[i].comme(m))
+							return;
+					m = m.cloner();
+					m.e = e;
+					e.m[e.m.length] = m;
+					++this.bouge;
+				};
+				RegEx.prototype.epsilon = function()
+				{
+					this.bouge = 0;
+					for(i = this.m.length; --i >= 0;)
+						switch(this.m[i].e.t)
+						{
+							case '.':
+								break;
+							case '-':
+								if(this.m[i].e.p)
+									this.m[i].e.p.recupererDuFils(this.m[i].e.i, this.m[i]);
+								break;
+							case '*':
+								break;
+							case '|':
+								break;
+							case '?':
+								break;
+							case '^':
+								break;
+							case 'ctl':
+								break;
+						}
+					return this.bouge;
+				};
+				RegEx.prototype.epsilons = function()
+				{
+					while(this.epsilon() > 0) {}
+				};
+				RegEx.prototype.commencer = function()
+				{
+					this.m = new Array();
+					this.m2 = new Array();
+					this.videArboMarqueurs(this.e);
+					this.marquer(this.e);
+					this.epsilons();
+				};
+				RegEx.prototype.marquer = function(e)
+				{
+					e.m[e.m.length] = new Marqueur(e);
+				};
+				RegEx.prototype.passer = function(c)
+				{
+					for(i = this.m.length; --i >= 0;)
+						switch(this.m[i].e.t)
+						{
+							case '.':
+								break;
+							case '-':
+								break;
+							case '*':
+								break;
+							case '|':
+								break;
+							case '?':
+								break;
+							case '^':
+								break;
+							case 'ctl':
+								break;
+						}
+				};
+				
+				function purger()
+				{
+					document.getElementById('d').value = purger2(document.getElementById('s').value);
+				}
+				-->
+			</script>
+		</form>
+	</body>
+</html>
