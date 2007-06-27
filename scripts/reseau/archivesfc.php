@@ -9,6 +9,22 @@ $RECHERCHE = $argv[1];
 
 require_once "$UTIL/navigateur.inc";
 
+/*--- Chargement par titre dans notre cache ---*/
+
+if($RECHERCHE == '-')
+{
+
+	$stdin = fopen("php://stdin", "r");
+	
+	while(($titre = fgets($stdin)) !== FALSE)
+		$rs[0][] = '<a href="">Suite</a><span class=.titreDossiers.>'.trim(utf8_decode($titre)).'</span>';
+	
+	fclose($stdin);
+
+}
+else
+{
+
 /*--- Obtention dela page de résultats de recherche ---*/
 
 $url = "http://www.edifa.com/sitemagazine/index.php?query_string=$RECHERCHE&blType_1=AND&query_string_2=&blType_2=AND&query_string_3=&rubrique=18&sous_rubrique=&strAuteur=&numero_fc=&blForm=1&isAvance=1&doSearch=1&idrub=23&idmeta=52&idlang=1&idsite=1&date_debut=jj%2Fmm%2Faaaa&date_fin=jj%2Fmm%2Faaaa&aff_par_page=16384&strValid=Rechercher";
@@ -21,6 +37,8 @@ $page = $n->aller($url);
  * l'identifiant de cette fois. */
 
 preg_match_all('#<div class="pageDossiersProduitDetail.*</div>#sU', $page, $rs); // Ce faisant, du <div class="…">…<div>…</div>…</div>, on ne récupère que jusqu'au premier </div>, mais ça n'est pas grave, car tout ce qu'on veut y est.
+
+}
 
 /*--- Préparation du global ---*/
 
