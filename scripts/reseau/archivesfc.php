@@ -147,7 +147,14 @@ foreach($rs[0] as $r)
 		
 		/*- Et dans le fichier global -*/
 		
-		fwrite($sortie, $page);
+		unset($coupe1);
+		unset($coupe2);
+		if(preg_match('#<span class="pageArchiveTitre">(<span.*</span>|[^<]*)*</span>#sU', $page, $r, PREG_OFFSET_CAPTURE))
+		{
+			$coupe1 = strrpos($r[0][0], '>', -4) + $r[0][1] + 1;
+			$coupe2 = strrpos($r[0][0], '<') + $r[0][1];
+		}
+		fwrite($sortie, isset($coupe1) && isset($coupe2) ? substr($page, 0, $coupe1).'</span><h2>'.substr($page, $coupe1, $coupe2 - $coupe1).'</h2>' : $page);
 	}
 
 fwrite($sortie, <<<TERMINE
