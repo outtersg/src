@@ -1,0 +1,26 @@
+#!/bin/bash
+
+if [ ! -f info.synchroalbo ] ; then
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Envoie un alboretum sur un site Free
+# © 2004 Guillaume Outters
+
+Utilisation: $nom [-]
+  -                             n'envoie que les données de l'albo, pas les
+                                sources (considérés déjà présents sur le site).
+Le répertoire courant doit être celui de l'alboretum, et contenir le fichier
+info.synchroalbo dans lequel se trouvent, séparés par un espace, le login Free
+et le répertoire dans lequel charger le site.
+TERMINE
+	exit 1
+fi
+
+infos=`cat info.synchroalbo`
+synchrosite . $infos --o --exclude "qui" --exclude "temp/[^.].*" # On devrait aussi exclure les imagettes, recréées par le serveur, mais ils utilisent chez Free un GD indépendant, qui ne sait pas faire de lissage sur les imagettes. Donc on y met celles générées sur mon ordi.
+[ -z "$1" ] || exit $?
+ou="`cut -d ' ' -f 2- < info.synchroalbo`"
+ou="`dirname "$ou"`"
+synchrosite ~/src/projets/alboretum `cut -d ' ' -f 1 < info.synchroalbo` "$ou/alboretum" --o --exclude _darcs --exclude '{arch}' --exclude ',,*' --exclude '\+\+*' --exclude '\.arch-ids'
+
