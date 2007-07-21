@@ -58,7 +58,7 @@ int valeur(char * chaine, int taille)
 	return r;
 }
 
-int programmerReveil(char * chaine, int contientLesSecondes)
+int programmerReveil(char * chaine, int contientLesSecondes, const char * quiSuisJe)
 {
 	IOReturn r;
 	CFGregorianDate joursmoischoses;
@@ -84,7 +84,7 @@ int programmerReveil(char * chaine, int contientLesSecondes)
 	/* Programmation */
 	
 	if(!(date = CFDateCreate(NULL, temps))) { fprintf(stderr, "# Création de la date impossible.\n"); goto eDate; }
-	if((r = IOPMSchedulePowerEvent(date, NULL, CFSTR(kIOPMAutoWake))) != 0) if(r == kIOReturnNotPrivileged) fprintf(stderr, "Attention, ce programme doit être lancé en root pour pouvoir sortir l'ordinateur de veille; ne l'y plongez donc pas!\n"); else { fprintf(stderr, "# Impossible de demander le réveil de l'ordi (%x).\n", r); goto eAjouter; }
+	if((r = IOPMSchedulePowerEvent(date, quiSuisJe ? CFStringCreateWithCString(NULL, quiSuisJe, CFStringGetSystemEncoding()) : NULL, CFSTR(kIOPMAutoWake))) != 0) if(r == kIOReturnNotPrivileged) fprintf(stderr, "Attention, ce programme doit être lancé en root pour pouvoir sortir l'ordinateur de veille; ne l'y plongez donc pas!\n"); else { fprintf(stderr, "# Impossible de demander le réveil de l'ordi (%x).\n", r); goto eAjouter; }
 	
 	/* Fini */
 	
@@ -108,7 +108,7 @@ int programmerReveil(char * chaine, int contientLesSecondes)
 int main(int argc, char ** argv)
 {
 	if(argc < 1) { auSecours(argv); goto eMalParti; }
-	if(programmerReveil(argv[1], 0) != 0) goto eProg;
+	if(programmerReveil(argv[1], 0, argv[2]) != 0) goto eProg;
 	return 0;
 
 	DEB
