@@ -56,6 +56,10 @@ menage()
 	defaults -currentHost write com.apple.screensaver askForPassword -int $demandePasse
 	sudo pmset -c sleep ${exHiber[0]}
 	sudo pmset -b sleep ${exHiber[1]}
+	pmset -g sched | grep "by reve.$$\$" | sed -e 's/^[^[]*\[//' -e 's/\].*$//' | while read i
+	do
+		sudo pmset sched cancel $i
+	done
 	"$SCRIPTS/notif"
 	exit 0
 }
@@ -67,7 +71,7 @@ sudo pmset sleep 30
 
 # Voilà pour le réveil.
 
-sudo "$SCRIPTS/reve" "$1"
+sudo "$SCRIPTS/reve" "$1" "reve.$$"
 
 taille=`echo -n "$1" | wc -c`
 depuis=`expr 12 - $taille + 1`
