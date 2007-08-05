@@ -8,10 +8,11 @@ auSecours()
 # Réémission de message
 # © 2006 Guillaume Outters
 
-Utilisation: $nom <nom> <adrél>
-  <nom>                         nom de la personne. Attention, le programme ne
-                                gère pas encore les caractères accentués!
+Utilisation: $nom [-][<nom> <adrél>]*
+  <nom>                         nom de la personne.
   <adrél>                       adresse du destinataire.
+  -                             les adresses après le - apparaîtront dans le
+                                To:, mais ne recevront pas le mél.
 Le message doit être fourni sur l'entrée standard.
 TERMINE
 	exit 1
@@ -20,15 +21,18 @@ TERMINE
 declare -a personnes adresses
 analyserParametres()
 {
+	stop=0
 	while [ $# -gt 0 ] ; do
 		case "$1" in
 			-h|--help) auSecours ;;
+			-) stop=1 ;;
 			*)
 				if [ "${#personnes[@]}" -eq "${#adresses[@]}" ]
 				then
 					personnes[${#personnes[@]}]="$1"
 				else
 					adresses[${#adresses[@]}]="$1"
+					[ $stop = 0 ] && destinataires[${#destinataires[@]}]="$1"
 				fi
 				;;
 		esac
@@ -38,7 +42,7 @@ analyserParametres()
 
 analyserParametres "$@"
 
-[ "${#adresses[@]}" -lt 1 ] && auSecours
+[ "${#destinataires[@]}" -lt 1 ] && auSecours
 
 n=${#adresses[@]}
 while [ $((--n)) -ge 0 ]
@@ -53,4 +57,4 @@ TERMINE
 `"
 done
 
-( echo EHLO 82.240.30.31 ; sleep 1 ; echo "MAIL FROM: <guillaume.outters@free.fr>" ; sleep 1 ; for adresse in ${adresses[@]} ; do echo "RCPT TO: <$adresse>" ; sleep 1 ; done ; echo DATA ; sleep 1 ; awk '{if(corps){print;next}}/^$/{corps=1}/^  /{if(!vire)print;next}{vire=0}/^Delivered-To: /{vire=1}/^To: /{print "To: '"`n=${#adresses[@]} ; while [ $((--n)) -ge 0 ] ; do echo -n "${personnes[$n]} <${adresses[$n]}>,\\n  " ; done`"'"substr($0,5);next}{if(!vire)print}' ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | nc smtp.free.fr smtp
+( echo EHLO 82.240.30.31 ; sleep 1 ; echo "MAIL FROM: <guillaume.outters@free.fr>" ; sleep 1 ; for adresse in ${destinataires[@]} ; do echo "RCPT TO: <$adresse>" ; sleep 1 ; done ; echo DATA ; sleep 1 ; awk '{if(corps){print;next}}/^$/{corps=1}/^  /{if(!vire)print;next}{vire=0}/^Delivered-To: /{vire=1}/^To: /{print "To: '"`n=${#adresses[@]} ; while [ $((--n)) -ge 0 ] ; do echo -n "${personnes[$n]} <${adresses[$n]}>,\\n  " ; done`"'"substr($0,5);next}{if(!vire)print}' ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | nc smtp.free.fr smtp
