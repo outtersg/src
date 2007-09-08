@@ -152,6 +152,13 @@ class Balance
 
 if(isset($argv))
 	Balance::EnvoyerRecursivement(new Chemin($argv[1].'/'), $argv[2], $argv[3].'/', array_key_exists(4, $argv) && $argv[4] == '-' ? array_slice($argv, 5): array());
+else if(array_key_exists('envoie', $_GET))
+{
+	$envoie = new Chemin($_GET['envoie'].'/', new Chemin($_SERVER['SCRIPT_NAME']));
+	$par = new Chemin($_GET['par']);
+	$vers = new Chemin($_GET['vers'].'/', $par, true);
+	Balance::EnvoyerRecursivement($envoie->cheminDepuis($envoie->depuis), $par->cheminComplet(), $vers->cheminDepuis($par)->cheminComplet(), array_key_exists('sauf', $_GET) ? is_array($_GET['sauf']) ? $_GET['sauf'] : array($_GET['sauf']) : array());
+}
 else
 	Balance::RecevoirRequete();
 
