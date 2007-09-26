@@ -27,6 +27,7 @@ int main(int argc, char ** argv)
 			fprintf(stderr, "# Trop indigeste. Je refuse.\n");
 			exit(1);
 		}
+	while(c == ' ' && (c = fgetc(stdin))) {}
 	if(c != '\n')
 	{
 		fprintf(stderr, "# Il me fallait des chiffres, suivis d'un retour à la ligne, suivi du message. Ça n'est pas ce que je vois.\n");
