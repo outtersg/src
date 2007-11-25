@@ -1,0 +1,119 @@
+#!/bin/bash
+# Copyright (c) 2007 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Les fichiers de raccourcis doivent avoir des lignes de la forme:
+# raccourci:utilisateur@machine[:port:nom réel]
+# Le raccourci est celui avec lequel invoquer la commande, machine et port
+# indiquent sur quoi on va taper, nom réel permet de donner un HostKeyAlias (par
+# exemple si le raccourci pointe sur un tunnel ouvert depuis localhost).
+# Les : peuvent être remplacés par des suites d'espaces ou de tabulations.
+
+CONFS=("$HOME/.src")
+
+# Première étape: voir si on a affaire à un ssh ou un scp.
+
+commande="ssh"
+for i in "$@"
+do
+	[[ "$i" = *:* ]] && commande=scp && break
+done
+
+# Chargement des raccourcis.
+
+RACCOURCIS=()
+raccourcis()
+{
+	for i in "$@"
+	do
+		# On normalise.
+		[[ "$i" = *:*:* ]] || i="$i:22"
+		[[ "$i" != *:*:*:* ]] && j="${i#*:}" && j="${j%%:*}" && j="${j##*@}" && i="$i:$j"
+		RACCOURCIS[${#RACCOURCIS[@]}]="$i"
+	done
+}
+
+lire()
+{
+	local n=$2
+	[ -z "$n" ] && n=1
+	[ -f "$1" ] && cat "$1" | sed -E -e '/^\./n' -e 's/[ :	]*#.*$//' -e 's/[ :	]+/:/g' > /tmp/temp.$$.$n.s
+	while read j
+	do
+		[[ "$j" != .* ]] && raccourcis "$j" && continue
+		j="${j#. }"
+		[[ "$j" = /* ]] || j="`dirname "$1"`/$j"
+		lire "$j" $((n + 1))
+	done < /tmp/temp.$$.$n.s
+	rm /tmp/temp.$$.$n.s
+}
+
+for i in "${CONFS[@]}"
+do
+	lire "$i"
+done
+set +x
+
+# Remplacement des raccourcis par leur valeur complète.
+
+# Remplace i, si c'est un raccourci, par ce qu'il faut, et règle les variables
+# globales dépendantes.
+filtrer()
+{
+	for z in "${RACCOURCIS[@]}"
+	do
+		if [ "${z%%:*}" = "$i" ]
+		then
+			z="${z#*:}"
+			i="${z%%:*}"
+			z="${z#*:}"
+			port="${z%%:*}"
+			alias="${z#*:}"
+			return
+		fi
+	done
+	alias="$i"
+}
+
+port=22
+params=()
+for i in "$@"
+do
+	if [ "$commande" = scp ]
+	then
+		if [[ "$i" = *:* ]]
+		then
+			reste="${i#*:}"
+			i="${i%%:*}"
+			filtrer
+			i="$i:$reste"
+		fi
+	else
+		filtrer
+	fi
+	params[${#params[@]}]="$i"
+done
+
+if [ "$commande" = scp ]
+then
+	scp -P "$port" -o HostKeyAlias="$alias" "${params[@]}"
+else
+	ssh -p "$port" -o HostKeyAlias="$alias" "${params[@]}"
+fi
