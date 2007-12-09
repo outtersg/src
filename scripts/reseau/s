@@ -28,13 +28,28 @@
 
 CONFS=("$HOME/.src")
 
+analyserParametres()
+{
+	while [ $# -gt 0 ]
+	do
+		i="$1"
+		case "$1" in
+			-L) traiterParamNormal ; shift ; i="$1" ; traiterParamNormal ;;
+			*:*) traiterParamDeuxPoints ;;
+			*) traiterParamNormal 1 ;;
+		esac
+		shift
+	done
+}
+
 # Première étape: voir si on a affaire à un ssh ou un scp.
 
 commande="ssh"
-for i in "$@"
-do
-	[[ "$i" = *:* ]] && commande=scp && break
-done
+
+traiterParamNormal() { true ; }
+traiterParamDeuxPoints() { commande=scp ; }
+
+analyserParametres "$@"
 
 # Chargement des raccourcis.
 
@@ -92,23 +107,21 @@ filtrer()
 }
 
 port=22
-params=()
-for i in "$@"
-do
+traiterParamNormal() { [ -z "$1" ] || filtrer ; params[${#params[@]}]="$i" ; }
+traiterParamDeuxPoints()
+{
 	if [ "$commande" = scp ]
 	then
-		if [[ "$i" = *:* ]]
-		then
 			reste="${i#*:}"
 			i="${i%%:*}"
 			filtrer
 			i="$i:$reste"
-		fi
 	else
 		filtrer
 	fi
 	params[${#params[@]}]="$i"
-done
+}
+analyserParametres "$@"
 
 if [ "$commande" = scp ]
 then
