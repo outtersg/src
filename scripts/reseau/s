@@ -69,7 +69,6 @@ for i in "${CONFS[@]}"
 do
 	lire "$i"
 done
-set +x
 
 # Remplacement des raccourcis par leur valeur complète.
 
