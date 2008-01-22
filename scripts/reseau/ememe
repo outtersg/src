@@ -52,7 +52,7 @@ python << TERMINE
 # -*- coding: utf-8 -*-
 import locale
 from email.Header import Header
-print Header('${personnes[n]}'.decode(locale.getdefaultlocale()[1]), 'iso-8859-1').encode()
+print Header('${personnes[n]//\'/\'}'.decode(locale.getdefaultlocale()[1]), 'iso-8859-1').encode()
 TERMINE
 `"
 done
