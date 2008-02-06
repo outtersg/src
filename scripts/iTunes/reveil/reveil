@@ -71,13 +71,20 @@ defaults -currentHost write com.apple.screensaver askForPassword -int 0
 sudo pmset sleep 30
 "$SCRIPTS/notif" # On prévient que les préfs d'économiseur ont changé.
 
+# Bonus: saut d'une unité si la date demandée est dans le passé (cette section
+# est facultative, mais alors si on est avant minuit il faudra manuellement
+# donner le numéro du jour suivant… et du mois si on est le dernier du mois,
+# etc.).
+
+date=`php -r 'require_once "/Users/gui/src/util/php/date.inc"; $m = time(); $t = Date::obtenir_datation($m); $t[-1] = floor($t[0] / 100); $t[0] %= 100; $c = $argv[1]; for($i = 5; --$i >= -1 && strlen($c) >= 2;) { $t[$i] = 0 + substr($c, -2); $c = substr($c, 0, -2); } ; $t[0] += 100 * $t[-1]; if($i >= -1 && Date::calculer($t) < $m) ++$t[$i]; $t[0] = $t[-1] * 100 + $t[0] % 100; $t = Date::corriger($t); echo sprintf("%04.4d%02.2d%02.2d%02.2d%02.2d", $t[0], $t[1], $t[2], $t[3], $t[4])."\n";' "$1"`
+
 # Voilà pour le réveil.
 
-sudo "$SCRIPTS/reve" "$1" "reve.$$"
+sudo "$SCRIPTS/reve" "$date" "reve.$$"
 
-taille=`echo -n "$1" | wc -c`
+taille=`echo -n "$date" | wc -c`
 depuis=`expr 12 - $taille + 1`
-while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$1" ] ; do
+while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$date" ] ; do
 	sleep 10
 done
 
