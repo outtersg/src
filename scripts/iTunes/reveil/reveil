@@ -23,6 +23,8 @@ VOLUME=4
 AVANT_SECOURS=900
 SECOURS='mpg123 /Users/gui/mp3/Aretha\ Franklin/Think.mp3'
 
+[ "x$1" = x-v ] && shift && VOLUME="$1" && shift
+
 SCRIPTS="`command -v "$0"`" ; while [ -L "$SCRIPTS" ] ; do SCRIPTS="`ls -l "$SCRIPTS"`" ; SCRIPTS="${SCRIPTS##*-> }" ; done ; SCRIPTS="`dirname "$SCRIPTS"`" ; echo "$SCRIPTS" | grep -q "^/" || SCRIPTS="`pwd`/$SCRIPTS"
 
 if [ $# -lt 1 ] ; then
