@@ -11,9 +11,8 @@ class Secu
 	
 	function verifier()
 	{
-		$v = array();
 		foreach(array(0, -1, 1) as $decalage) // Tout le monde n'est pas à la seconde près, et une seconde, arrondie à l'heure, ça peut faire beaucoup, voire une heure; alors on cherche si les heures voisines n'ont pas servi.
-			if($_POST['mdp'] == Secu::calculer(time() + 3600 * $i))
+			if($_POST['mdp'] == Secu::calculer(time() + 3600 * $decalage))
 				return true;
 		return false;
 		
