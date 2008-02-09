@@ -63,7 +63,7 @@ class Balance
 			ftruncate($f, 0); /* À FAIRE: passer par des signaux de début / fin de fichier. Le premier demande de tronquer. Le second pourrait servir, si on fonctionne en « je crée à côté, et finis en rename », au rename. */
 		$r = false;
 		if(fseek($f, $position) == 0)
-			$r = fwrite($f, file_get_contents($cheminBloc)) == strlen($bloc);
+			$r = fwrite($f, file_get_contents($cheminBloc)) == filesize($cheminBloc);
 		fclose($f);
 		return $r;
 	}
