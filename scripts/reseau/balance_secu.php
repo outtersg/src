@@ -2,7 +2,7 @@
 
 class Secu
 {
-	private static $mdp = 'clepartagee';
+	private static $mdp = 'monmdp';
 	
 	function calculer($quand)
 	{
