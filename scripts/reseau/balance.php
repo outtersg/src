@@ -178,7 +178,6 @@ class Balance
 			if($nom == '..' || $nom == '.' || in_array($soussource->cheminComplet(), $sauf)) return; /* À FAIRE: blinder avec une table d'inodes déjà parcourus (enfin, pas d'inodes, car un inode peut se retrouver à plusieurs endroits)). */
 				$f = new Balance($soussource);
 				$i = $f->infos();
-		$nom = basename($nom);
 				switch($i['type'])
 				{
 					case 'd':
@@ -195,7 +194,7 @@ class Balance
 	 * EnvoyerChose(). */
 	function Balancer($chemin, $facteur, $destination, $sauf)
 	{
-		Balance::EnvoyerChose(new Chemin(), in_array($chemin, array('.', '..')) ? $chemin.'/' : $chemin, $facteur, $destination, $sauf);
+		Balance::EnvoyerChose(new Chemin(dirname($chemin).'/'), in_array($nom = basename($chemin), array('.', '..')) ? $nom.'/' : $nom, $facteur, $destination, $sauf);
 	}
 }
 
