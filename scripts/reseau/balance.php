@@ -175,7 +175,7 @@ class Balance
 	function EnvoyerChose($source, $nom, $facteur, $destination, $sauf)
 	{
 				$soussource = $source->et($nom);
-				if($nom == '..' || $nom == '.' || in_array($soussource->cheminComplet(), $sauf)) continue; /* À FAIRE: blinder avec une table d'inodes déjà parcourus (enfin, pas d'inodes, car un inode peut se retrouver à plusieurs endroits)). */
+			if($nom == '..' || $nom == '.' || in_array($soussource->cheminComplet(), $sauf)) return; /* À FAIRE: blinder avec une table d'inodes déjà parcourus (enfin, pas d'inodes, car un inode peut se retrouver à plusieurs endroits)). */
 				$f = new Balance($soussource);
 				$i = $f->infos();
 		$nom = basename($nom);
