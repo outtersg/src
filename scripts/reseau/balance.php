@@ -71,14 +71,11 @@ class Balance
 			$url .= ($url ? '&' : '?').$cle.'='.urlencode($p);
 		*/
 		curl_setopt($c, CURLOPT_POST, 1);
-		curl_setopt($c, CURLOPT_POSTFIELDS, $params);
 		$url = $facteur.$url;
 		curl_setopt($c, CURLOPT_URL, $url);
 		if($bloc)
-		{
-			curl_setopt($c, CURLOPT_POST, 1);
-			curl_setopt($c, CURLOPT_POSTFIELDS, array('bloc' => urlencode($bloc)));
-		}
+			$params = array_merge(array('bloc' => urlencode($bloc)), $params);
+		curl_setopt($c, CURLOPT_POSTFIELDS, $params);
 		$r = curl_exec($c);
 		curl_close($c);
 		return unserialize($r);
