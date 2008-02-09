@@ -130,11 +130,17 @@ class Balance
 				$noms[] = $f;
 			closedir($d);
 			foreach($noms as $nom)
-			{
+				Balance::EnvoyerChose($source, $nom, $facteur, $destination, $sauf);
+		}
+	}
+	
+	function EnvoyerChose($source, $nom, $facteur, $destination, $sauf)
+	{
 				$soussource = $source->et($nom);
 				if($nom == '..' || $nom == '.' || in_array($soussource->cheminComplet(), $sauf)) continue; /* À FAIRE: blinder avec une table d'inodes déjà parcourus (enfin, pas d'inodes, car un inode peut se retrouver à plusieurs endroits)). */
 				$f = new Balance($soussource);
 				$i = $f->infos();
+		$nom = basename($nom);
 				switch($i['type'])
 				{
 					case 'd':
@@ -145,13 +151,18 @@ class Balance
 						$f->envoyerSiNecessaire($facteur, $i, $destination.'/'.$nom);
 						break;
 				}
-			}
-		}
+	}
+	
+	/* Point d'entrée. Bidouille ses paramètres pour qu'ils soient acceptés par
+	 * EnvoyerChose(). */
+	function Balancer($chemin, $facteur, $destination, $sauf)
+	{
+		Balance::EnvoyerChose(new Chemin(), in_array($chemin, array('.', '..')) ? $chemin.'/' : $chemin, $facteur, $destination, $sauf);
 	}
 }
 
 if(isset($argv))
-	Balance::EnvoyerRecursivement(new Chemin($argv[1].'/'), $argv[2], $argv[3].'/', array_key_exists(4, $argv) && $argv[4] == '-' ? array_slice($argv, 5): array());
+	Balance::Balancer($argv[1], $argv[2], $argv[3].'/', array_key_exists(4, $argv) && $argv[4] == '-' ? array_slice($argv, 5): array());
 else if(array_key_exists('envoie', $_GET))
 {
 	$envoie = new Chemin($_GET['envoie'].'/', new Chemin($_SERVER['SCRIPT_NAME']));
