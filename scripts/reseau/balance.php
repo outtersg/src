@@ -23,7 +23,7 @@ class Balance
 				echo serialize($b->infos());
 				break;
 			case 'bloc':
-				$b->recevoir($_FILES['bloc']['tmp_name'], $_POST['position']);
+				echo serialize($b->recevoir($_FILES['bloc']['tmp_name'], $_POST['position']) ? 'oui' : 'non');
 				break;
 		}
 	}
@@ -90,6 +90,14 @@ class Balance
 		return unserialize($r);
 	}
 	
+	function rerequete($facteur, $params, $bloc = false)
+	{
+		for($essai = 3; --$essai >= 0;)
+			if(($r = $this->requete($facteur, $params, $bloc)) == 'oui' || is_array($r))
+				return $r;
+		return $r;
+	}
+	
 	function envoyer($facteur, $infos, $destination)
 	{
 		$t = time();
@@ -99,7 +107,7 @@ class Balance
 		
 		$chemin = $this->chemin->cheminComplet();
 		if($infos['taille'] <= $taille)
-			$this->requete($facteur, array('mode' => 'bloc', 'chemin' => $destination, 'position' => $p, 'bloc' => '@'.realpath($chemin)));
+			$r = $this->rerequete($facteur, array('mode' => 'bloc', 'chemin' => $destination, 'position' => $p, 'bloc' => '@'.realpath($chemin)));
 		else if(($f = fopen($chemin, 'r')))
 		{
 			$cheminTemp = '/tmp/'.temp_nouveau('/tmp/', '.balance.temp').'.balance.temp';
@@ -109,22 +117,25 @@ class Balance
 				ftruncate($temp, 0);
 				fseek($temp, 0, SEEK_SET);
 				fwrite($temp, $b);
-				$this->requete($facteur, array('mode' => 'bloc', 'chemin' => $destination, 'position' => $p, 'bloc' => '@'.realpath($cheminTemp)));
+				if(($r = $this->rerequete($facteur, array('mode' => 'bloc', 'chemin' => $destination, 'position' => $p, 'bloc' => '@'.realpath($cheminTemp)))) != 'oui')
+					break;
 				$p += strlen($b);
 			}
 			fclose($temp);
 			unlink($cheminTemp);
 			fclose($f);
 		}
-		echo $chemin.((time() - $t) ? ' ('.ceil($infos['taille'] / (time() - $t) / 1000.0).' Ko/s)' : '')."\n";
+		echo $chemin.($r == 'oui' ? ((time() - $t) ? ' ('.ceil($infos['taille'] / (time() - $t) / 1000.0).' Ko/s)' : '') : ' ('.$r.')')."\n";
 	}
 	
 	function envoyerSiNecessaire($facteur, $infos, $destination)
 	{
 		echo $this->chemin->cheminComplet()."?\n";
-		$infosAutre = $this->requete($facteur, array('mode' => 'infos', 'chemin' => $destination));
+		$infosAutre = $this->rerequete($facteur, array('mode' => 'infos', 'chemin' => $destination));
 		if(!$infosAutre || $infosAutre['crc32'] != $infos['crc32'])
 			$this->envoyer($facteur, $infos, $destination);
+		else if(!is_array($infosAutre))
+			echo $this->chemin->cheminComplet().' ('.$r.')'."\n";
 	}
 	
 	function EnvoyerRecursivement($source, $facteur, $destination, $sauf)
