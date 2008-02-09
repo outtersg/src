@@ -3,12 +3,19 @@
 require_once 'util/chemin.inc';
 require_once 'util/temp.inc';
 
-/* À FAIRE: autorisations. Pour le moment on se fie au .htaccess. */
+@include_once 'balance_secu.php';
 
 class Balance
 {
 	function RecevoirRequete()
 	{
+		if(class_exists('Secu') && method_exists('Secu', 'verifier'))
+			if(!Secu::verifier())
+			{
+				echo serialize('qued');
+				return;
+			}
+		
 		$b = new Balance(new Chemin($_POST['chemin']));
 		switch($_POST['mode'])
 		{
@@ -64,6 +71,8 @@ class Balance
 	function requete($facteur, $params, $bloc = false)
 	{
 		$c = curl_init();
+		if(class_exists('Secu') && method_exists('Secu', 'authentifier'))
+			Secu::authentifier($c, $params);
 		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 		$url = '';
 		/*
