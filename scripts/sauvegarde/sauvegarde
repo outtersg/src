@@ -1,0 +1,157 @@
+#!/bin/bash
+
+cd /Users/gui
+mkdir /tmp/$$ || exit 1
+
+# À FAIRE: refléter les droits d'accès. ni mkdir ni ditto ne savent le faire.
+
+while [ $# -gt 0 ] ; do
+	case "$1" in
+		-v) shift ; vitesse="$1" ;;
+	esac
+	shift
+done
+
+DATE=`date +%Y:%m:%d`
+FICHIER=/tmp/$$/${DATE//:/-}.sparseimage
+
+echo --- Ménage ---
+#( cd tmp/CS/créations/doc/src && make livraison )
+#( cd tmp/CS/créations && mv Doc\ SimAirport.*.zip ../ )
+(
+ls -d /Apps/*/*
+ls -d /usr/local/*-*
+ls -d /Library/Address\ Book\ Plug-Ins/*
+ls -d /Library/PreferencePanes/*
+ls -d ~/Library/PreferencePanes/*
+echo FontTools
+ ) > "$HOME/src/installs/liste.$DATE"
+
+echo --- Constitution des arborescences ---
+
+(
+	find Library/Mail -name CachedMessages -or -name Avec\ photos.mbox -or -name mbox
+	find internet -name imagettes -or -name temp -or -name photos
+) > /tmp/$$/toutsaufca.temp
+toutsaufca=()
+while read b
+do
+	toutsaufca[${#toutsaufca[@]}]="$b"
+done < /tmp/$$/toutsaufca.temp
+
+(\
+	arbop /Users/gui +\
+	.CFUserTextEncoding\
+	.MacOSX\
+	.arch-params\
+	.bashrc\
+	.cvspass\
+	.exrc\
+	.gdbinit\
+	.inputrc\
+	.screenrc\
+	.ssh\
+	.vim\
+	.vimrc\
+	Documents/Notes.txt\
+	Library/Application\ Support/arch\
+	Library/Application\ Support/AddressBook/AddressBook.data\
+	Library/Application\ Support/Adium\ 2.0/Users/Default/Logs\
+	Library/Application\ Support/darcs\
+	Library/KeyBindings\
+	Library/Keyboard\ Layouts\
+	Library/Keychains\
+	Library/Mail\
+	Library/Preferences\
+	Library/Safari\
+	Library/Scripts\
+	Library/StickiesDatabase\
+	Music/iTunes/iTunes\ Library\
+	Music/iTunes/iTunes\ Music\ Library.xml\
+	bazar\
+	internet\
+	perso\
+	src\
+	teleir\
+	tmp/CS/bin\
+	-\
+	Library/Mail/Envelope\ Index\
+	Library/Mail/Mailboxes/Spam\
+	Library/Mail/Mailboxes/Spam.mbox\
+	Library/Preferences/ImageBrowserUserData\
+	Library/Safari/Icons\
+	`find Library/Mail -name "Avec Photos.mbox"`\
+	src/obj\
+	src/objc/mX/*.mp3\
+	perso/Photos\
+	`find internet -maxdepth 1 -type l`\
+	internet/gmg2000/album/grandes\
+	internet/gmg2000/album/petites\
+	internet/gmg2000/album/imagettes\
+	internet/esiee2000etrangers/photos\
+	internet/esiee2000etrangers/apercus\
+	"${toutsaufca[@]}"
+) | tr '\012' '\000' > /tmp/$$/liste.sauvegarde
+
+echo --- Création de ${FICHIER} ---
+FICHIER=`hdiutil create ${FICHIER} -megabytes 1024 -type SPARSE -fs HFS+ -volname $DATE | grep "created: " | cut -d ' ' -f 2-` || exit 1
+
+echo --- Montage de l\'image-disque ---
+PERIPH=`hdid ${FICHIER} | tee /tmp/$$/sauvegarde.temp | grep Apple_partition_scheme | cut -d ' ' -f 1`
+MONTAGE=`cat /tmp/$$/sauvegarde.temp | grep Apple_HFS | awk 'NR == 1' | cut -f 3-`
+
+echo --- Copie des arborescences ---
+cat > /tmp/$$/copie << FIN_DU_SCRIPT
+#!/bin/sh
+if [ -e "\$1" ]
+then
+	if [ -d "\$1" ]
+	then
+		mkdir -p "${MONTAGE}/\$1"
+	else
+		DOSSIER=`dirname "\$1"`
+		mkdir -p "${MONTAGE}/\${DOSSIER}"
+	fi
+	ditto -v -rsrcFork "\$1" "${MONTAGE}/\$1" || exit 255 # Pour qu'xargs se plante immédiatement
+else
+	echo "### Attention : $1 n'existe pas !"
+fi
+FIN_DU_SCRIPT
+chmod a+x /tmp/$$/copie
+
+xargs -0 -n 1 sudo /tmp/$$/copie < /tmp/$$/liste.sauvegarde || exit 1
+hdiutil detach "${PERIPH}"
+
+echo --- Compression de l\'archive ---
+FICHIER_TEMP="${FICHIER}"
+FICHIER=/tmp/$$/${DATE//:/-}.dmg
+hdiutil convert "${FICHIER_TEMP}" -format UDZO -o "${FICHIER}" -imagekey zlib-level=9 || exit 1
+rm "${FICHIER_TEMP}"
+
+ver="`uname -r`"
+if [ ${ver%%.*} -ge 8 ] # Tiger ou supérieur: sait graver un dossier directement.
+then
+
+echo --- Écriture ---
+mkdir "/tmp/$$/${DATE}.cramage"
+mv "$FICHIER" "/tmp/$$/${DATE}.cramage"
+drutil burn -appendable "/tmp/$$/${DATE}.cramage"
+
+else
+
+echo --- Préparation de l\'écriture ---
+TAILLE=$((`du -s ${FICHIER} | cut -f 1`*1024/1000))
+IMAGE=`hdiutil create /tmp/$$/${DATE//:/-}.temp.dmg -size ${TAILLE}b -type SPARSE -fs HFS+ -volname $DATE | grep "created: " | cut -d ' ' -f 2-` || exit 1
+PERIPH=`hdid ${IMAGE} | tee /tmp/$$/sauvegarde.temp | grep Apple_partition_scheme | cut -d ' ' -f 1`
+MONTAGE=`cat /tmp/$$/sauvegarde.temp | grep Apple_HFS | awk 'NR == 1{print $3}'`
+ditto "${FICHIER}" "${MONTAGE}/`basename ${FICHIER}`" || exit 1
+hdiutil detach "${PERIPH}"
+
+echo --- Écriture ---
+[ "$vitesse" = "" ] && read -p 'Vitesse de gravure? ' vitesse
+set -x
+#hdiutil burn "${IMAGE}" -speed $vitesse -optimizeimage || exit 1
+hdiutil burn "${IMAGE}" -speed $vitesse || exit 1 # Bus error ninon
+set +x
+
+fi
