@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "Veuillez faire ouvrir le CD par iTunes (il doit apparaître sous le onm \"CD Audio\" puis coller ici, suivie de la touche entrée, l'URL http://musicbrainz.org/ws/… de l'album:"
+read url
+n=0
+curl -s "$url" | xmlpropre | sed -e '/<track-list>/,/<.track-list>/!d' -e '/<title>/!d' -e 's/^.*<title>//' -e 's/<.title>.*$//' | while read titre
+do
+	true $((++n))
+	titre="`echo "$titre" | iconv -t mac`"
+	osascript <<TERMINE
+tell application "iTunes"
+	tell source "CD Audio"
+		tell playlist "CD Audio"
+			set name of track $n to "$titre"
+		end tell
+	end tell
+end tell
+TERMINE
+done
+
