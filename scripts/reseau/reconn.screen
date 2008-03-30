@@ -1,0 +1,2 @@
+screen bash -c "while true ; do while true ; do echo vient ; sleep 59 ; done | ssh ks31107.kimsufi.com -R 8080:localhost:22 -g 'while true ; do echo va ; sleep 60 ; done' ; sleep 60 ; done"
+screen bash -c "while true ; do ssh -p 443 82.240.30.31 -R 9898:localhost:22 'while true ; do echo va ; sleep 60 ; done' ; sleep 60 ; done"
