@@ -1,0 +1,17 @@
+#!/bin/bash
+
+t=(af ar be be_BY bg bn bn_BD bn_IN br bs ca Catalan Chinese cs cy da Danish de Dutch el en_AU en_CA en_ZA eo es et eu fa Farsi fi ga German gl gu gu_IN he hi hi_IN hr hu id is it Italian ja Japanese ka km kn kn_IN ko lo lt lv mk ms nb ne nl nn no Norwegian nr ns oc pa pa_IN Polish pl pt pt_BR pt_PT ro ru Russian rw sh sh_YU sk sl Spanish sr sr_CS ss st sv sw sw_TZ Swedish sx ta ta_IN th tn tr ts Turkish ve vi xh zh zh_CN zh_TW zu)
+declare -a c
+for i in "${t[@]}"
+do
+	c[${#c[@]}]="-o"
+	c[${#c[@]}]="-name"
+	c[${#c[@]}]="$i.lproj"
+done
+unset c[0]
+find "$@" "${c[@]}" | while read d
+do
+	pushd "`dirname "$d"`" > /dev/null
+	tar cjf "`basename "$d"`.tar.bz2" "`basename "$d"`" && rm -Rf "`basename "$d"`"
+	popd > /dev/null
+done
