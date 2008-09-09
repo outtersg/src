@@ -1,7 +1,16 @@
 #!/bin/bash
 
-if [ $# = 0 ]
-then
+aide()
+{
+	nom="`basename "$0"`"
+	cat >&2 <<TERMINE
+$nom
+Liste les fichiers d'une liste iTunes
+© 2008 Guillaume Outters
+
+Utilisation: $nom <liste>*
+Les listes sont à choisir parmi les suivantes:
+TERMINE
 	osascript <<TERMINE
 set liste to {}
 tell application "iTunes"
@@ -17,12 +26,31 @@ tell application "System Events"
 	close access f
 end tell
 TERMINE
-	iconv -f utf-16 < /tmp/temp.$$.liste
+	iconv -f utf-16 < /tmp/temp.$$.liste >&2
 	rm /tmp/temp.$$.liste
 	exit 0
+}
+
+analyserParametres()
+{
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-h) aide ;;
+			*) liste[${#liste[@]}]="$1" ;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+
+if [ ${#liste[@]} = 0 ]
+then
+	aide
 fi
 
-n="`echo "$@" | tr ' ' ,`"
+n="`echo "${liste[@]}" | tr ' ' ,`"
 
 osascript <<TERMINE
 set liste to {}
