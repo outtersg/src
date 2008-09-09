@@ -1,0 +1,53 @@
+#!/bin/bash
+
+if [ $# = 0 ]
+then
+	osascript <<TERMINE
+set liste to {}
+tell application "iTunes"
+	repeat with i from 1 to (count of playlists)
+		set liste to liste & (i as string & "\\t" & name of playlist i & "\\n")
+	end repeat
+end tell
+tell application "System Events"
+	set f to open for access POSIX file "/tmp/temp.$$.liste" with write permission
+	repeat with c in liste
+		write c to f
+	end repeat
+	close access f
+end tell
+TERMINE
+	iconv -f utf-16 < /tmp/temp.$$.liste
+	rm /tmp/temp.$$.liste
+	exit 0
+fi
+
+n="`echo "$@" | tr ' ' ,`"
+
+osascript <<TERMINE
+set liste to {}
+tell application "iTunes"
+	repeat with z in {$n}
+		set p to playlist z
+		repeat with i from (count of file tracks of p) to 1 by -1
+			try
+				if rating of file track i of p > 60 then
+					set liste to liste & location of file track i of p
+				end if
+			end try
+		end repeat
+	end repeat
+end tell
+
+tell application "System Events"
+	set f to open for access POSIX file "/tmp/temp.$$.liste" with write permission
+		repeat with i from (count of items of liste) to 1 by -1
+			set c to POSIX path of item i of liste & "\\n"
+			write c to f
+		end repeat
+	close access f
+end tell
+TERMINE
+
+cat /tmp/temp.$$.liste | iconv -f utf-16 | sort -u
+rm /tmp/temp.$$.liste
