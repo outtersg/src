@@ -1,0 +1,3 @@
+#!/bin/sh
+
+ouf -d /Volumes/Mastix/sauvegardes/guillaume "$HOME/sauvegarde/asterix."
