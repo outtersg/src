@@ -1,0 +1,44 @@
+#!/bin/bash
+
+CHEMINS=(/Volumes/CARLOMAN/sauvegardes/martine/panoramix "/Volumes/sauve bernard/sauvegardes/martine/panoramix")
+OUF=/Users/gui/bin/ouf
+export PATH=/usr/local/bin:$PATH
+
+trouvePresents()
+{
+	presents=()
+	for i in "${CHEMINS[@]}"
+	do
+echo "$i"
+		[ -d "$i" ] && presents=("${presents[@]}" "$i")
+	done
+}
+
+trouvePresents
+if [ "${#presents[@]}" = 0 ]
+then
+	echo "Impossible de trouver une destination de sauvegarde (parmi ${CHEMINS[@]}). Veuillez vous assurer que le disque est bien présent, et le dossier existant sur ce disque. Si vous préférez annuler la procédure, tapez Ctrl-C." >&2 && deja=1
+	while [ "${#presents[@]}" = 0 ]
+	do
+		sleep 5
+		trouvePresents
+	done
+fi
+[ "${#presents[@]}" = 0 ] && exit 1
+
+echo "Veuillez choisir le dossier de sauvegarde à viser:"
+n=0
+for i in "${presents[@]}"
+do
+	true $((++n))
+	echo "$n. $i"
+done
+echo -n "Votre choix (puis validez par la touche entrée): "
+read $choix
+[ -z "$choix" ] && choix=1
+true $((--choix))
+chemin="${presents[choix]}"
+
+$OUF -e -v "$chemin" '- /Library/Caches;- /.Trash'
+
+[ $? = 0 ] && echo "FINI, vous pouvez maintenant quitter l'application."
