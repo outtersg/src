@@ -123,7 +123,7 @@ class Balance
 	{
 		$t = time();
 		/* À FAIRE: paramétrer cette taille. */
-		$taille = 0x80000;
+		$taille = 0x500;
 		$p = 0;
 		
 		$chemin = $this->chemin->cheminComplet();
