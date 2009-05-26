@@ -204,7 +204,7 @@ else if(array_key_exists('envoie', $_GET))
 {
 	$envoie = new Chemin($_GET['envoie'].'/', new Chemin($_SERVER['SCRIPT_NAME']));
 	$par = new Chemin($_GET['par']);
-	$vers = new Chemin($_GET['vers'].'/', $par, true);
+	$vers = new Chemin($_GET['vers'].'/', $par);
 	Balance::EnvoyerRecursivement($envoie->cheminDepuis($envoie->depuis), $par->cheminComplet(), $vers->cheminDepuis($par)->cheminComplet(), array_key_exists('sauf', $_GET) ? is_array($_GET['sauf']) ? $_GET['sauf'] : array($_GET['sauf']) : array());
 }
 else
