@@ -1,0 +1,45 @@
+# Boîte à outils pour faire passer un logiciel d'une version à une autre, sur le
+# mode j'écrase l'ancienne version par la nouvelle et j'enregistre sous darcs
+# les changements.
+# Déroulement habituel:
+# - supprimer le répertoire à mettre à jour
+# - décompresser à la place l'archive officielle de la nouvelle version
+# - rentrer dedans
+# - entamer le versionnage sur un fichier que l'on sait uniquement modifié:
+#   e "machin x.y.z -> x.z.z" "+ Version officielle." README
+# - regarder les fichiers déplacés:
+#   d
+#   qui donne la liste des supprimés (R) et des ajoutés (a).
+# - pour tous les R dont on voit qu'ils ont atteri en un a, vérifier que le
+#   répertoire de a est bien versionné (darcs add, puis darcs amend), puis:
+#   m fichier_R fichier_a
+# - notifier tous les ajouts et enregistrer le reste des modifs:
+#   darcs add -r .
+#   darcs amend .
+
+recalc()
+{
+	DDARCS="`pwd -P`"
+	SOUSD=""
+	until [ -d "$DDARCS/_darcs" ]
+	do
+		SOUSD="${DDARCS##*/}/$SOUSD"
+		DDARCS="${DDARCS%/*}"
+		[ -z "$DDARCS" ] && echo "Oups. Pas de versionnage de ce répertoire." >&2 && break
+	done
+	DDARCS="$DDARCS/_darcs"
+	SOUSD="./$SOUSD"
+}
+
+# Établit la liste des ajouts / suppressions, et les trie par fichier, dans
+# /tmp/1.
+
+d() { recalc ; darcs w -sl | grep -v ^M | sort -k 2 | sed -e "s# $SOUSD# #" | tee /tmp/1 ; }
+
+# Notifie la dernière rustine d'un déplacement de fichier, par exemple si dans
+# le fichier généré par d() on a un R toto et un a titi, on peut faire un m toto
+# titi.
+# Fonctionne en amend, il faut donc que la nouvelle rustine ait commencé à être
+# constituée.
+# ATTENTION, ne gère que si le répertoire de la destination a été ajouté.
+m() { local i ; recalc ; mkdir -p "`dirname "$1"`" ; darcs revert -a "$1" ; for i in  "$DDARCS/patches/"pending* ; do true > "$i" ; done ; mv "$2" "$2.temp" && darcs mv "$1" "$2" ; darcs amend -a "$1" "$2" ; cat "$2.temp" > "$2" ; }
