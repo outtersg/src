@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+	nom=`basename "$0"`
+	cat >&2 <<- TERMINE
+	# $nom
+	# Réveil-matin
+	# © Guillaume Outters 2005
+	
+	Utilisation: $nom [[[[[[[[[a]a]a]a]m]m]j]j]hhmm
+	TERMINE
+	exit 1
+fi
+
+taille=`printf "$1" | wc -c`
+depuis=`expr 12 - $taille + 1`
+while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$1" ] ; do
+	sleep 10
+done
+osascript -e 'tell application "iTunes" to play'
