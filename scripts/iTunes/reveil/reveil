@@ -82,7 +82,7 @@ date=`php -r 'require_once "/Users/gui/src/util/php/date.inc"; $m = time(); $t =
 
 sudo "$SCRIPTS/reve" "$date" "reve.$$"
 
-taille=`echo -n "$date" | wc -c`
+taille=`printf "$date" | wc -c`
 depuis=`expr 12 - $taille + 1`
 while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$date" ] ; do
 	sleep 10
