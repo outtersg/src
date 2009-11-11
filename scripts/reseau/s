@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# NOTE: je me suis rendu compte que toutes les fonctionnalités permises par cette chose, ou presque, étaient gérées directement par ssh/scp via un ~/.ssh/config comportant des sections Host bien configurées.
+
 # Les fichiers de raccourcis doivent avoir des lignes de la forme:
 # raccourci:utilisateur@machine[:port:nom réel]
 # Le raccourci est celui avec lequel invoquer la commande, machine et port
