@@ -105,7 +105,7 @@ filtrer()
 			return
 		fi
 	done
-	alias="$i"
+	[ $commande = ssh ] && alias="$i"
 }
 
 port=22
