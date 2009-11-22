@@ -1,0 +1,65 @@
+#!/bin/sh
+
+dossier="$1"
+ref="$2"
+
+[ -z "$1" -o -z "$ref" ] && echo '# Utilisation: archivedarcs <dossier à archiver> <dossier référence qui restera en place>' && exit 1
+
+set -e
+
+[ -x "/tmp/realpath" ] ||
+(
+	cat > /tmp/realpath.c <<TERMINE
+#include <sys/param.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+int main(int argc, char ** argv)
+{
+	char chemin[PATH_MAX];
+	fprintf(stdout, "%s\\n", realpath(argv[1], chemin));
+	return(0);
+}
+TERMINE
+	cc -o /tmp/realpath /tmp/realpath.c
+)
+
+dossier="`/tmp/realpath "$dossier"`"
+ref="`/tmp/realpath "$ref"`"
+
+mkdir "$dossier.archivedarcs"
+( cd "$dossier.archivedarcs" && darcs init )
+cp "$dossier/_darcs/hashed_inventory" "$dossier.archivedarcs/_darcs/hashed_inventory"
+cp -R "$dossier/_darcs/patches/." "$dossier.archivedarcs/_darcs/patches/."
+( cd "$dossier.archivedarcs/_darcs/patches" && ls ) | while read i
+do
+	[ -f "$ref/_darcs/patches/$i" ] && [ "`cksum "$dossier.archivedarcs/_darcs/patches/$i" | cut -d ' ' -f 1`" = "`cksum "$ref/_darcs/patches/$i" | cut -d ' ' -f 1`" ] && rm "$dossier.archivedarcs/_darcs/patches/$i"
+done
+ln -s "$ref/_darcs/patches" "$dossier.archivedarcs/_darcs/archivedarcs.source"
+petitnom="`basename "$dossier"`"
+cat > "$dossier.archivedarcs/_darcs/archivedarcs.restauration" <<TERMINE
+#!/bin/sh
+set -e
+d="\`command -v "\$0"\`"
+cd "\`dirname "\$d"\`"
+( cd archivedarcs.source && ls ) | while read i
+do
+	[ -e "patches/\$i" ] || ln "archivedarcs.source/\$i" "patches/"
+done
+cd ..
+darcs repair
+darcs get . "../$petitnom"
+TERMINE
+chmod a+x "$dossier.archivedarcs/_darcs/archivedarcs.restauration"
+
+# Test.
+
+[ "`dirname "$dossier"`" = '/tmp' ] && echo "Je ne peux vérifier les sauvegardes créées dans /tmp." >&2 && exit 1
+
+rm -Rf "/tmp/$petitnom"
+rm -Rf "/tmp/$petitnom.archivedarcs"
+cp -R "$dossier.archivedarcs" "/tmp/$petitnom.archivedarcs"
+"/tmp/$petitnom.archivedarcs/_darcs/archivedarcs.restauration"
+rm -Rf "/tmp/$petitnom/_darcs"
+diff -rq "/tmp/$petitnom" "$dossier"
+echo "# Si le diff ci-dessus ne voit que le répertoire _darcs de manquant, vous pouvez maintenant supprimer le répertoire original: il pourra être restauré à partir de '$dossier.archivedarcs' et '$ref'." >&2
