@@ -82,6 +82,8 @@ date=`php -r 'require_once "/Users/gui/src/util/php/date.inc"; $m = time(); $t =
 
 sudo "$SCRIPTS/reve" "$date" "reve.$$"
 
+echo "Vous pouvez maintenant mettre en veille votre ordinateur." >&2
+
 taille=`printf "$date" | wc -c`
 depuis=`expr 12 - $taille + 1`
 while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$date" ] ; do
