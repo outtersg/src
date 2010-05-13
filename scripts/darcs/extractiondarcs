@@ -1,0 +1,54 @@
+#!/bin/sh
+set -e
+set -x
+
+# À FAIRE: gestion des dépendances entre incréments.
+
+# Utilisation: extractiondarcs <destination> <fichier>*
+
+T=/tmp/temp.$$
+mkdir $T
+
+dest="$1"
+shift
+
+# Calcul d'où on est par rapport à _darcs.
+
+ici="`pwd`"
+descente=
+until [ -d "_darcs" ]
+do
+	ici="`pwd`"
+	descente="`basename "$ici"`/$descente"
+	cd ..
+done
+format="`grep darcs- _darcs/format`"
+cd "$ici"
+
+# Création des dossiers de travail.
+
+mkdir $T/src
+mkdir $T/dst
+
+[ $format = darcs-2 ] || type=--hashed
+( cd $T/src && darcs init $type )
+( cd $T/dst && darcs init )
+
+while ( echo y ; echo d ) | darcs push $T/src
+do
+	mv $T/src/_darcs $T/src_darcs
+	mv $T/dst/_darcs $T/dst_darcs
+	rm -R $T/dst
+	mkdir $T/dst
+	( cd $T/src/$descente && tar cf - . ) | ( cd $T/dst && tar xf - ) || true
+	mv $T/dst_darcs $T/dst/_darcs
+	mv $T/src_darcs $T/src/_darcs
+	( cd $T/dst && darcs add -r "$@" ) || true
+	( cd $T/src && darcs cha --last=1 ) > $T/cha
+	( cd $T/dst && ( sed -e '1!d' -e 's/  [^ ]*$//' < $T/cha ; sed -e '1,2d' -e 's/^  //' < $T/cha ) | darcs record -a -A "`sed -e '1!d' -e 's/^.*  //' < $T/cha`" -m "`sed -e '2!d' -e 's/^  \* //' < $T/cha`" --pipe )
+done
+
+rm -R "$dest"
+mv $T/dst "$dest"
+
+rm -R $T
