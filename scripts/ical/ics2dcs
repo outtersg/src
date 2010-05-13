@@ -1,0 +1,223 @@
+#!/bin/sh
+set -e
+
+mkdir /tmp/$$
+chmod 700 /tmp/$$
+
+auSecours()
+{
+	nom="`basename "$0"`"
+	cat >&2 <<TERMINE
+# $nom
+# Conversion de fichiers iCal (.ics) en agendas Darwin Calendar Server
+# © 2010 Guillaume Outters
+
+Utilisation: $nom -b <base> <dossier>
+  -b <base>                     base à compléter; typiquement: /usr/local/calserv-…/var/db/caldav/docs/calendars/__uids__/xx/xx/xxxx…/
+  <dossier>:                    dossier à intégrer. Chaque .ics repéré dedans
+                                sera converti en un calendrier.
+TERMINE
+	exit 1
+}
+
+analyseParametres()
+{
+	src=
+	base=
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-h) auSecours ;;
+			-b) shift ; base="$1" ;;
+			*) src="$1"
+		esac
+		shift
+	done
+}
+
+# nouvelAgenda <nom> <fichier .ics d'origine>
+nouvelAgenda()
+{
+	# curl --digest -u gui:xxx -X MKCALENDAR http://ks31107.kimsufi.com:8080/calendars/users/gui/nomdelagenda/
+	nom="$1"
+	ics="$2"
+	code="`echo "$nom" | iconv -t ascii//TRANSLIT | tr '[A-Z] ' '[a-z]_' | sed -e 's/[^-a-z0-9_.]//g'`"
+	echo "$nom -> $code"
+	mkdir "/tmp/$$/$code"
+	# sqlite3 .db.sqlite .dump sur un agenda fraîchement créé.
+	sqlite3 "/tmp/$$/$code/.db.sqlite" <<TERMINE
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE CALDAV (
+                KEY text unique, VALUE text unique
+            );
+INSERT INTO "CALDAV" VALUES('SCHEMA_VERSION','6');
+INSERT INTO "CALDAV" VALUES('TYPE','Regular Calendar Collection');
+CREATE TABLE RESOURCE (
+                    NAME           text unique,
+                    UID            text unique,
+                    TYPE           text,
+                    RECURRANCE_MAX date
+                );
+CREATE TABLE TIMESPAN (
+                NAME  text,
+                FLOAT text(1),
+                START date,
+                END   date
+            );
+CREATE TABLE RESERVED (
+                    UID  text unique,
+                    TIME date
+                );
+COMMIT;
+TERMINE
+	# Découpage du .ics et peuplement de la base et du répertoire.
+	true > "/tmp/$$/$code/dates.csv"
+	true > "/tmp/$$/$code/sqlite3.sql"
+	mkdir "/tmp/$$/$code/tmp"
+	rabouteDatesIcs < "$ics" | awk 'BEGIN{n=0}/^BEGIN:VEVENT/{++n;f="'"/tmp/$$/$code/tmp"'/"n}{if(f)print>>f}/^END:VEVENT/{close(f);f=0}'
+	ls "/tmp/$$/$code/tmp/" | while read i
+	do
+		i="/tmp/$$/$code/tmp/$i"
+		# UID
+		u="`grep ^UID: < "$i" | cut -d : -f 2 | tr -d `"
+		[ -z "$u" ] && u="`uuidgen`" && echo "Le fichier $i ne comporte pas d'UID." >&2 && return 1 # Bon, en fait, on préfère ne pas génrérer d'uids: autant que nos données soient proprens dès le départ.
+		# Dates, et écriture finale.
+		(
+			printf "%s;" "$u"
+			awk 'BEGIN{d=";";f=";"}/^DTSTART;TZID=/{sub(/.*=/,"");sub(/:/,";");sub(//,"");d=$0}/^DTEND;TZID=/{sub(/.*=/,"");sub(/:/,";");sub(//,"");f=$0}/^DTSTART;VALUE=DATE:/{sub(/.*:/,"");sub(//,"");jd=$0}/^DTEND;VALUE=DATE:/{sub(/.*:/,"");sub(//,"");jf=$0}END{if(f==";")f=d;if(jf=="")jf=jd;print d";"jd";"f";"jf}' < "$i"
+		) >> "/tmp/$$/$code/dates.csv"
+		entreeVcal "$i" > "/tmp/$$/$code/$u.ics"
+	done
+	grep '^[^;]*;;;;' < "/tmp/$$/$code/dates.csv" | sed -e "s/;.*/ ne contient pas ses dates de début et fin d'événement/" >&2
+	grep -q '^[^;]*;;;;' < "/tmp/$$/$code/dates.csv" && return 1
+	gmtCsvVersSql "/tmp/$$/$code/dates.csv" > "/tmp/$$/$code/sqlite3.sql"
+	sqlite3 "/tmp/$$/$code/.db.sqlite" < "/tmp/$$/$code/sqlite3.sql"
+	rm -Rf "/tmp/$$/$code/tmp" "/tmp/$$/$code/sqlite3.sql" "/tmp/$$/$code/dates.csv"
+}
+
+# Enrobe une entrée VEVENT du VCALENDAR pour en faire un .ics indépendant.
+# entreeVcal <fichier contenant le seul VEVENT>
+# À FAIRE: récupérer l'en-tête (avec ses zones) de l'ics initial.
+# À FAIRE: gérer les entrées récurrentes.
+# À FAIRE: gérer les DURATION quand on n'a pas d'heure de fin.
+entreeVcal()
+{
+	cat <<TERMINE
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Apple Inc.//iCal 3.0//EN
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:Europe/Paris
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+DTSTART:19810329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+TZNAME:CEST
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+DTSTART:19961027T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+TZNAME:CET
+END:STANDARD
+END:VTIMEZONE
+TERMINE
+	cat "$1"
+	cat <<TERMINE
+END:VCALENDAR
+TERMINE
+}
+
+# Renvoie l'heure GMT correspondant à une heure avec fuseau.
+# gmt <fuseau> <AAAAMMJJTHHMMSS> [<AAAAMMJJ du jour pour si fuseau ou date sont vides>]
+gmt()
+{
+	[ -z "$1" -o -z "$2" ] && echo "$3" | sed -e 's/\(....\)\(..\)\(..\)/\1-\2-\3 00:00:00+00:00/' && return 0
+	python -c "import os;from time import strptime,strftime,mktime,gmtime,tzset;os.environ['TZ']='$1';tzset();t=mktime(strptime('$2','%Y%m%dT%H%M%S'));print strftime('%Y-%m-%d %H:%M:%S+00:00',gmtime(t));"
+}
+
+gmtCsvVersSql()
+{
+	python <<TERMINE
+import os, csv, re
+from time import strptime, strftime, mktime, gmtime, tzset
+
+dernierFuseau = ''
+eDecompactage = re.compile(r"(....)(..)(..)")
+
+def gmt(f, d, j):
+	global dernierFuseau, eDecompactage
+	if f and d:
+		if f != dernierFuseau:
+			os.environ['TZ'] = f
+			tzset()
+			dernierFuseau = f
+		t = mktime(strptime(d,'%Y%m%dT%H%M%S'))
+		return strftime('%Y-%m-%d %H:%M:%S+00:00', gmtime(t))
+	else:
+		return eDecompactage.sub(r"\\1-\\2-\\3 00:00:00+00:00", j)
+	return 
+
+for ligne in csv.reader(open('$1'), delimiter = ';'):
+	jour = 'N' if ligne[1] and ligne[2] else 'Y'
+	d = gmt(ligne[1], ligne[2], ligne[3])
+	f = gmt(ligne[4], ligne[5], ligne[6])
+	print "INSERT INTO TIMESPAN VALUES('%s.ics','%s','%s','%s');"%(ligne[0], jour, d, f)
+	print "INSERT INTO RESOURCE VALUES('%s.ics','%s','VEVENT',NULL);"%(ligne[0], ligne[0])
+TERMINE
+}
+
+# Remet les enregistrements d'un .ics sur une ligne (ils adoptent sinon la norme, une ligne de plus de n caractères passe à la suivante), pour analyse.
+rabouteIcs()
+{
+	awk 'BEGIN{accu=""}/^ /{sub(/$/,"",accu);accu=accu""substr($0,2);next}{if(accu)print accu;accu=$0}END{print accu}'
+}
+
+# Remet les enregistrements d'un .ics sur une ligne (ils adoptent sinon la norme, une ligne de plus de n caractères passe à la suivante), pour analyse. Ne traite que les lignes dates et uids. Effectue quelques remplacements de zone de temps.
+rabouteDatesIcs()
+{
+	rempl=
+	# Remplacements de zones pour des zones connues de notre OS (cf. le strftime dans gmtCsvVersSql).
+	for i in \
+		'"(GMT+01.00) Amsterdam / Berlin / Bern / Rome / Stockholm / Vienna"':Europe/Paris \
+		'"(GMT+01.00) Brussels / Copenhagen / Madrid / Paris"':Europe/Paris \
+		
+	do
+		de="`echo "$i" | sed -e 's/:.*//' -e 's#[/)+(]#\\\\&#g'`"
+		a="`echo "$i" | sed -e 's/.*://' -e 's/"/\\\\"/g'`"
+		rempl="$rempl;sub(/$de/,\"$a\",accu);"
+	done
+	boulot='BEGIN{accu=""}/^ /{if(rabout){sub(/$/,"",accu);accu=accu""substr($0,2);next}}{if(rabout){if(accu){'"$rempl"'print accu};rabout=0}}/^(UID|DT(START|END))[;:]/{rabout=1;accu=$0}{if(!rabout)print}END{if(rabout){'"$rempl"'print accu}}'
+	awk "$boulot"
+}
+
+analyseParametres "$@"
+[ -z "$src" ] && auSecours
+[ -z "$base" -o ! -d "$base" ] && auSecours
+
+nums=0
+find "$src" -name "*.ics" | while read f
+do
+	nom=
+	if [ "`basename "$f"`" = "corestorage.ics" -a -f "`dirname "$f"/Info.plist`" ]
+	then
+		infoplist="`dirname "$f"`/Info.plist"
+		nom="`awk '{if(oui){gsub("[ \t]*<[^>]*> *", "");print;oui=0}}/<key>Title<\/key>/{oui=1}' < "$infoplist"`"
+	fi
+	nums="`expr $nums + 1`"
+	[ -z "$nom" ] && nom="Agenda $nums"
+	nouvelAgenda "$nom" "$f"
+done
+
+sudo chown -R "`ls -ldn "$base" | awk '{print $3":"$4}'`" "/tmp/$$"/*
+for i in "/tmp/$$"/*
+do
+	sudo mv "$i" "$base/" 
+	sudo PYTHONPATH=$PYTHONPATH fix_calendar "$base/`basename "$i"`"
+done
+
+rm -Rf "/tmp/$$"
