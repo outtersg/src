@@ -1,0 +1,6 @@
+#!/bin/sh
+
+for i in "$@"
+do
+	echo "$i"
+done | iconv -t mac | LC_ALL=C tr '\012' '\000' | xargs -0 /usr/bin/contacts | iconv -f mac
