@@ -1,0 +1,18 @@
+#!/bin/sh
+
+#echo "# NTFS-3G corrompt les répertoires lorsqu'il doit manipuler des attributs étendus. Veuillez vérifier manuellement la procédure plus bas dans le fichier avant de l'activer." >&2
+#exit 0
+(
+cat <<TERMINE
+- Downloads/
+- Library/Caches/
+- Library/PubSub/
+- Library/VirtualBox/Machines/
+- .thumbnails/
+- .darcs/cache/
+- internet/**/photos/
+- internet/**/temp/
+- internet/**/imagettes/
+- tmp/ouin
+TERMINE
+) | ouf --bete -v -e /Volumes/FreeAgent\ Drive/Backup/gui | grep -v uptodate
