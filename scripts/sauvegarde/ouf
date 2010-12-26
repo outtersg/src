@@ -1,0 +1,171 @@
+#!/bin/bash
+set -e
+
+analyserParametres()
+{
+	local i
+	DOSSIER=
+	FILTRE=
+	ECRABOUILLE=
+	OPTIONS_SSH=()
+	OPTIONS_RSYNC=
+	SOURCE=$HOME
+	if rsync --version | grep -q xattrs # Version 3, sans doute, avec gestion des xattrs et tout par la communauté.
+	then
+		OPTIONS_RSYNC=AX
+	else # Version Apple.
+		OPTIONS_RSYNC=E
+	fi
+	OPTIONS_RSYNC="az$OPTIONS_RSYNC"
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			-v) OPTIONS_RSYNC="v$OPTIONS_RSYNC" ;;
+			-e) ECRABOUILLE=1 ;;
+			-d) shift ; SOURCE="$1" ;;
+			--bete) bete=1 ;;
+			--sans-acl) bebete=1 ;;
+			*)
+				[ -z "$DOSSIER" ] && case "$1" in # Tout ce que l'on reconnaît avant le DOSSIER est une option à passer à ssh.
+					-p)
+						OPTIONS_SSH[${#OPTIONS_SSH[@]}]="$1"
+						shift
+						OPTIONS_SSH[${#OPTIONS_SSH[@]}]="$1"
+						shift
+						continue
+						;;
+				esac
+				for i in DOSSIER FILTRE
+				do
+					eval test -z \$$i && eval $i=\""$1"\" && break
+				done
+				;;
+		esac
+		shift
+	done
+	[ -z "$bete" ] || OPTIONS_RSYNC=${OPTIONS_RSYNC//a/vrltD}
+	[ -z "$bete" ] || OPTIONS_RSYNC=${OPTIONS_RSYNC//[AXE]/}
+	[ -z "$bebete" ] || OPTIONS_RSYNC=${OPTIONS_RSYNC//A/}
+}
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Sauvegarde du \$HOME
+# © Guillaume Outters 2005
+
+Utilisation: $nom [-v] [-e] [--bete] [-d <dossier>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
+  -v:                           blablateux.
+  -e:                           écrabouille. La nouvelle sauvegarde écrase
+                                directement <dossier>, plutôt que d'en créer une
+                                incrémentale à côté avec dans le nom <préfixe>.
+  --bete:                       destination disque bête (NTFS, etc.): pas de
+                                gestion des permissions.
+  -d <dossier>:                 dossier source, plutôt que \$HOME.
+  -p <port>:                    complément d'<ip>.
+  <ip>:                         adresse IP de destination, pour une sauvegarde à
+                                distance.
+  <dossier>:                    dossier de destination, façon scp (relatif au
+                                \$HOME ou absolu). Attention à ce qu'il ne
+                                termine pas par un point (ce qui dénote un
+                                préfixe de sauvegarde).
+  <préfixe>:                    préfixe sur la destination qui identifiera la
+                                provenance. Par défaut, `hostname -s | tr '[A-Z]' '[a-z]'`.
+  <filtre>:                     filtre rsync, séparé par des points-virgules
+                                (ex.: '+ /tmp/glub;- /tmp/').
+La sauvegarde est faite par rsync --link-dest, pour les connaisseurs.
+TERMINE
+exit 0
+}
+
+analyserParametres "$@"
+PANO=${DOSSIER%%:*}
+DOSSIER=${DOSSIER#*:}
+
+# Local ou distant?
+
+fauxsshlocal()
+{
+	shift # On se fiche du nom de la machine.
+	"$@"
+}
+
+SSH="ssh ${OPTIONS_SSH[@]}" # BOGUE: ce faisant, on ne peut avoir d'espace dans les OPTIONS_SSH.
+SSHRS=(-e "$SSH")
+if [ "$PANO" = "$DOSSIER" ]
+then
+	SSH=fauxsshlocal
+	SSHRS=()
+	[[ "$DOSSIER" = /* ]] || PANOP="$HOME/" # Un chemin absolu est nécessaire si on travaille en local, car sinon il y aura confusion entre le répertoire de travail $SOURCE et la racine de destination $HOME.
+else
+	PANOP="$PANO:"
+fi
+
+# Chemin spécifié ou à déterminer?
+
+if [[ "$DOSSIER" == *. ]]
+then
+	PREFIXE=${DOSSIER##*/}
+	[[ "$DOSSIER" == */* ]] && DOSSIER=${DOSSIER%/*} || DOSSIER=.
+else
+	PREFIXE="`hostname -s | tr '[A-Z]' '[a-z]'`." # Par défaut; un tr derrière, car Mac OS X hésite chez moi: un jour en majuscules, l'autre en minuscules.
+fi
+
+[ -z "$PANO" -o -z "$PREFIXE" ] && auSecours
+
+# Détermination de la vraie destination.
+
+if [ -z "$ECRABOUILLE" ]
+then
+dest="$PREFIXE`date +%Y-%m-%d`"
+dernier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE"'" && touch -t 197910100826 "'"$PREFIXE"'" && ls -d1 "'"$PREFIXE"'"*/.ouf.complet | grep -v "'"$PREFIXE"'[^0-9]" | tail -1 | sed -e "s#/.ouf.complet##"' | $SSH "$PANO" sh`"
+num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=0 ; until mkdir '"$dest"'.$((++c)) 2> /dev/null ; do true ; done ; echo $c' | $SSH "$PANO" sh`"
+[ "$num" = "" ] || dest="$dest.$num"
+	LIEN=(--link-dest="../$dernier")
+else
+	echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir -p '"$dest"' 2> /dev/null ; rm -f "'"$dest"'/.ouf.complet"' | $SSH "$PANO" sh 
+	dest="."
+	LIEN=()
+fi
+
+# Copie.
+
+if [ -d "$SOURCE" ]
+then
+	SOURCEREL="./"
+	cd "$SOURCE"
+else
+	SOURCEREL="$SOURCE"
+	SOURCE=.
+	case "$SOURCEREL" in
+		*:)
+			SOURCEREL="$SOURCEREL./"
+			;;
+		*/)
+			true
+			;;
+		*)
+			SOURCEREL="$SOURCEREL/"
+			;;
+	esac
+fi
+( if [ -z "$FILTRE" ] ; then cat ; else echo "$FILTRE" | tr ';' '\012' ; fi ; echo "- /.ouf.complet" ) | rsync "${SSHRS[@]}" --delete --exclude-from=- "${LIEN[@]}" -$OPTIONS_RSYNC "$SOURCEREL" "$PANOP$DOSSIER/$dest/" || [ $? -eq 23 -o $? -eq 24 ] # On ne sort pas en erreur pour des Permission denied ou fichiers modifiés.
+
+# Marquage comme dernière sauvegarde complète.
+
+(
+	echo -n 'cd "$HOME" && cd "'"$DOSSIER"'" && touch "'"$dest"'/.ouf.complet"'
+	if [ -z "$ECRABOUILLE" ]
+	then
+		echo ' && rm -f "'"$PREFIXE"'dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'dernier"'
+	else
+		echo
+	fi
+) | $SSH "$PANO" sh
+
+exit 0
+
+# Pour relier une sauvegarde faite en autonome:
+( cd asterix.2005-11-15 && find . -type f | while read i ; do [ -f "$i" -a -f "../asterix.2005-11-14/$i" -a `cksum "$i" | awk '{print $1}'` = `cksum "../asterix.2005-11-14/$i" | awk '{print $1}'` ] && echo "$i" && sudo rm "$i" && ln "../asterix.2005-11-14/$i" "$i" ; done )
+
