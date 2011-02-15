@@ -1,0 +1,118 @@
+#!/bin/bash
+
+g_destNomGuillaume=/Users/gui/perso/Photos/arrivage
+
+# Renvoie l'orientation EXIF de la photo.
+orientation()
+{
+	php -r '$chose=exif_read_data($argv[1],IFD0);echo $chose["Orientation"];' "$1"
+}
+
+### Fonctions de renommage ###
+
+# Dans le même dossier, avec un .2
+nom_copie()
+{
+	echo "${1/./.2.}"
+}
+
+nouveauNomCanon()
+{
+	echo "$1" | sed -e '/IMG_\([0-9][0-9]\)\([0-9][0-9]\.JPG\)/s//1\1_\1\2/'
+}
+
+nom_guillaume()
+{
+	echo "$g_destNomGuillaume/$(nouveauNomCanon "$(basename "$1")")"
+}
+
+nom_p()
+{
+	echo "$g_destNomGuillaume/$(basename "$1")"
+}
+
+tenterleln()
+{
+	ln "$@" 2> /dev/null || cp "$@"
+}
+
+# Tourne (par jpegtran) les photos passées en paramètres pour qu'elles aient
+# toutes une orientation EXIF de 1.
+# Sans cette rotation, certains logiciels prennent en compte la rotation EXIF
+# pour l'affichage (GraphicConverter), d'autre non (PHP, Aperçu).
+tourner()
+{
+	local or rot fr=copie dest rempl
+	while [ $# -gt 0 ]
+	do
+		[ "x$1" = x-f ] && shift && fr="$1" && shift && continue
+		
+		dest="`nom_$fr "$1"`"
+		[ -e "$dest" ] && echo "# $dest: fichier existant." >&2 && shift && continue
+		
+		or="`orientation "$1"`"
+		case "$or" in
+			6) rot=90 ;;
+			8) rot=270 ;;
+			1) rot=0 ;;
+			*) rot=0 ; echo "# $1: orientation indéterminable." >&2 ;;
+		esac
+		
+		if [ "$rot" = 0 ]
+		then
+			$dupliquer "$1" "$dest"
+		else
+			jpegtran -rotate "$rot" -copy all -outfile "$dest" "$1"
+			#rempl="`choc "$dest" 40 1201 0300 0100 0000 0100 0000`" # À FAIRE: un peu moins codé en dur, pour le changement d'orientation EXIF.
+			#[ "x$rempl" = "x1201 0300 0100 0000 0${or}00 0000 " ] || ( choc "$dest" 40 $rempl > /dev/null ; echo "# $dest: neutralisation de la rotation impossible." >&2 )
+		fi
+		touch -r "$1" "$dest"
+		shift
+	done
+}
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Copie les photos en appliquant la rotation EXIF
+# © 2006 Guillaume Outters
+
+Utilisation: $nom [-d <dest>] [-n <nommage>] [-l] <photo>*
+  -n <nommage>                  utilise un nommage différent à la destination
+  -d <destination>              répertoire de destination des photos
+  -l                            lier plutôt que copier les fichiers conservés
+Les images sont copiées telles quelles, à moins qu'elles ne possèdent une info
+EXIF indiquant une rotation. L'image est alors tournée suivant cette directive,
+et la rotation EXIF mise à 0.
+Cela permet aux logiciels ne tenant pas compte des infos EXIF d'afficher toutes
+les images selon la bonne orientation.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	photos=()
+	nommage=
+	dupliquer=cp
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-h) auSecours ;;
+			-d) shift ; g_destNomGuillaume="$1" ;;
+			-n) shift ; nommage="$1" ;;
+			-l) dupliquer=tenterleln ;;
+			*) photos[${#photos[@]}]="$1" ;;
+		esac
+		shift
+	done
+	if [ -z "$nommage" ]
+	then
+		[ -z "$g_destNomGuillaume" ] && nommage=copie || nommage=p
+	fi
+}
+
+analyserParametres "$@"
+tourner -f "$nommage" "${photos[@]}"
