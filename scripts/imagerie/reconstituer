@@ -1,0 +1,108 @@
+#!/bin/sh
+
+[ -z "$1" ] && echo "# Utilisation: reconstituer <dossier>" >&2 && echo "#   <dossier>: dossier contenant les pasbons* qui contiennent les photos endommagées (pour être reconstituable, une photo doit se trouver dans plusieurs de ces pasbons*, avec des blocs endommagés différents dans chacun)." >&2 && exit 1
+
+cd "$1" || exit 1
+mkdir /tmp/$$
+mkdir -p oui
+
+# Liste de l'ensemble des fichiers contenus dans au moins deux des répertoires d'images partiellement corrompues.
+for i in pasbons*
+do
+	(cd "$i" && ls )
+done | sort | tee /tmp/$$/1 | sort -u > /tmp/$$/2
+diff /tmp/$$/2 /tmp/$$/1 | grep '^>' | cut -c 3- | sort -u > /tmp/$$/liste
+
+cat /tmp/$$/liste | while read i
+do
+	echo "=== $i ===" >&2
+	ref=
+	rm -f /tmp/$$/hex.*
+	true > /tmp/$$/diffs
+	for j in pasbons*
+	do
+		# Si le fichier existe dans cet arrivage.
+		if [ -f "$j/$i" ]
+		then
+			# On repère les problèmes sur les débuts de blocs de 2 Ko: quand erreur il y a, elle se trouve sur un tel bloc, bien alignée, et elle se manifeste dès les premiers octets du bloc.
+			#hexdump -C "$j/$i" | grep ^.....[08]00 > /tmp/$$/hex.$j # Ce grep est incorrect, car parfois en tête de bloc les octets sont identiques: on loupe alors le repérage du bloc.
+			hexdump -C "$j/$i" > /tmp/$$/hex.$j
+			if [ -z "$ref" ]
+			then
+				ref=/tmp/$$/hex.$j
+				cat "$j/$i" > /tmp/$$/ref
+			else
+				( echo ibase=16 ; diff "$ref" /tmp/$$/hex.$j | grep '^<' | cut -c 3- | cut -d ' ' -f 1 | tr 'abcdef' 'ABCDEF' | sed -e 's#$#/800#' ) | bc | sort >> /tmp/$$/diffs
+			fi
+		fi
+	done
+	# Si trop d'erreurs à la lecture, on fera du manuel: la machine ne tiendra pas l'exploration des n envois puissance p blocs en erreur possibilités. À nous d'intelligemment décider, pour n > 2, si un bloc apparaît dans plus d'un envoi, qu'il est le bon.
+	sort -nu < /tmp/$$/diffs > /tmp/$$/diff
+	echo "`wc -l < /tmp/$$/diff` blocs variables" >&2
+	[ "`wc -l < /tmp/$$/diff`" -lt 2 ] && continue
+	[ "`wc -l < /tmp/$$/diff`" -gt 11 ] && continue
+	rm -Rf /tmp/$$/bouts.*
+	rm -Rf /tmp/$$/avant.*
+	cat /tmp/$$/diff | while read j
+	do
+		mkdir /tmp/$$/bouts.$j
+		for f in pasbons*/$i
+		do
+			g="`dirname "$f"`"
+			dd if="$f" of=/tmp/$$/bouts.$j/$g bs=2048 skip=$j count=1 2> /dev/null
+		done
+		# Si on a des doublons de bouts, on les regroupe. On ne décide pas que ceux en plus grand nombre sont le bon: il m'est arrivé d'avoir deux envois avec le même mauvais segment avant d'en avoir un bon.
+		cksum /tmp/$$/bouts.$j/* | sort | tee /tmp/$$/sum.0 | sort -u -k 1,1 > /tmp/$$/sum.1
+		diff /tmp/$$/sum.1 /tmp/$$/sum.0 | grep '^> ' | cut -c 3- | while read rien rien k
+		do
+			rm "$k"
+		done
+	done
+	# On va générer autant de commandes de composition de nouveau fichier qu'il y a de combinaisons possibles entre blocs divergents.
+	# Pour chaque divergence de données (un répertoire par endroit de divergence), on duplique autant de fois que de versions de la divergence, l'accumulation précédente.
+	prec=0
+	echo cat > /tmp/$$/commandes
+	while read j
+	do
+		# Le bout intercalaire sans erreur.
+		dd if=/tmp/$$/ref bs=2048 skip=$prec count="`expr $j - $prec`" of=/tmp/$$/avant.$j 2> /dev/null
+		# Les différentes version du bout erroné.
+		true > /tmp/$$/commandes.1
+		for f in /tmp/$$/bouts.$j/*
+		do
+			sed -e "s#\$# /tmp/$$/avant.$j $f#" < /tmp/$$/commandes >> /tmp/$$/commandes.1
+		done
+		cat /tmp/$$/commandes.1 > /tmp/$$/commandes
+		prec=`expr $j + 1`
+	done < /tmp/$$/diff
+	dd if=/tmp/$$/ref bs=2048 skip=$prec of=/tmp/$$/apres.dernier 2> /dev/null
+	sed -e "s#\$# /tmp/$$/apres.dernier > /tmp/$$/test#" < /tmp/$$/commandes > /tmp/$$/comm
+	# Premier écrémage: on essaie de ne garder pour chaque bloc divergent qu'une seule version, celle qui placée après un bon début de fichier fait sortir en "fin prématurée de fichier" plutôt qu'en "valeur incorrecte". Si pour un bloc on a 0 version correcte, on ne sait traiter. Si on en a 2, on poursuit le processus combinatoire qui seul nous permettra de déterminer, sur le fichier complet, quel recollage est valide.
+if false # En fait on n'a pas vraiment de moyen de distinguer les deux cas d'erreur dans le JPEG.
+then
+	true > /tmp/$$/reconst
+	while read j
+	do
+		cat /tmp/$$/avant.$j >> /tmp/$$/reconst
+		for f in /tmp/$$/bouts.$j/*
+		do
+			cat /tmp/$$/reconst $f > /tmp/$$/reconst.2
+			php -r "imagecreatefromjpeg('/tmp/$$/reconst.2');" 2>&1
+			# À FAIRE: si le truc précédent voit des données valides mais équeutées, on continue. S'il voit des données pourries, on supprime $f après l'avoir grepmoinvé de comm.
+		done
+		# À FAIRE: s'il nous reste 0 /tmp/$$/bouts.$j/*, continue 2; s'il nous en reste 2 ou plus, break (on passe à l'algo bourrin qui suit).
+	done < /tmp/$$/diff
+fi
+	# Exécution des commandes.
+	n=0
+	cat /tmp/$$/comm | while read j
+	do
+		printf "%d... " "$n" >&2
+		sh -c "$j"
+		r=non
+		php -r "imagecreatefromjpeg('/tmp/$$/test');" 2>&1 | grep -q JPEG || r=oui
+		echo "$r" >&2
+		[ $r = oui ] && cp /tmp/$$/test oui/$i.$n && break
+		n="`expr $n + 1`"
+	done
+done
