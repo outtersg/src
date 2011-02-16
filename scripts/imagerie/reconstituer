@@ -1,9 +1,42 @@
 #!/bin/sh
 
+methode=bourrin # On essaie toutes les combinaisons de blocs possibles, jusqu'à ce que PHP nous signale qu'il arrive à charger l'image.
+methode=prog # On essaie progressivement de reconstituer l'image: pour chaque bloc, on essaie de l'accoler au début déjà reconstitué, et on demande voir si AppleScript arrive à la lire "un peu plus loin".
+
 [ -z "$1" ] && echo "# Utilisation: reconstituer <dossier>" >&2 && echo "#   <dossier>: dossier contenant les pasbons* qui contiennent les photos endommagées (pour être reconstituable, une photo doit se trouver dans plusieurs de ces pasbons*, avec des blocs endommagés différents dans chacun)." >&2 && exit 1
 
 cd "$1" || exit 1
 mkdir /tmp/$$
+
+[ $methode = prog ] && ( cat > /tmp/$$/trouve.c <<TERMINE
+#include <stdio.h>
+int main(int argc, char ** argv)
+{
+	char b[0x1000];
+	char * p, * p2;
+	int n = 0;
+	int lus;
+	while((p2 = (p = &b[0]) + read(0, b, 0x1000)) > p)
+	{
+		--p;
+		while(++p < p2)
+			if(*p != 0x6d) // Apple nous met ce joli gris pour indiquer une absence d'image, autrement dit une erreur de lecture.
+				n = 0;
+			else if(++n > 10) // Plus de 10 pixels gris d'affilée? On sort.
+			{
+				printf("%d\n", (int)(lus + (p - 10 - &b[0])));
+				return 0;
+			}
+		lus += p - &b[0];
+	}
+	printf("%d\n", lus);
+	return 0;
+}
+TERMINE
+) && cc -o /tmp/$$/trouve /tmp/$$/trouve.c
+
+traiter()
+{
 mkdir -p oui
 
 # Liste de l'ensemble des fichiers contenus dans au moins deux des répertoires d'images partiellement corrompues.
@@ -40,7 +73,7 @@ do
 	sort -nu < /tmp/$$/diffs > /tmp/$$/diff
 	echo "`wc -l < /tmp/$$/diff` blocs variables" >&2
 	[ "`wc -l < /tmp/$$/diff`" -lt 2 ] && continue
-	[ "`wc -l < /tmp/$$/diff`" -gt 11 ] && continue
+	[ $methode = bourrin ] && [ "`wc -l < /tmp/$$/diff`" -gt 11 ] && continue
 	rm -Rf /tmp/$$/bouts.*
 	rm -Rf /tmp/$$/avant.*
 	cat /tmp/$$/diff | while read j
@@ -58,6 +91,12 @@ do
 			rm "$k"
 		done
 	done
+	$methode
+done
+}
+	
+bourrin()
+{
 	# On va générer autant de commandes de composition de nouveau fichier qu'il y a de combinaisons possibles entre blocs divergents.
 	# Pour chaque divergence de données (un répertoire par endroit de divergence), on duplique autant de fois que de versions de la divergence, l'accumulation précédente.
 	prec=0
@@ -105,4 +144,40 @@ fi
 		[ $r = oui ] && cp /tmp/$$/test oui/$i.$n && break
 		n="`expr $n + 1`"
 	done
-done
+}
+
+prog()
+{
+	prec=0
+	true > /tmp/$$/reconst.jpg
+	while read j
+	do
+		printf "  - bout $j " >&2
+		# Le bout intercalaire sans erreur.
+		dd if=/tmp/$$/ref bs=2048 skip=$prec count="`expr $j - $prec`" >> /tmp/$$/reconst.jpg 2> /dev/null
+		# Les différentes version du bout erroné.
+		max=-1
+		true > /tmp/$$/max
+		for f in /tmp/$$/bouts.$j/*
+		do
+			cat /tmp/$$/reconst.jpg $f > /tmp/$$/reconst.essai.jpg
+			dd if=/tmp/$$/ref bs=2048 skip=`expr $j + 1` >> /tmp/$$/reconst.essai.jpg 2> /dev/null
+			rm -f /tmp/$$/reconst.essai.bmp
+			sips -s format bmp /tmp/$$/reconst.essai.jpg --out /tmp/$$/reconst.essai.bmp 2> /dev/null > /dev/null # C'est ce qu'appelle le composant AppleScipr "Image Events"… Sauf que lui a un comportement fiable (Image Events, parfois convertit, parfois pas, la même image).
+			t=`/tmp/$$/trouve < /tmp/$$/reconst.essai.bmp`
+			echo $t >> /tmp/$$/max
+			[ $t -gt $max ] && max=$t && boutmax=$f
+		done
+		#[ $max -eq 0 -o "`grep ^$max$ < /tmp/$$/max | wc -l`" -gt 1 ] && echo '#'$max >&2 && continue 2
+		[ $max -eq 0 -o "`grep ^$max$ < /tmp/$$/max | wc -l`" -gt 1 ] && printf '#'$max >&2
+		echo "o" >&2
+		cat $boutmax >> /tmp/$$/reconst.jpg
+		prec=`expr $j + 1`
+	done < /tmp/$$/diff
+	cat /tmp/$$/reconst.jpg > oui/$i
+	dd if=/tmp/$$/ref bs=2048 skip=$prec >> oui/$i 2> /dev/null
+}
+
+traiter
+
+rm -Rf /tmp/$$
