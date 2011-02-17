@@ -150,31 +150,42 @@ prog()
 {
 	prec=0
 	true > /tmp/$$/reconst.jpg
+	rm -f /tmp/$$/essai.*.jpg
+	true > /tmp/$$/essai.0.jpg
 	while read j
 	do
 		printf "  - bout $j " >&2
 		# Le bout intercalaire sans erreur.
-		dd if=/tmp/$$/ref bs=2048 skip=$prec count="`expr $j - $prec`" >> /tmp/$$/reconst.jpg 2> /dev/null
-		# Les différentes version du bout erroné.
 		max=-1
-		true > /tmp/$$/max
+		n=0
+		for precedent in /tmp/$$/essai.*.jpg
+		do
+			dd if=/tmp/$$/ref bs=2048 skip=$prec count="`expr $j - $prec`" >> $precedent 2> /dev/null
+			# Les différentes version du bout erroné.
 		for f in /tmp/$$/bouts.$j/*
 		do
-			cat /tmp/$$/reconst.jpg $f > /tmp/$$/reconst.essai.jpg
-			dd if=/tmp/$$/ref bs=2048 skip=`expr $j + 1` >> /tmp/$$/reconst.essai.jpg 2> /dev/null
-			rm -f /tmp/$$/reconst.essai.bmp
+				cat $precedent $f > /tmp/$$/reconst.essai.jpg
+				#dd if=/tmp/$$/ref bs=2048 skip=`expr $j + 1` >> /tmp/$$/reconst.essai.jpg 2> /dev/null
+				true > /tmp/$$/reconst.essai.bmp
 			sips -s format bmp /tmp/$$/reconst.essai.jpg --out /tmp/$$/reconst.essai.bmp 2> /dev/null > /dev/null # C'est ce qu'appelle le composant AppleScipr "Image Events"… Sauf que lui a un comportement fiable (Image Events, parfois convertit, parfois pas, la même image).
 			t=`/tmp/$$/trouve < /tmp/$$/reconst.essai.bmp`
-			echo $t >> /tmp/$$/max
-			[ $t -gt $max ] && max=$t && boutmax=$f
+				# Si on atteint un nouveau (ou un ancien) maximum, on range le fichier résultant dans un dossier au nom de ce max
+				[ $t -ge $max ] && max=$t && mkdir -p /tmp/$$/reconst.$max && mv /tmp/$$/reconst.essai.jpg /tmp/$$/reconst.$max/essai.$n.jpg && n=`expr $n + 1`
+			done
 		done
-		#[ $max -eq 0 -o "`grep ^$max$ < /tmp/$$/max | wc -l`" -gt 1 ] && echo '#'$max >&2 && continue 2
-		[ $max -eq 0 -o "`grep ^$max$ < /tmp/$$/max | wc -l`" -gt 1 ] && printf '#'$max >&2
-		echo "o" >&2
-		cat $boutmax >> /tmp/$$/reconst.jpg
 		prec=`expr $j + 1`
+		rm -f /tmp/$$/essai.*.jpg
+		mv /tmp/$$/reconst.$max/* /tmp/$$/
+		rm -Rf /tmp/$$/reconst.*
+		[ "`ls /tmp/$$/essai.*.jpg | wc -l`" -gt 10 ] && echo 'x' >&2 && break # Bon, là on commence à avoir engrangé trop de variantes qui nous donnent toutes la même taille au final. Ce qui signifie probablement qu'avant dans le fichier on a déjà un bloc inreconstituable (avec quelque variante sienne que ce soit la lecture reste coincée à cet endroit). On sort donc plutôt que de continuer à s'épuiser.
+		if [ "`ls /tmp/$$/essai.*.jpg | wc -l`" -gt 1 ]
+		then
+			echo "# $max octets lisibles sur `ls /tmp/$$/essai.*.jpg | wc -l` variantes" >&2
+		else
+			echo 'o' >&2
+		fi
 	done < /tmp/$$/diff
-	cat /tmp/$$/reconst.jpg > oui/$i
+	cat "`ls /tmp/$$/essai.*.jpg | head -1`" > oui/$i
 	dd if=/tmp/$$/ref bs=2048 skip=$prec >> oui/$i 2> /dev/null
 }
 
