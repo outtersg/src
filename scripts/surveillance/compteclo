@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+T=/tmp/temp.compteclo.$$
+mkdir "$T"
+chmod 700 "$T"
+#echo -n "mdp? "
+#read -s p
+p="`osascript -e 'tell application "Usable Keychain Scripting" to (password of internet passwords of current keychain whose account is "1109P") as string' | cut -c 1-6`" # Cet abruti de trousseau, à peu près pendant trois invocations toutes les 8, rajoute un caractère parasite au mot de passe. On n'a que ça comme moyen de contrôle.
+curl -c "$T/gateau" -b "$T/gateau" -s 'https://e.secure.lcl.fr/index.html' > /dev/null
+curl -c "$T/gateau" -b "$T/gateau" -s -d serviceId=AVE -d agenceId=1104 -d compteId=1109P -d CodeId="$p" 'https://e.secure.lcl.fr/everest/UWBI/UWBIAccueil?DEST=IDENTIFICATION' > /dev/null
+somme="`curl -s -c "$T/gateau" -b "$T/gateau" -L 'https://e.secure.lcl.fr/outil/UWSP/Synthese/accesSynthese' | awk '/<a[^>]*href="[^"]*1109P/{sub(/^.*>/,"");oui=1;accu=""}{if(oui)accu=accu$0}/<\/a>/{if(oui){sub(/<\/a>/,"",accu);gsub(/[^0-9,]/,"",accu);sub(/,.*/,"",accu);print accu}oui=0}'`"
+[ "0$somme" -lt 426 ] && mail -s "Alerte compte Clo" guillaume.outters@free.fr <<TERMINE
+Le compte courant de Clotilde n'a que $somme euros.
+TERMINE
+curl -c "$T/gateau" -b "$T/gateau" -s -L 'https://e.secure.lcl.fr/everest/UWBI/UWBIAccueil?DEST=LOGOUT' > /dev/null # Si on ne se déconnecte pas, la prochaine tentative de reconnexion sera renvoyée vers la page d'accueil.
+rm -Rf "$T"
