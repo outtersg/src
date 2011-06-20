@@ -5,6 +5,9 @@ shopt -s extglob
 
 prefixe=/usr/local
 
+[ -z "$PREFIXE_UTILISER" ] || prefixe="$PREFIXE_UTILISER"
+[ "x$1" = "x-r" ] && shift && prefixe="$1" && shift
+
 if [ \( "x$1" = x \) -o ! -d "$prefixe/$1" ]
 then
 	echo '# Utiliser'
