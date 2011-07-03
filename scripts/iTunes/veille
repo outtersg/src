@@ -1,0 +1,16 @@
+#!/bin/sh
+
+n="`osascript -e 'get volume settings' | sed -e 's/.*output volume://' -e 's/,.*//'`"
+t=10
+[ -z "$1" ] || t="$1"
+t=`expr $t \* 60 / $n`
+while [ $n -gt 0 ]
+do n=`expr $n - 1`
+	#v=`echo $n | sed -e 's/.$/.&/'`
+	#osascript -e 'tell application "System Events" to set volume '"$v"
+	osascript -e "set volume output volume $n"
+	sleep $t
+done
+osascript -e 'tell application "iTunes" to play next track' # On se recale, pour le réveil, au prochain morceau.
+osascript -e 'tell application "iTunes" to pause'
+osascript -e 'tell application "Finder" to sleep'
