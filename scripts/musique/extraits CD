@@ -1,0 +1,15 @@
+#!/bin/sh
+
+n=0
+while true
+do
+	n=`expr $n + 1`
+	f="`echo $n\ *.aiff`"
+	[ -f "$f" ] || break
+	read i
+	[ "$i" = "" ] && i="`echo "$f" | sed -e 's/^[0-9]* //' -e 's/.aiff$//'`"
+	echo "=== $n $i ==="
+	rm -f /tmp/1.aiff
+	ffmpeg -loglevel quiet -i "$f" -t 30 -ss 30 -y /tmp/1.aiff < /dev/null > /dev/null 2>&1
+	lame -S -m m -v -V 5 /tmp/1.aiff "/tmp/`printf %2.2d $n` - $i.mp3"
+done
