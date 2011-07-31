@@ -1,0 +1,57 @@
+#!/bin/bash
+
+if [ x"$1" == x ]
+then
+	echo '### Utilisation: '$0' <disque>'
+	exit 1
+fi
+
+function champ
+{
+	cat /tmp/pistes.encogg | awk FNR==${numero} | cut -f $1
+}
+
+function champs
+{
+	arg=1
+	while [ "$1" ]
+	do
+		contenu=`champ ${arg}`
+		if [ "${contenu}" ]
+		then
+			echo $1=${contenu}
+		fi
+		arg=$((++arg))
+		shift
+	done
+}
+
+function faire()
+{
+	true $((++numero))
+	#numero=`echo $2 | cut -d ' ' -f 1 | cut -d - -f 2`
+	fichier=/tmp/${numero}.ogg
+	oggenc -q 5 -o ${fichier} "$1/$2"
+	echo TRACKNUMBER=${numero} > /tmp/champs.encogg
+	champs TITLE ARTIST COMPOSER ALBUM DATE DISCNUMBER >> /tmp/champs.encogg
+	vorbiscomment -a -R -c /tmp/champs.encogg ${fichier} "/tmp/`champ 1`.ogg"
+	rm ${fichier}
+}
+
+echo Veuillez afficher dans iTunes les colonnes suivantes, dans cet ordre, et les
+echo coller ici, puis faites un Ctrl-D sur une ligne vide:
+echo Titre Interprète Compositeur Album Année Numéro de disque
+cat > /tmp/pistes.encogg
+
+if [ ! `echo $1 | cut -d '/' -f 1` ]
+then
+	slashAuDebut=/
+fi
+sansSlash=`echo -n $1 | tr '/ ' ' *'`
+sansSlash=`echo -n $sansSlash | tr ' *' '/ '`
+numero=0
+ls "$slashAuDebut$sansSlash" | sort -n | while read ligne
+do
+	faire "$slashAuDebut$sansSlash" "$ligne"
+done
+
