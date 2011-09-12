@@ -12,7 +12,7 @@ def protocole(nom):
 	return struct.unpack('L', '%-4.4s'%nom)[0]
 
 def decouper(url):
-	decoupage = re.search('^([a-z0-9]*)://([a-z.0-9]*)@([a-z.0-9]*)$', url)
+	decoupage = re.search('^([a-z0-9]*)://(([a-zA-Z.0-9@]*)@)?([a-z.0-9]*)$', url)
 	if decoupage:
 		return decoupage.groups()
 	return None
@@ -42,19 +42,20 @@ try:
 	recherche = KeychainSearch.keychainSearchWithKeychain_(k)
 except AttributeError, ex:
 	recherche = KeychainSearch.keychainSearchWithKeychains_(NSArray.arrayWithObject_(k))
-recherche.setServer_(decoupage[2])
-recherche.setAccount_(decoupage[1])
+recherche.setServer_(decoupage[3])
+if decoupage[2]:
+	recherche.setAccount_(decoupage[2])
 recherche = recherche.anySearchResults()
 if not recherche.count():
 	a = Access.accessEmptyWithName_(sys.argv[1])
 	entree = k.addNewItemWithClass_access_(protocole('inet'), a)
-	entree.setServer_(decoupage[2])
+	entree.setServer_(decoupage[3])
 	mdp = os.popen('stty -echo ; echo -n "Mot de passe pour '+sys.argv[1]+'? " >&2 ; read mdp ; stty echo ; echo $mdp ; echo >&2').read().strip()
-	entree.setLabel_(decoupage[2]+' ('+decoupage[1]+')')
+	entree.setLabel_(decoupage[3]+' ('+decoupage[2]+')')
 	entree.setDataString_(mdp)
 	entree.setPath_('/')
 	entree.setProtocol_(protocole(decoupage[0]))
-	entree.setAccount_(decoupage[1])
+	entree.setAccount_(decoupage[2])
 	print mdp
 else:
 	val = recherche.objectAtIndex_(0).dataAsString()
