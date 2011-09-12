@@ -61,3 +61,5 @@ else:
 	val = recherche.objectAtIndex_(0).dataAsString()
 	if val:
 		print val
+	else:
+		sys.exit(1)
