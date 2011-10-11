@@ -1,0 +1,44 @@
+#!/bin/sh
+
+T=/tmp/temp.$$.capte
+mkdir -p "$T"
+cat > "$T/capatulte" <<TERMINE
+#!/bin/sh
+# Il arrive à imagesnap de planter un peu trop souvent: on l'enrobe pour le protéger.
+while true
+do
+	/Users/gui/bin/imagesnap -q -t 3.00
+done
+TERMINE
+chmod u+x "$T/capatulte"
+
+menage()
+{
+	kill `ps auxww | grep apatulte | awk '{print $2}'`
+	killall imagesnap
+	rm -Rf "$T"
+	exit 0
+}
+
+trap menage INT
+trap menage TERM
+
+"$T/capatulte" &
+
+# http://www.instructables.com/id/Web-controlled-Surveillance-Camera/step7/Easy-Motion-Detector-Program/
+# http://motiontrack.sourceforge.net/
+# http://www.lavrsen.dk/foswiki/bin/view/Motion/WebHome
+cd /Users/gui/Downloads/camera
+while true
+do
+	sleep 1
+	n="`ls -tr | tail -1`"
+	[ "x$a" = "x$n" ] && continue
+	if [ -f "$a" -a $n != capte ]
+	then
+		diff=`compare -metric PSNR "$a" "$n" /dev/null 2>&1 | cut -d . -f 1`
+		[ "$diff" = inf -o "$diff" -gt 25 ] && rm -f "$n" && continue
+	fi
+	scp "$n" k:tmp/camera/
+	a="$n"
+done
