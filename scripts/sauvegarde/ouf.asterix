@@ -1,0 +1,104 @@
+#!/bin/sh
+
+cd "$HOME"
+
+# Préparation
+
+dest=
+options=
+ajouts=
+true > /tmp/temp.$$.ajouts
+chmod 700 /tmp/temp.$$.ajouts
+true > /tmp/temp.$$.ajouts
+
+# Destination
+
+case "$1" in
+	pano)
+		dest=panoramix.local:sauvegarde/asterix.
+		;;
+	maison)
+		dest=m:sauvegarde/asterix.
+		;;
+	cafe)
+		dest=cafeolix.local:sauvegarde/asterix.
+		;;
+	mastix)
+		dest=/Volumes/Mastix/sauvegardes/guillaume/
+		;;
+	ks)
+		dest=k:sauvegardes/asterix.
+		;;
+	*)
+		echo "# Utilisation: machin <config à lancer>" >&2
+		exit 1
+		;;
+esac
+
+# Sélection
+
+case "$1" in
+	maison)
+		ajouts='- /mp3/;- /perso/Photos/'
+		;;
+	cafe)
+#		ajouts='- /mp3/'
+		;;
+	mastix)
+		ajouts='- /mp3/'
+		options=-e
+		;;
+	ks)
+		ajouts='- /mp3/;- /perso/Photos/'
+		options=--sans-acl
+		;;
+esac
+
+# Boulot
+
+(
+cat <<TERMINE
+- /.Spotlight-V100/
+- /.Trash/
+- /.darcs/cache/
+- /.spring/
+- /.thumbnails/
+- /Downloads/
+- /Library/Application Support/CrashReporter/
+- /Library/Application Support/Freeciv/
+- /Library/Application Support/Firefox/
+- /Library/Application Support/irate/download/
+- /Library/Application Support/mlMac/temp/
+- /Library/Application Support/Freeware Update
+- /Library/Caches/
+- /Library/Logs/
+- /Library/Mail/Envelope Index
+- /Library/Mail/IMAP-guout@*/
+- /Library/Mail/LSMMap2
+- /Library/Mail/Mailboxes/Spam/
+- /Library/Mailboxes/*(Smile)*
+- /Library/Preferences/Macromedia/Flash Player/
+- /Library/PubSub
+- /Library/Safari/Icons/
+- /Library/Thunderbird/
+- /Library/VirtualBox/Machines/
+- /Library/xes
+- /Music/iTunes/iTunes Music/
+- /internet/**/imagettes
+- /internet/**/photos/
+- /internet/**/temp
+- /mp3/-[Classement]-
+- /tmp/autres/
+- /tmp/fonds/
+- /tmp/mp3/
+- /tmp/obj/
+- /tmp/paquets/
+- /tmp/qemux/
+- /tmp/ouin/
+- /tmp/z/
+TERMINE
+cat /tmp/temp.$$.ajouts | tr \; '\012'
+echo "$ajouts" | tr \; '\012'
+) | ouf "$options" -v "$dest" 
+
+rm /tmp/temp.$$.ajouts
