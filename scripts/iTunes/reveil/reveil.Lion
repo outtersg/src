@@ -1,0 +1,105 @@
+#!/bin/sh
+# Copyright (c) 2005,2008 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+VOLUME=4
+AVANT_SECOURS=900
+SECOURS='mpg123 /Users/gui/mp3/Aretha\ Franklin/Think.mp3'
+
+[ "x$1" = x-v ] && shift && VOLUME="$1" && shift
+
+SCRIPTS="`command -v "$0"`" ; while [ -L "$SCRIPTS" ] ; do SCRIPTS="`ls -l "$SCRIPTS"`" ; SCRIPTS="${SCRIPTS##*-> }" ; done ; SCRIPTS="`dirname "$SCRIPTS"`" ; echo "$SCRIPTS" | grep -q "^/" || SCRIPTS="`pwd`/$SCRIPTS"
+
+if [ $# -lt 1 ] ; then
+	nom=`basename "$0"`
+	cat >&2 <<- TERMINE
+	# $nom
+	# Réveil-matin
+	# © 2005 Guillaume Outters
+	
+	Utilisation: $nom [[[AAAA]MM]JJ]hhmm
+	TERMINE
+	#Utilisation: $nom [[[[[[[[[a]a]a]a]m]m]j]j]hhmm # Plus permissive, mais pas acceptée par reveil.c.
+	exit 1
+fi
+
+[ $# -gt 1 ] && AVANT_SECOURS="$2"
+
+# Au réveil, on ne veut pas que l'ordi replonge.
+
+demandePasse=`defaults -currentHost read com.apple.screensaver.7CBB3974-D55F-5D48-AA34-93F20B5BA50B askForPassword`
+# On récupère les différents réglages de durée avant la mise en veille (un par
+# config: secteur, batterie…).
+i=0
+for nom in "AC Power" "Battery Power"
+do
+	exHiber[$i]=`defaults read /Library/Preferences/SystemConfiguration/com.apple.PowerManagement "Custom Profile" | sed -e "/\"$nom\"/,/};/"\!d | grep "System Sleep Timer" | sed -e 's/.*= //' -e 's/;//'`
+	true $((++i))
+done
+menage()
+{
+	defaults -currentHost write com.apple.screensaver.7CBB3974-D55F-5D48-AA34-93F20B5BA50B askForPassword -int $demandePasse
+	sudo pmset -c sleep ${exHiber[0]}
+	sudo pmset -b sleep ${exHiber[1]}
+	pmset -g sched | grep "by reve.$$\$" | sed -e 's/^[^[]*\[//' -e 's/\].*$//' | while read i
+	do
+		sudo pmset sched cancel $i
+	done
+	"$SCRIPTS/notif"
+	exit 0
+}
+trap menage INT
+trap menage TERM
+defaults -currentHost write com.apple.screensaver.7CBB3974-D55F-5D48-AA34-93F20B5BA50B askForPassword -int 0
+sudo pmset sleep 30
+"$SCRIPTS/notif" # On prévient que les préfs d'économiseur ont changé.
+
+# Bonus: saut d'une unité si la date demandée est dans le passé (cette section
+# est facultative, mais alors si on est avant minuit il faudra manuellement
+# donner le numéro du jour suivant… et du mois si on est le dernier du mois,
+# etc.).
+
+[ "x$TZ" = x ] && TZ=Europe/Paris && export TZ
+
+date=`php -r 'require_once "/Users/gui/src/util/php/date.inc"; $m = time(); $t = Date::obtenir_datation($m); $t[-1] = floor($t[0] / 100); $t[0] %= 100; $c = $argv[1]; for($i = 5; --$i >= -1 && strlen($c) >= 2;) { $t[$i] = 0 + substr($c, -2); $c = substr($c, 0, -2); } ; $t[0] += 100 * $t[-1]; if($i >= -1 && Date::calculer($t) < $m) ++$t[$i]; $t[0] = $t[-1] * 100 + $t[0] % 100; $t = Date::corriger($t); echo sprintf("%04.4d%02.2d%02.2d%02.2d%02.2d", $t[0], $t[1], $t[2], $t[3], $t[4])."\n";' "$1"`
+
+# Voilà pour le réveil.
+
+sudo "$SCRIPTS/reve" "$date" "reve.$$"
+
+echo "Vous pouvez maintenant mettre en veille votre ordinateur." >&2
+
+taille=`printf "$date" | wc -c`
+depuis=`expr 12 - $taille + 1`
+while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$date" ] ; do
+	sleep 10
+done
+
+osascript -e 'tell application "iTunes" to activate'
+osascript -e 'tell application "iTunes" to set sound volume to 90'
+osascript -e 'tell application "System Events" to set volume '"$VOLUME"
+osascript -e 'tell application "System Events" to set volume without output muted'
+osascript -e 'tell application "iTunes" to play'
+
+# Parfois iTunes bloque sur un Ogg…
+sleep "$AVANT_SECOURS"
+echo "$SECOURS" | sh
+
+menage
