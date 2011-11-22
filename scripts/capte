@@ -57,4 +57,5 @@ do
 	[ -z "$ici" ] || cp "$n" "$ici/"
 	scp "$n" k:tmp/camera/
 	a="$n"
+	[ -z "$ici" ] || find . -atime +1m -name \*.jpg -exec rm {} \;
 done
