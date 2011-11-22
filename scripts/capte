@@ -1,7 +1,19 @@
 #!/bin/sh
 
+dest=/Users/gui/Downloads/camera
 T=/tmp/temp.$$.capte
 mkdir -p "$T"
+
+# Disque RAM
+disque=`hdiutil attach -nomount ram://10240`
+newfs_hfs -v "Espace de travail Capte" $disque
+ici="$dest"
+dest="$T/montage"
+mkdir "$dest"
+mount -t hfs $disque "$dest"
+dest="$dest/images"
+mkdir -p "$dest"
+
 cat > "$T/capatulte" <<TERMINE
 #!/bin/sh
 # Il arrive à imagesnap de planter un peu trop souvent: on l'enrobe pour le protéger.
@@ -16,6 +28,8 @@ menage()
 {
 	kill `ps auxww | grep apatulte | awk '{print $2}'`
 	killall imagesnap
+	cd
+	[ -z "$disque" ] || ( sleep 2 && umount $disque && hdiutil detach $disque )
 	rm -Rf "$T"
 	exit 0
 }
@@ -23,12 +37,13 @@ menage()
 trap menage INT
 trap menage TERM
 
+cd "$dest"
+
 "$T/capatulte" &
 
 # http://www.instructables.com/id/Web-controlled-Surveillance-Camera/step7/Easy-Motion-Detector-Program/
 # http://motiontrack.sourceforge.net/
 # http://www.lavrsen.dk/foswiki/bin/view/Motion/WebHome
-cd /Users/gui/Downloads/camera
 while true
 do
 	sleep 1
@@ -39,6 +54,7 @@ do
 		diff=`compare -metric PSNR "$a" "$n" /dev/null 2>&1 | cut -d . -f 1`
 		[ "$diff" = inf -o "$diff" -gt 25 ] && rm -f "$n" && continue
 	fi
+	[ -z "$ici" ] || cp "$n" "$ici/"
 	scp "$n" k:tmp/camera/
 	a="$n"
 done
