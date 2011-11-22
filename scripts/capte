@@ -19,7 +19,7 @@ cat > "$T/capatulte" <<TERMINE
 # Il arrive à imagesnap de planter un peu trop souvent: on l'enrobe pour le protéger.
 while true
 do
-	/Users/gui/bin/imagesnap -q -t 3.00
+	/Users/gui/bin/imagesnap -q -t 3.00 -s 640x480
 done
 TERMINE
 chmod u+x "$T/capatulte"
