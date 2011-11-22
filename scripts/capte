@@ -26,7 +26,10 @@ chmod u+x "$T/capatulte"
 
 menage()
 {
-	kill `ps auxww | grep apatulte | awk '{print $2}'`
+	ps auxww | grep apatulte | sed -e '/g[r]ep/d' | awk '{print $2}' | while read i
+	do
+		kill "$i"
+	done
 	killall imagesnap
 	cd
 	[ -z "$disque" ] || ( sleep 2 && umount $disque && hdiutil detach $disque )
