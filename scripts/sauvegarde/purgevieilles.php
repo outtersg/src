@@ -20,6 +20,11 @@ while(($arg = array_shift($argv)) !== null)
 {
 	switch($arg)
 	{
+		case '-p':
+			$arg = array_shift($argv);
+			$arg = strtr($arg, ',;', '::');
+			$periodes = explode(':', $arg);
+			break;
 		case '-n':
 			$faire = false;
 			break;
