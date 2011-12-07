@@ -14,6 +14,17 @@ $periodes = array
 
 $fichiers = "/Users/gui/Downloads/Mail.*.tar.gz";
 
+array_shift($argv);
+while(($arg = array_shift($argv)) !== null)
+{
+	switch($arg)
+	{
+		default:
+			$fichiers = $arg;
+			break;
+	}
+}
+
 function extraireDate($fichier)
 {
 	sscanf(basename($fichier), 'Mail.%d-%d:%d.tar.gz', $j, $h, $m);
