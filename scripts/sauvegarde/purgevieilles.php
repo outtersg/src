@@ -12,7 +12,7 @@ $periodes = array
 	1, 1,
 );
 
-$fichiers = "/Users/gui/Downloads/Mail.*.tar.gz";
+$fichiers = "/Users/gui/Downloads/Mail.%d-%d:%d.tar.gz";
 
 $faire = true;
 array_shift($argv);
@@ -34,17 +34,32 @@ while(($arg = array_shift($argv)) !== null)
 	}
 }
 
-function extraireDate($fichier)
+$fichiers = strtr($fichiers, '@', '%');
+
+if(!($GLOBALS['aLaMinute'] = strpos($fichiers, ':') !== false))
+	for($i = count($periodes) + 1; ($i -= 2) > 0;)
+		$periodes[$i] *= 24 * 3600;
+
+function extraireDate($fichier, $schemaNomFichiers)
 {
-	sscanf(basename($fichier), 'Mail.%d-%d:%d.tar.gz', $j, $h, $m);
-	if(($t = mktime($h, $m, 0, date('m'), $j, date('Y'))) >= time())
-		$t = mktime($h, $m, 0, date('m') - 1, $j, date('Y'));
+	if($GLOBALS['aLaMinute'])
+	{
+		sscanf(basename($fichier), basename($schemaNomFichiers), $j, $h, $m);
+		if(($t = mktime($h, $m, 0, date('m'), $j, date('Y'))) >= time())
+			$t = mktime($h, $m, 0, date('m') - 1, $j, date('Y'));
+	}
+	else
+	{
+		sscanf(basename($fichier), basename($schemaNomFichiers), $a, $m, $j);
+		$t = mktime(0, 0, 0, $m, $j, $a);
+	}
 	return $t;
 }
 
 $t = array();
-foreach(glob($fichiers) as $fichier)
-	$t[extraireDate($fichier)] = $fichier;
+$fichiersGlob = preg_replace('/%[a-z]/', '*', $fichiers);
+foreach(glob($fichiersGlob) as $fichier)
+	$t[extraireDate($fichier, $fichiers)] = $fichier;
 ksort($t);
 
 $frequence = null;
