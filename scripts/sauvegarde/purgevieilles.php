@@ -14,11 +14,15 @@ $periodes = array
 
 $fichiers = "/Users/gui/Downloads/Mail.*.tar.gz";
 
+$faire = true;
 array_shift($argv);
 while(($arg = array_shift($argv)) !== null)
 {
 	switch($arg)
 	{
+		case '-n':
+			$faire = false;
+			break;
 		default:
 			$fichiers = $arg;
 			break;
@@ -55,10 +59,15 @@ foreach($t as $d => $fichier)
 		{
 			$dGarde = $d;
 			$garde = $fichier;
+			if(!$faire)
+				echo '+ '.$fichier."\n";
 			continue;
 		}
 	
-	unlink($fichier);
+	if(!$faire)
+		echo '- '.$fichier."\n";
+	else
+		unlink($fichier);
 }
 
 ?>
