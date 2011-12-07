@@ -32,7 +32,7 @@ $dGarde = null;
 $garde = null;
 foreach($t as $d => $fichier)
 {
-	if(count($periodes) && $d >= time() - $periodes[0] * 24 * 3600) // Changement de zone.
+	while(count($periodes) && $d >= time() - $periodes[0] * 24 * 3600) // Changement de zone.
 	{
 		$frequence = $periodes[1];
 		array_shift($periodes);
