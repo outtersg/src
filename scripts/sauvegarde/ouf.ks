@@ -42,13 +42,16 @@ o()
 (
 cat <<TERMINE
 - /dev
+- /home/gui/paquets
+- /home/gui/sauvegardes/asterix.*
+- /home/gui/sauvegardes/falbala.*
+- /home/gui/tmp/camera
 - /home/local/share
 - /home/local/ghc-*
 - /home/local/ocaml-*
 - /home/local/python-*
 - /home/local/vim-*
 - /home/ports
-- /home/*/sauvegardes
 - /home/swap*
 - /proc
 - /rescue
