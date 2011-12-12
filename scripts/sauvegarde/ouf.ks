@@ -1,20 +1,24 @@
 #!/bin/sh
 
+serveur=k
+nom=ks
+[ "x$1" = x-l ] && serveur=l && nom=l && shift
+
 case "$1" in
 	carlo)
-		dest="/Volumes/CARLOMAN/sauvegardes/ks/"
+		dest="/Volumes/CARLOMAN/sauvegardes/$nom/"
 		commande=rs
 		;;
 	sb)
-		dest="/Volumes/sauve bernard/sauvegardes/ks/"
+		dest="/Volumes/sauve bernard/sauvegardes/$nom/"
 		commande=rs
 		;;
 	sg)
-		dest="/Volumes/FreeAgent Drive/Backup/ks"
+		dest="/Volumes/FreeAgent Drive/Backup/$nom"
 		commande=rsnt
 		;;
 	006)
-		dest="/Users/sauvegardes/ks."
+		dest="/Users/sauvegardes/$nom."
 		commande=o
 esac
 
@@ -22,17 +26,17 @@ esac
 
 rs()
 {
-	rsync -XvrltDz --exclude-from=- root@k:/ "$dest"
+	rsync -XvrltDz --exclude-from=- root@$serveur:/ "$dest"
 }
 
 rsnt()
 {
-	rsync -AXazv -e "ssh -p 443" --exclude-from=- root@ks31107.kimsufi.com:/ "$dest"
+	rsync -AXazv -e "ssh -p 443" --exclude-from=- root@$serveur:/ "$dest"
 }
 
 o()
 {
-	ouf -v -d root@k:/ "$dest"
+	ouf -v -d root@$serveur:/ "$dest"
 }
 
 (
