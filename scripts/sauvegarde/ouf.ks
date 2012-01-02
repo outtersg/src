@@ -36,7 +36,7 @@ rsnt()
 
 o()
 {
-	ouf -v -d root@$serveur:/ "$dest"
+	ouf "$@" -v -d root@$serveur:/ "$dest"
 }
 
 (
