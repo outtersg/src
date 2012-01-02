@@ -21,6 +21,7 @@ analyserParametres()
 		case "$1" in
 			-v) OPTIONS_RSYNC="v$OPTIONS_RSYNC" ;;
 			-e) ECRABOUILLE=1 ;;
+			-r) shift ; SEUIL_RECUP="$1" ;;
 			-d) shift ; SOURCE="$1" ;;
 			--bete) bete=1 ;;
 			--sans-acl) bebete=1 ;;
@@ -119,10 +120,16 @@ fi
 if [ -z "$ECRABOUILLE" ]
 then
 dest="$PREFIXE`date +%Y-%m-%d`"
+	[ -z "$SEUIL_RECUP" ] || premier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE"'" && touch -t 197910100826 "'"$PREFIXE"'" && ls -d1 "'"$PREFIXE"'"*/ | grep -v "^'"$PREFIXE"'[^0-9]" | sort -r | sed -e '\''s#/$##'\'' -e 1,'"$SEUIL_RECUP"'d | tail -1' | $SSH "$PANO" sh`"
 dernier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE"'" && touch -t 197910100826 "'"$PREFIXE"'" && ls -d1 "'"$PREFIXE"'"*/.ouf.complet | grep -v "'"$PREFIXE"'[^0-9]" | tail -1 | sed -e "s#/.ouf.complet##"' | $SSH "$PANO" sh`"
 num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=0 ; until mkdir '"$dest"'.$((++c)) 2> /dev/null ; do true ; done ; echo $c' | $SSH "$PANO" sh`"
 [ "$num" = "" ] || dest="$dest.$num"
 	LIEN=(--link-dest="../$dernier")
+	if [ ! -z "$premier" ]
+	then
+		postdest="$dest"
+		dest="$premier"
+	fi
 else
 	echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir -p '"$dest"' 2> /dev/null ; rm -f "'"$dest"'/.ouf.complet"' | $SSH "$PANO" sh 
 	dest="."
@@ -156,6 +163,7 @@ fi
 
 (
 	echo -n 'cd "$HOME" && cd "'"$DOSSIER"'" && touch "'"$dest"'/.ouf.complet"'
+	[ ! -z "$postdest" ] && echo -n " && [ \`ls '$postdest' | wc -l\` = 0 ] && rm -R '$postdest' && mv '$dest' '$postdest'" && dest="$postdest" # postdest a normalement été créé juste un peu au-dessus, donc on peut le supprimer sans soucis.
 	[ -z "$ECRABOUILLE" ] && echo -n ' && rm -f "'"$PREFIXE"'dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'dernier"'
 	echo
 ) | $SSH "$PANO" sh
