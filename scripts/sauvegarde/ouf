@@ -156,12 +156,8 @@ fi
 
 (
 	echo -n 'cd "$HOME" && cd "'"$DOSSIER"'" && touch "'"$dest"'/.ouf.complet"'
-	if [ -z "$ECRABOUILLE" ]
-	then
-		echo ' && rm -f "'"$PREFIXE"'dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'dernier"'
-	else
-		echo
-	fi
+	[ -z "$ECRABOUILLE" ] && echo -n ' && rm -f "'"$PREFIXE"'dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'dernier"'
+	echo
 ) | $SSH "$PANO" sh
 
 exit 0
