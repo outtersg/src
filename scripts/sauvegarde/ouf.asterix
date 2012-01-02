@@ -70,6 +70,7 @@ cat <<TERMINE
 - /Library/Application Support/CrashReporter/
 - /Library/Application Support/Freeciv/
 - /Library/Application Support/Firefox/
+- /Library/Application Support/Hewlett-Packard/
 - /Library/Application Support/irate/download/
 - /Library/Application Support/mlMac/temp/
 - /Library/Application Support/Freeware Update
