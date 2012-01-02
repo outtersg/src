@@ -57,14 +57,21 @@ auSecours()
 # Sauvegarde du \$HOME
 # © Guillaume Outters 2005
 
-Utilisation: $nom [-v] [-e] [--bete] [-d <dossier>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
+Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r <n min>] [-l <plien>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
   -v:                           blablateux.
   -e:                           écrabouille. La nouvelle sauvegarde écrase
                                 directement <dossier>, plutôt que d'en créer une
                                 incrémentale à côté avec dans le nom <préfixe>.
   --bete:                       destination disque bête (NTFS, etc.): pas de
                                 gestion des permissions.
+  --sans-acl:                   destination semi-intelligente (UFS, etc.):
+                                permissions, mais pas d'ACL.
   -d <dossier>:                 dossier source, plutôt que \$HOME.
+  -r <n min>:                   récupère une ancienne sauvegarde, s'il en existe
+                                plus de n min.
+  -l <plien>:                   lie ses fichiers à ceux de la dernière
+                                sauvegarde de préfixe <plien>. Par défaut
+                                <préfixe>.
   -p <port>:                    complément d'<ip>.
   <ip>:                         adresse IP de destination, pour une sauvegarde à
                                 distance.
