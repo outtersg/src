@@ -23,6 +23,7 @@ analyserParametres()
 			-e) ECRABOUILLE=1 ;;
 			-r) shift ; SEUIL_RECUP="$1" ;;
 			-d) shift ; SOURCE="$1" ;;
+			-l) shift ; P_LIEN="$1." ;;
 			--bete) bete=1 ;;
 			--sans-acl) bebete=1 ;;
 			*)
@@ -121,7 +122,8 @@ if [ -z "$ECRABOUILLE" ]
 then
 dest="$PREFIXE`date +%Y-%m-%d`"
 	[ -z "$SEUIL_RECUP" ] || premier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE"'" && touch -t 197910100826 "'"$PREFIXE"'" && ls -d1 "'"$PREFIXE"'"*/ | grep -v "^'"$PREFIXE"'[^0-9]" | sort -r | sed -e '\''s#/$##'\'' -e 1,'"$SEUIL_RECUP"'d | tail -1' | $SSH "$PANO" sh`"
-dernier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE"'" && touch -t 197910100826 "'"$PREFIXE"'" && ls -d1 "'"$PREFIXE"'"*/.ouf.complet | grep -v "'"$PREFIXE"'[^0-9]" | tail -1 | sed -e "s#/.ouf.complet##"' | $SSH "$PANO" sh`"
+	[ -z "$P_LIEN" ] && P_LIEN="$PREFIXE"
+	dernier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$P_LIEN"'" && touch -t 197910100826 "'"$P_LIEN"'" && ls -d1 "'"$P_LIEN"'"*/.ouf.complet | grep -v "^'"$P_LIEN"'[^0-9]" | tail -1 | sed -e "s#/.ouf.complet##"' | $SSH "$PANO" sh`"
 num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=0 ; until mkdir '"$dest"'.$((++c)) 2> /dev/null ; do true ; done ; echo $c' | $SSH "$PANO" sh`"
 [ "$num" = "" ] || dest="$dest.$num"
 	LIEN=(--link-dest="../$dernier")
