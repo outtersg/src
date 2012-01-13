@@ -1,0 +1,14 @@
+#!/bin/sh
+
+[ "x$1" = x-c ] && classique=1 && shift
+dest="$HOME/mp3"
+
+while [ $# -gt 0 ]
+do
+	attr=ARTIST
+	[ -z "$classique" ] || attr=COMPOSER
+	artiste="`ogginfo "$1" | grep "^[ 	]*$attr=" | sed -e 's/^[^=]*=//'`"
+	[ -z "$artiste" ] && continue
+	mkdir -p "$dest/$artiste" && mv -i "$1" "$dest/$artiste/"
+	shift
+done
