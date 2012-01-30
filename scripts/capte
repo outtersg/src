@@ -14,6 +14,21 @@ mount -t hfs $disque "$dest"
 dest="$dest/images"
 mkdir -p "$dest"
 
+cat > "$T/compote" <<TERMINE
+#!/bin/sh
+# Le processus compare part parfois en boucle infinie. On ôte la vie à tous ceux qu'on voit vivre 10 secondes ou plus.
+while true
+do
+	ps auxww -o etime | grep '[c]ompare' | sed -e 's/^[^ ]*  *//' -e 's/ .*:/ /' | grep '[1-9].\$' | while read i j
+	do
+		kill "\$i"
+		echo "Oups. Compare \$i trop long. On tue." >&2
+	done
+	sleep 5
+done
+TERMINE
+chmod u+x "$T/compote"
+
 cat > "$T/capatulte" <<TERMINE
 #!/bin/sh
 # Il arrive à imagesnap de planter un peu trop souvent: on l'enrobe pour le protéger.
@@ -26,9 +41,12 @@ chmod u+x "$T/capatulte"
 
 menage()
 {
-	ps auxww | grep apatulte | sed -e '/g[r]ep/d' | awk '{print $2}' | while read i
+	for pro in apatulte ompote
+	do
+		ps auxww | grep $pro | sed -e '/g[r]ep/d' | awk '{print $2}' | while read i
 	do
 		kill "$i"
+		done
 	done
 	killall imagesnap
 	cd
@@ -41,6 +59,8 @@ trap menage INT
 trap menage TERM
 
 cd "$dest"
+
+"$T/compote" &
 
 "$T/capatulte" &
 
