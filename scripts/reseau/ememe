@@ -24,6 +24,21 @@ analyserParametres()
 	stop=0
 	serveur=smtp.free.fr
 	port=25
+	auth=true
+	monfrom=guillaume.outters@free.fr
+	mamachine=82.240.30.31
+	
+	serveur=smtp.free.fr
+	port=587
+	auth=loginfree
+	monfrom=guillaume.outters@free.fr
+	mamachine=89.88.76.4
+	
+	serveur=mail.gclo.fr
+	port=25
+	auth=plaingclo
+	mamachine=mail.gclo.fr
+	
 	while [ $# -gt 0 ] ; do
 		case "$1" in
 			-h|--help) auSecours ;;
@@ -45,6 +60,16 @@ analyserParametres()
 
 analyserParametres "$@"
 
+loginfree()
+{
+	echo AUTH LOGIN ; sleep 1 ; echo Z3VpbGxhdW1lLm91dHRlcnM= ; sleep 1 ; echo cG9pcmVhdQ== ; sleep 1
+}
+
+plaingclo()
+{
+	echo AUTH PLAIN xxxxxxxxxx== ; sleep 1
+}
+
 [ "${#destinataires[@]}" -lt 1 ] && auSecours
 
 n=${#adresses[@]}
@@ -60,5 +85,4 @@ TERMINE
 `"
 done
 
-( echo EHLO 82.240.30.31 ; sleep 1 ; echo "MAIL FROM: <guillaume.outters@free.fr>" ; sleep 1 ; for adresse in ${destinataires[@]} ; do echo "RCPT TO: <$adresse>" ; sleep 1 ; done ; echo DATA ; sleep 1 ; awk '{if(corps){print;next}}/^$/{corps=1}/^  /{if(!vire)print;next}{vire=0}/^Delivered-To: /{vire=1}/^To: /{print "To: '"`n=${#adresses[@]} ; while [ $((--n)) -ge 0 ] ; do echo -n "${personnes[$n]} <${adresses[$n]}>,\\n  " ; done`"'"substr($0,5);next}{if(!vire)print}' ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | nc $serveur $port
-# while [ `date +%Y%m%d%H%M | cut -c 7-` -lt 190001 ] ; do sleep 10 ; done ; ( sleep 1 ; echo EHLO 89.88.76.4 ; sleep 1 ; echo AUTH LOGIN ; sleep 1 ; echo Z3VpbGxhdW1lLm91dHRlcnM= ; sleep 1 ; echo cG9pcmVhdQ== ; sleep 1 ; echo MAIL FROM: guillaume.outters@free.fr ; sleep 1 ; echo RCPT TO: outtersg@yahoo.fr ; sleep 1 ; echo RCPT TO: alixdenoray@yahoo.fr ; sleep 1 ; echo DATA ; sleep 1 ; sed -e '1d' -e '/^</,$d' -e 's/<.xml.*//' < 105597.emlx ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | telnet 212.27.48.4 587
+( sleep 1 ; echo EHLO $mamachine ; sleep 1 ; $auth ; echo "MAIL FROM: $monfrom" ; sleep 1 ; for adresse in ${destinataires[@]} ; do echo "RCPT TO: $adresse" ; sleep 1 ; done ; echo DATA ; sleep 1 ; read taille ; dd bs=$taille count=1 | awk '{if(corps){print;next}}/^$/{corps=1}/^  /{if(!vire)print;next}{vire=0}/^Delivered-To: /{vire=1}/^To: /{print "To: '"`n=${#adresses[@]} ; while [ $((--n)) -ge 0 ] ; do echo -n "${personnes[$n]} <${adresses[$n]}>,\\n  " ; done`"'"substr($0,5);next}{if(!vire)print}' ; sleep 1 ; echo . ; sleep 1 ; echo QUIT ; sleep 1 ) | nc $serveur $port
