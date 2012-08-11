@@ -1,6 +1,7 @@
 #!/bin/sh
 
 dest=/Users/gui/Downloads/camera
+ddest=l:tmp/camera/
 T=/tmp/temp.$$.capte
 mkdir -p "$T"
 
@@ -78,7 +79,7 @@ do
 		[ "$diff" = inf -o "$diff" -gt 25 ] && rm -f "$n" && continue
 	fi
 	[ -z "$ici" ] || cp "$n" "$ici/"
-	scp "$n" l:tmp/camera/
+	scp "$n" "$ddest"
 	a="$n"
 	[ -z "$ici" ] || find . -atime +1m -name \*.jpg -exec rm {} \;
 done
