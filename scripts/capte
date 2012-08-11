@@ -75,8 +75,8 @@ cd "$dest"
 # http://www.lavrsen.dk/foswiki/bin/view/Motion/WebHome
 while true
 do
-	sleep 1
 	n="`ls -tr | tail -1`"
+	sleep 1 # La pause est mise ici plutôt qu'avant: ce pour laisser au fichier le temps de finir de s'écrire, si on arrivait pile au moment de sa génération. En effet scp n'aime pas travailler sur un fichier en train d'être trituré (il se met à bloquer, et pas simplement le temps que le fichier se termine, mais indéfiniment).
 	[ "x$a" = "x$n" ] && continue
 	if [ -f "$a" -a $n != capte ]
 	then
