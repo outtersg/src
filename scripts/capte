@@ -18,6 +18,7 @@ mkdir -p "$dest"
 cat > "$T/compote" <<TERMINE
 #!/bin/sh
 # Le processus compare part parfois en boucle infinie. On ôte la vie à tous ceux qu'on voit vivre 10 secondes ou plus.
+# D'autre part, scp bloque aussi lorsque le fichier qu'il est en train de transférer disparaît soudain.
 while true
 do
 	ps auxww -o etime | grep '[c]ompare' | sed -e 's/^[^ ]*  *//' -e 's/ .*:/ /' | grep '[1-9].\$' | while read i j
