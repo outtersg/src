@@ -25,6 +25,11 @@ do
 		kill "\$i"
 		echo "Oups. Compare \$i trop long. On tue." >&2
 	done
+	ps -o pid,etime,args | grep '[s]cp.* $ddest' | sed -e 's/:\\([^ ]*\\).*/\\1/' | grep '[1-9].\$' | while read i j
+	do
+		kill "\$i"
+		echo "Oups. scp \$i trop long. On tue." >&2
+	done
 	sleep 5
 done
 TERMINE
