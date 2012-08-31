@@ -93,6 +93,7 @@ done
 osascript -e 'tell application "iTunes" to activate'
 osascript -e 'tell application "System Events" to set volume '"$VOLUME"
 osascript -e 'tell application "System Events" to set volume without output muted'
+osascript -e 'tell application "iTunes" to set the sound volume to 85'
 osascript -e 'tell application "iTunes" to play'
 
 # Parfois iTunes bloque sur un Ogg…
