@@ -66,6 +66,7 @@ cat <<TERMINE
 - /.darcs/cache/
 - /.spring/
 - /.thumbnails/
+- /Documents/Partagés/
 - /Downloads/
 - /Library/Application Support/CrashReporter/
 - /Library/Application Support/Freeciv/
