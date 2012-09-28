@@ -34,7 +34,7 @@ function faire()
 	oggenc -q 5 -o ${fichier} "$1/$2"
 	echo TRACKNUMBER=${numero} > /tmp/champs.encogg
 	champs TITLE ARTIST COMPOSER ALBUM DATE DISCNUMBER >> /tmp/champs.encogg
-	vorbiscomment -a -R -c /tmp/champs.encogg ${fichier} "/tmp/`champ 1`.ogg"
+	vorbiscomment -a -R -c /tmp/champs.encogg ${fichier} "/tmp/`champ 1 | tr / :`.ogg"
 	rm ${fichier}
 }
 
