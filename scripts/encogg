@@ -1,10 +1,6 @@
 #!/bin/bash
 
-if [ x"$1" == x ]
-then
-	echo '### Utilisation: '$0' <disque>'
-	exit 1
-fi
+absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`"
 
 function champ
 {
@@ -29,29 +25,77 @@ function champs
 function faire()
 {
 	true $((++numero))
-	#numero=`echo $2 | cut -d ' ' -f 1 | cut -d - -f 2`
+	if [ "x$1" = x-n ]
+	then
+		shift
+		piste=$1
+		shift
+	else
+		piste=$numero
+	fi
+	#fichier="`basename "$1"`"
+	#numero=`echo $fichier | cut -d ' ' -f 1 | cut -d - -f 2`
 	fichier=/tmp/${numero}.ogg
-	oggenc -q 5 -o ${fichier} "$1/$2"
-	echo TRACKNUMBER=${numero} > /tmp/champs.encogg
+	oggenc -q 5 -o ${fichier} "$1"
+	echo TRACKNUMBER=${piste} > /tmp/champs.encogg
 	champs TITLE ARTIST COMPOSER ALBUM DATE DISCNUMBER >> /tmp/champs.encogg
 	vorbiscomment -a -R -c /tmp/champs.encogg ${fichier} "/tmp/`champ 1 | tr / :`.ogg"
 	rm ${fichier}
 }
 
-echo Veuillez afficher dans iTunes les colonnes suivantes, dans cet ordre, et les
-echo coller ici, puis faites un Ctrl-D sur une ligne vide:
-echo Titre Interprète Compositeur Album Année Numéro de disque
-cat > /tmp/pistes.encogg
+faireEntreeStandard()
+{
+	echo Veuillez afficher dans iTunes les colonnes suivantes, dans cet ordre, et les
+	echo coller ici, puis faites un Ctrl-D sur une ligne vide:
+	echo Titre Interprète Compositeur Album Année Numéro de disque
+	cat > /tmp/pistes.encogg
 
-if [ ! `echo $1 | cut -d '/' -f 1` ]
+	if [ ! `echo $1 | cut -d '/' -f 1` ]
+	then
+		slashAuDebut=/
+	fi
+	sansSlash=`echo -n $1 | tr '/ ' ' *'`
+	sansSlash=`echo -n $sansSlash | tr ' *' '/ '`
+	numero=0
+	ls "$slashAuDebut$sansSlash" | sort -n | while read ligne
+	do
+		faire "$slashAuDebut$sansSlash/$ligne"
+	done
+}
+
+faireSelection()
+{
+	osascript "$SCRIPTS/encogg.applescript"
+	cut -d '	' -f 3- < /tmp/listeselection > /tmp/pistes.encogg
+	numero=0
+	cat /tmp/listeselection | cut -d '	' -f 1,2 | while read numPiste fichier
+	do
+		faire -n "$numPiste" "$fichier"
+	done
+	
+	# Les champs qui peuvent nous donner le titre sous lequel classer les morceaux: on prend la première des infos commune à toutes les pistes.
+	for i in 9 10 11 12 13 # Le dernier est un garde-fou, rempli avec toujours la même valeur (Various artists), donc apte à passer le filtre.
+	do
+		cat /tmp/listeselection | cut -d '	' -f $i | sort -u > /tmp/info
+		[ `wc -l < /tmp/info` -eq 1 -a `wc -c < /tmp/info` -gt 1 ] || continue # Il faut que le sort -u nous sort(e) une seule ligne, et composée de plus de caractères que du seul retour à la ligne.
+		lieu="`cat /tmp/info`"
+		break
+	done
+	mkdir -p "/Users/gui/mp3/Récup +/$lieu/"
+	mv /tmp/*.ogg "/Users/gui/mp3/Récup +/$lieu/"
+	until ping -W 2000 -c 1 falbala.lan > /dev/null
+	do
+		sleep 30
+	done
+	rsync -avz /Users/gui/mp3/ falbala.lan:"/Users/Shared/Musique\\ Guillaume/"
+	ssh falbala.lan 'sudo -u clotilde open -a iTunes /Users/Shared/Musique\ Guillaume/'
+}
+
+if [ x"$1" == x ]
 then
-	slashAuDebut=/
+	#echo '### Utilisation: '$0' <disque>'
+	#exit 1
+	faireSelection
+else
+	faireEntreeStandard "$@"
 fi
-sansSlash=`echo -n $1 | tr '/ ' ' *'`
-sansSlash=`echo -n $sansSlash | tr ' *' '/ '`
-numero=0
-ls "$slashAuDebut$sansSlash" | sort -n | while read ligne
-do
-	faire "$slashAuDebut$sansSlash" "$ligne"
-done
-
