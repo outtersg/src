@@ -52,7 +52,8 @@ case "$1" in
 		options=-e
 		;;
 	ks|l)
-		ajouts='- /mp3/;- /perso/Photos/'
+		#ajouts='- /mp3/;- /perso/Photos/'
+		ajouts='- /mp3/'
 		options=--sans-acl
 		;;
 esac
