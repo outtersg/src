@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ "x$1" = x-g ]
+then
+	shift
+	sqlite3 "$HOME/Library/Application Support/AddressBook/AddressBook-v22.abcddb" "select p.ZFIRSTNAME, p.ZLASTNAME, t.ZFULLNUMBER, t.ZLABEL, t.ZORDERINGINDEX from ZABCDRECORD p inner join ZABCDPHONENUMBER t on t.ZOWNER = p.Z_PK inner join Z_19PARENTGROUPS j on j.Z_19CONTACTS = p.Z_PK inner join ZABCDRECORD g on j.Z_15PARENTGROUPS1 = g.Z_PK where g.ZNAME like '%$1%' order by p.ZLASTNAME asc, p.ZFIRSTNAME asc, t.ZORDERINGINDEX asc"
+else
+	sqlite3 "$HOME/Library/Application Support/AddressBook/AddressBook-v22.abcddb" "select p.ZFIRSTNAME, p.ZLASTNAME, t.ZFULLNUMBER, t.ZLABEL, t.ZORDERINGINDEX from ZABCDRECORD p inner join ZABCDPHONENUMBER t on t.ZOWNER = p.Z_PK where ZLASTNAME like '%$1%' or ZFIRSTNAME like '%$1%' order by p.ZLASTNAME asc, p.ZFIRSTNAME asc, t.ZORDERINGINDEX asc"
+fi
