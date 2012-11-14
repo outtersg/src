@@ -48,6 +48,7 @@ cat <<TERMINE
 - /home/gui/sauvegardes/asterix.*
 - /home/gui/sauvegardes/falbala.*
 - /home/gui/tmp/camera
+- /home/gui/var/postgresql/base
 - /home/local/share
 - /home/local/ghc-*
 - /home/local/ocaml-*
