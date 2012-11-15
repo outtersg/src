@@ -46,9 +46,11 @@ analyserParametres()
 	dispo=
 	racine=
 	cache=non
+	vide=non
 	emplacement=
 	while [ $# -gt 0 ] ; do
 		case "$1" in
+			--vide) vide=oui ;;
 			-c) cache=oui ;;
 			-d) shift ; emplacement="$1" ;;
 			-r) shift ; racine="$1" ;;
@@ -154,7 +156,7 @@ $contact append "/users/$compte" passwd "*"
 
 [ $cache = oui ] && defaults write "$racine/Library/Preferences/com.apple.loginwindow" HiddenUsersList -array-add "$compte"
 
-if [ -d "$racine$emplacement" ]
+if [ -d "$racine$emplacement" -o $vide = oui ]
 then
 	true
 else
