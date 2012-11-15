@@ -104,6 +104,7 @@ cat <<TERMINE
 - /tmp/qemux/
 - /tmp/ouin/
 - /tmp/z/
+- /var/postgresql/
 TERMINE
 cat /tmp/temp.$$.ajouts | tr \; '\012'
 echo "$ajouts" | tr \; '\012'
