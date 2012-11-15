@@ -75,15 +75,22 @@ analyserParametres "$@"
 if [ "x$racine" = x ]
 then 
 	contact="nicl /"
+	command -v nicl || contact="dscl ."
 else
 	base="$racine/var/db/netinfo/local.nidb"
 	contact="nicl -raw $base"
+	if ! command -v nicl 2> /dev/null ; then echo "# Impossible de faire du dscl sur $racine (enfin ce script ne sait pas faire)." >&2 ; exit ; fi
 fi
 
+if command -v nicl 2> /dev/null
+then
 if [ ! -d "$racine/var/db/netinfo/local.nidb" ]
 then
 	echo "$racine/ ne ressemble pas à un Mac OS X." >&2
 	exit 1
+fi
+else
+true # Je ne sais pas détecter ça.
 fi
 
 [ -z "$emplacement" ] && emplacement="/Users/$compte"
@@ -91,20 +98,25 @@ fi
 
 $contact read "/users/$compte" > /dev/null 2>&1 && echo "Le compte $compte existe déjà." >&2 && exit 0
 
+niracine()
+{
+	[ "$racine" = "" ] && command -v nicl 2> /dev/null
+}
+
 dernierNum()
 {
-	if [ "$racine" = "" ]
+	if niracine
 	then
 		( nidump group / | cut -d : -f 3 ; nidump passwd / | cut -d : -f 3 )
 	else
 		$contact list /users | awk '{print "/users/"$2}' | while read existant
 		do
 			$contact read "$existant" uid
-		done | sed -e 's/^uid: //'
+		done | sed -e 's/^.*uid: //'
 		$contact list /groups | awk '{print "/groups/"$2}' | while read existant
 		do
 			$contact read "$existant" gid
-		done | sed -e 's/^gid: //'
+		done | sed -e 's/^.*gid: //'
 	fi | sort -n | tail -1
 }
 
@@ -112,9 +124,13 @@ if [ "x$dispo" = x ]
 then
 	dispo="`dernierNum`"
 	true $((++dispo))
-else
+elif command -v nicl 2> /dev/null
+then
 	$contact read "/users/uid=$dispo" > /dev/null 2>&1 && echo "L'uid $dispo est déjà pris." >&2 && exit 1
 	$contact read "/users/gid=$dispo" > /dev/null 2>&1 && echo "Le gid $dispo est déjà pris." >&2 && exit 1
+else
+	$contact search "/users" uid $dispo 2> /dev/null | grep -q . && echo "L'uid $dispo est déjà pris." >&2 && exit 1
+	$contact search "/groups" gid $dispo 2> /dev/null | grep -q . && echo "Le gid $dispo est déjà pris." >&2 && exit 1
 fi
 
 $contact create "/groups/$compte"
