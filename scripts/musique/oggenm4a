@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# find . -type f -name \*.ogg -print0 | xargs -0 /tmp/oggenm4a
+
+# Sans cela, ogginfo sort les accents graves en `A, qui foutent la grouille dans notre temp.$$.oggenm4a (et font moche).
+LC_ALL=fr_FR.UTF-8
+LANG=fr_FR.UTF-8
+export LC_ALL LANG
+
+for i in "$@"
+do
+	i2="`echo "$i" | sed -e 's/\.ogg/\.m4a/'`"
+	[ -e "$i2" ] && continue
+	echo "$i..."
+	cat > /tmp/temp.$$.oggenm4a <<TERMINE
+#!/bin/sh
+source="\$1"
+dest="\$2"
+ffmpeg -v quiet -i "\$source" -ab 160k -strict -2 \\
+TERMINE
+	ogginfo "$i" | sed -e '/^[ 	]*\([A-Z]*=\)/!d' -e 's// -metadata \1/' -e 's/"/\\"/g' -e 's/=/="/' -e 's/$/" \\/' -e 's/TRACKNUMBER/track/' -e 's/TITLE/title/' -e 's/ARTIST/artist/' -e 's/COMPOSER/composer/' -e 's/ALBUM/album/' -e 's/DATE/year/' -e '/-metadata [A-Z]*=/d' >> /tmp/temp.$$.oggenm4a
+	echo "\"\$dest\"" >> /tmp/temp.$$.oggenm4a
+	chmod u+x /tmp/temp.$$.oggenm4a
+	/tmp/temp.$$.oggenm4a "$i" "$i2"
+done
