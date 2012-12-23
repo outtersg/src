@@ -1,9 +1,10 @@
+on run argv
+	set cheminTmp to POSIX file (item 1 of argv)
 tell application "iTunes"
 	set liste to selection
-	if number of items of liste is 0 then
+	if number of items of liste is less than 2 then
 		set liste to tracks of source 2
 	end if
-	set cheminTmp to POSIX file "/tmp/listeselection"
 	try
 		close access cheminTmp
 	end try
@@ -18,3 +19,4 @@ tell application "iTunes"
 	end repeat
 	close access tmp
 end tell
+end run
