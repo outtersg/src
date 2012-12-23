@@ -2,9 +2,13 @@
 
 absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`"
 
+TMP=/tmp/temp.$$.encogg
+temp=$TMP/morceaux
+mkdir -p "$temp"
+
 function champ
 {
-	cat /tmp/pistes.encogg | awk FNR==${numero} | cut -f $1
+	cat $TMP/pistes.encogg | awk FNR==${numero} | cut -f $1
 }
 
 function champs
@@ -22,6 +26,30 @@ function champs
 	done
 }
 
+function convertir_ogg()
+{
+	fichier="$temp/`champ 1 | tr / :`.ogg"
+	fichier1=$temp/${numero}.ogg
+	oggenc -q 5 -o "$fichier1" "$1"
+	echo TRACKNUMBER=${piste} > $TMP/champs.encogg
+	champs TITLE ARTIST COMPOSER ALBUM DATE DISCNUMBER >> $TMP/champs.encogg
+	vorbiscomment -a -R -c $TMP/champs.encogg "$fichier1" "$fichier"
+	rm "$fichier1"
+}
+
+function convertir_m4a()
+{
+	fichier="$temp/`champ 1 | tr / :`.m4a"
+	ffmpeg -v quiet -i "$1" -ab 160k -strict -2 \
+		-metadata track="$piste" \
+		-metadata title="`champ 1`" \
+		-metadata artist="`champ 2`" \
+		-metadata composer="`champ 3`" \
+		-metadata album="`champ 4`" \
+		-metadata year="`champ 5`" \
+		"$fichier" < /dev/null # Cet abruti me bouffe mon entrée standard.
+}
+
 function faire()
 {
 	true $((++numero))
@@ -35,12 +63,10 @@ function faire()
 	fi
 	#fichier="`basename "$1"`"
 	#numero=`echo $fichier | cut -d ' ' -f 1 | cut -d - -f 2`
-	fichier=/tmp/${numero}.ogg
-	oggenc -q 5 -o ${fichier} "$1"
-	echo TRACKNUMBER=${piste} > /tmp/champs.encogg
-	champs TITLE ARTIST COMPOSER ALBUM DATE DISCNUMBER >> /tmp/champs.encogg
-	vorbiscomment -a -R -c /tmp/champs.encogg ${fichier} "/tmp/`champ 1 | tr / :`.ogg"
-	rm ${fichier}
+	
+	printf "($format) Piste $piste... " > /dev/tty
+	convertir_$format "$@"
+	basename "$fichier" > /dev/tty
 }
 
 faireEntreeStandard()
@@ -48,7 +74,7 @@ faireEntreeStandard()
 	echo Veuillez afficher dans iTunes les colonnes suivantes, dans cet ordre, et les
 	echo coller ici, puis faites un Ctrl-D sur une ligne vide:
 	echo Titre Interprète Compositeur Album Année Numéro de disque
-	cat > /tmp/pistes.encogg
+	cat > $TMP/pistes.encogg
 
 	if [ ! `echo $1 | cut -d '/' -f 1` ]
 	then
@@ -65,32 +91,43 @@ faireEntreeStandard()
 
 faireSelection()
 {
-	osascript "$SCRIPTS/encogg.applescript"
-	cut -d '	' -f 3- < /tmp/listeselection > /tmp/pistes.encogg
+	osascript "$SCRIPTS/encogg.applescript" "$TMP/listeselection"
+	cut -d '	' -f 3- < $TMP/listeselection > $TMP/pistes.encogg
 	numero=0
-	cat /tmp/listeselection | cut -d '	' -f 1,2 | while read numPiste fichier
+	cat $TMP/listeselection | cut -d '	' -f 1,2 | while read numPiste fichierOrigine
 	do
-		faire -n "$numPiste" "$fichier"
+		faire -n "$numPiste" "$fichierOrigine"
 	done
 	
 	# Les champs qui peuvent nous donner le titre sous lequel classer les morceaux: on prend la première des infos commune à toutes les pistes.
 	for i in 9 10 11 12 13 # Le dernier est un garde-fou, rempli avec toujours la même valeur (Various artists), donc apte à passer le filtre.
 	do
-		cat /tmp/listeselection | cut -d '	' -f $i | sort -u > /tmp/info
-		[ `wc -l < /tmp/info` -eq 1 -a `wc -c < /tmp/info` -gt 1 ] || continue # Il faut que le sort -u nous sort(e) une seule ligne, et composée de plus de caractères que du seul retour à la ligne.
-		lieu="`cat /tmp/info`"
+		cat $TMP/listeselection | cut -d '	' -f $i | sort -u > $TMP/info
+		[ `wc -l < $TMP/info` -eq 1 -a `wc -c < $TMP/info` -gt 1 ] || continue # Il faut que le sort -u nous sort(e) une seule ligne, et composée de plus de caractères que du seul retour à la ligne.
+		lieu="`cat $TMP/info`"
 		break
 	done
-	mkdir -p "/Users/gui/mp3/Récup +/$lieu/"
-	mv /tmp/*.ogg "/Users/gui/mp3/Récup +/$lieu/"
+	mkdir -p "$dest/Récup +/$lieu/"
+	mv $temp/* "$dest/Récup +/$lieu/"
+	if [ $transferer = x ]
+	then
 	until ping -W 2000 -c 1 falbala.lan > /dev/null
 	do
 		sleep 30
 	done
-	rsync -avz /Users/gui/mp3/ falbala.lan:"/Users/Shared/Musique\\ Guillaume/"
+		rsync -avz "$dest/" falbala.lan:"/Users/Shared/Musique\\ Guillaume/"
 	ssh falbala.lan 'sudo -u clotilde open -a iTunes /Users/Shared/Musique\ Guillaume/'
+	fi
 }
 
+quefaire=ogg:.:/Users/gui/mp3
+quefaire="m4a:x:/tmp/mp3 $quefaire" # Si c'est pour Clo, c'est pour l'iPhone, donc AAC.
+
+for passe in $quefaire
+do
+	format="`echo "$passe" | cut -d : -f 1`"
+	transferer="`echo "$passe" | cut -d : -f 2`"
+	dest="`echo "$passe" | cut -d : -f 3-`"
 if [ x"$1" == x ]
 then
 	#echo '### Utilisation: '$0' <disque>'
@@ -99,3 +136,6 @@ then
 else
 	faireEntreeStandard "$@"
 fi
+done
+
+rm -R $TMP/
