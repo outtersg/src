@@ -9,7 +9,8 @@ fais_par_groupe()
 
 if [ -z "$1" ]
 then
-	grep '^fais_' < "$MOI" >&2
+	echo "# Veuillez choisir un mode:" >&2
+	sed -e '/^fais_/!d' -e 's//  /' -e 's/()//' < "$MOI" >&2
 else
 	commande="fais_$1"
 	shift
