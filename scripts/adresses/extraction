@@ -2,6 +2,16 @@
 
 absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; MOI="$SCRIPTS" ; SCRIPTS="`dirname "$SCRIPTS"`"
 
+fais_telgroupe()
+{
+	sqlite3 AddressBook-v22.abcddb "select p.ZFIRSTNAME, p.ZLASTNAME, t.ZFULLNUMBER, t.ZLABEL, t.ZORDERINGINDEX from ZABCDRECORD p inner join ZABCDPHONENUMBER t on t.ZOWNER = p.Z_PK inner join Z_19PARENTGROUPS j on j.Z_19CONTACTS = p.Z_PK inner join ZABCDRECORD g on j.Z_15PARENTGROUPS1 = g.Z_PK where g.ZNAME like '%$1%' order by p.ZLASTNAME asc, p.ZFIRSTNAME asc, t.ZORDERINGINDEX asc"
+}
+
+fais_tel()
+{
+	sqlite3 AddressBook-v22.abcddb "select p.ZFIRSTNAME, p.ZLASTNAME, t.ZFULLNUMBER, t.ZLABEL, t.ZORDERINGINDEX from ZABCDRECORD p inner join ZABCDPHONENUMBER t on t.ZOWNER = p.Z_PK where ZLASTNAME like '%$1%' or ZFIRSTNAME like '%$1%' order by p.ZLASTNAME asc, p.ZFIRSTNAME asc, t.ZORDERINGINDEX asc"
+}
+
 fais_par_groupe()
 {
 	sqlite3 AddressBook-v22.abcddb "select g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME from ZABCDRECORD p inner join Z_19PARENTGROUPS j on j.Z_19CONTACTS = p.Z_PK inner join ZABCDRECORD g on j.Z_15PARENTGROUPS1 = g.Z_PK order by g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME asc" | sed -e 's/|/;/' -e 's/|/ /' -e 's/|.*//' #| iconv -t cp1252
