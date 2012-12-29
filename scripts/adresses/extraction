@@ -2,8 +2,6 @@
 
 absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; MOI="$SCRIPTS" ; SCRIPTS="`dirname "$SCRIPTS"`"
 
-cd "$HOME/Library/Application Support/AddressBook"
-
 fais_par_groupe()
 {
 	sqlite3 AddressBook-v22.abcddb "select g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME from ZABCDRECORD p inner join Z_19PARENTGROUPS j on j.Z_19CONTACTS = p.Z_PK inner join ZABCDRECORD g on j.Z_15PARENTGROUPS1 = g.Z_PK order by g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME asc" | sed -e 's/|/;/' -e 's/|/ /' -e 's/|.*//' > /tmp/groupes.csv
@@ -13,5 +11,15 @@ if [ -z "$1" ]
 then
 	grep '^fais_' < "$MOI" >&2
 else
-
+	commande="fais_$1"
+	shift
+	if [ "x$1" = x-d ]
+	then
+		shift
+		cd "$1"
+		shift
+	else
+		cd "$HOME/Library/Application Support/AddressBook"
+	fi
+	$commande "$@"
 fi
