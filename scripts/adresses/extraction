@@ -4,7 +4,7 @@ absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`d
 
 fais_par_groupe()
 {
-	sqlite3 AddressBook-v22.abcddb "select g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME from ZABCDRECORD p inner join Z_19PARENTGROUPS j on j.Z_19CONTACTS = p.Z_PK inner join ZABCDRECORD g on j.Z_15PARENTGROUPS1 = g.Z_PK order by g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME asc" | sed -e 's/|/;/' -e 's/|/ /' -e 's/|.*//' > /tmp/groupes.csv
+	sqlite3 AddressBook-v22.abcddb "select g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME from ZABCDRECORD p inner join Z_19PARENTGROUPS j on j.Z_19CONTACTS = p.Z_PK inner join ZABCDRECORD g on j.Z_15PARENTGROUPS1 = g.Z_PK order by g.ZNAME, p.ZFIRSTNAME, p.ZLASTNAME asc" | sed -e 's/|/;/' -e 's/|/ /' -e 's/|.*//' #| iconv -t cp1252
 }
 
 if [ -z "$1" ]
