@@ -1,0 +1,17 @@
+#!/bin/sh
+
+for f in "$@"
+do
+	if xattr "$f" | grep -q ResourceFork
+	then
+		if DeRez "$f" | grep -v '^	' | grep -v '^};' | grep -v 'data .icns' | grep -v '^$' | grep -q .
+		then
+			true
+		else
+			touch -r "$f" /tmp/h
+			rm -f "$f/rsrc"
+			touch -r /tmp/h "$f"
+		fi
+	fi
+	xattr "$f" | grep -q com.apple.FinderInfo && xattr -d com.apple.FinderInfo "$f"
+done
