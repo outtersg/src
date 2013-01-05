@@ -80,8 +80,10 @@ cat <<TERMINE
 - /Library/Logs/
 - /Library/Mail/Envelope Index
 - /Library/Mail/IMAP-guout@*/
+- /Library/Mail/*/*.imapmbox/Attachments/
 - /Library/Mail/LSMMap2
 - /Library/Mail/Mailboxes/Spam/
+- /Library/Mail Downloads/
 - /Library/Mailboxes/*(Smile)*
 - /Library/Preferences/Macromedia/Flash Player/
 - /Library/PubSub
