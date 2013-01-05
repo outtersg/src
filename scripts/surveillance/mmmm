@@ -1,0 +1,26 @@
+#!/bin/sh
+
+curl -s 'http://mmmm.free.fr/info/gourmet-91e0ee2f558df9f95b3ab023d2716336-Guillaume+O..html' | grep 'http://mmmm.free.fr/resto/[0-9]*.html' | LANG=C LC_ALL=C sed -e 's/.*href="//' -e 's/".*//' -e 's#.html#f.html#' | sort -u | while read i
+do
+	curl -s "$i"
+done | awk '
+{if(titre)titre=titre"\n"$0}
+{if(pseudo)pseudo=pseudo$0}
+/<p class="pseudo">.*>Guillaume O\.</{gsub(/<[^>]*>/,"",comm);gsub(/&nbsp;/," ",comm);gsub(/&euro;/,"€",comm);print comm;comm=0;pseudo=$0}
+{if(comm)comm=comm"\n"$0}
+/<h1/{titre=$0}
+/<p class="comment"/{comm=$0}
+/<p class="pseudo"/{comm=0}
+/<\/p/{if(pseudo){gsub(/<[^>]*>/,"",pseudo);gsub(/\[[^]]*\]/,"",pseudo);print pseudo;pseudo=0}}
+/<\/h1/{gsub(/<[^>]*>/,"",titre);gsub(/Mmmm !!!/,"",titre);gsub(/\n/,"",titre);print "\n=== "titre;titre=0}
+' | iconv -f cp1252 | sed -e '/^===/a\
+------------
+' -e '/^Guillaume O\./a\
+------------
+' | sed -e 's/^------------$//' | sed -e '/^$/{
+x
+s/./a/
+g
+t
+d
+}' -e h
