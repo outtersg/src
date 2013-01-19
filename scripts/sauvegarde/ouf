@@ -123,6 +123,10 @@ fi
 
 [ -z "$PANO" -o -z "$PREFIXE" ] && auSecours
 
+# Préparation du terrain distant.
+
+echo 'cd "$HOME" && cd "'"$DOSSIER"'" && chmod 700 "'"$PREFIXE"'"*/' | $SSH "$PANO" sh # Il se peut que nous ayons rendu illisibles tous les répertoires, afin d'éviter à updatedb ou mdfind de les parcourir.
+
 # Détermination de la vraie destination.
 
 if [ -z "$ECRABOUILLE" ]
@@ -173,6 +177,7 @@ fi
 (
 	echo -n 'cd "$HOME" && cd "'"$DOSSIER"'" && touch "'"$dest"'/.ouf.complet"'
 	[ ! -z "$postdest" ] && echo -n " && [ \`ls '$postdest' | wc -l\` = 0 ] && rm -R '$postdest' && mv '$dest' '$postdest'" && dest="$postdest" # postdest a normalement été créé juste un peu au-dessus, donc on peut le supprimer sans soucis.
+	echo -n ' && chmod 000 "'"$PREFIXE"'"*/ && chmod 700 "'"$dest"'"' # Afin d'éviter que les recherches système ne parcourent toutes les sauvegardes, on ne rend lisible que l'actuelle.
 	[ -z "$ECRABOUILLE" ] && echo -n ' && rm -f "'"$PREFIXE"'dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'dernier"'
 	echo
 ) | $SSH "$PANO" sh
