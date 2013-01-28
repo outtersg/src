@@ -1,0 +1,3 @@
+#!/bin/sh
+/bin/launchctl unload /Users/clotildedognin/Library/LaunchAgents/eu.outters.fichiersCopiesEnPressePapier.plist
+/bin/launchctl load /Users/clotildedognin/Library/LaunchAgents/eu.outters.fichiersCopiesEnPressePapier.plist
