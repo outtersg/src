@@ -1,0 +1,19 @@
+#!/bin/sh
+
+surv="$1"
+dest="$2"
+[ -d "$surv" -a -d "$dest" ] || exit 1
+
+derniers="$dest/.exposerFluxDePhotos.derniers"
+# On prend une période assez large, l'iPhone pouvant n'être pas forcément à l'heure.
+find "$surv/" -mtime -5d -name \*.JPG | sed -e 's#//#/#' | while read chemin
+do
+	fichier="`basename "$chemin"`"
+	echo "$fichier" >> "$derniers.temp"
+	[ -e "$dest/$fichier" ] && continue
+	grep -q "^$fichier$" < "$derniers" && continue
+	
+	ln "$chemin" "$dest/$fichier"
+done
+
+mv "$derniers.temp" "$derniers"

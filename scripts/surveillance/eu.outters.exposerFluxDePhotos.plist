@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>Disabled</key>
+		<false/>
+		<key>Label</key>
+		<string>eu.outters.exposerFluxDePhotos</string>
+		<key>Program</key>
+		<string>/Users/gui/bin/eu.outters.exposerFluxDePhotos</string>
+		<key>ProgramArguments</key>
+		<array>
+			<string>/Users/gui/bin/eu.outters.exposerFluxDePhotos</string>
+			<string>/Users/clotildedognin/Library/Application Support/iLifeAssetManagement/assets/sub</string>
+			<string>/Users/clotildedognin/Pictures/Photos iPhone</string>
+		</array>
+		<key>WatchPaths</key>
+		<array>
+			<string>/Users/clotildedognin/Library/Application Support/iLifeAssetManagement/assets/sub</string>
+		</array>
+	</dict>
+</plist>
