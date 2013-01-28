@@ -1,0 +1,9 @@
+#!/bin/sh
+
+liste=/tmp/fichiersCopiesEnPressePapier
+surv="$1"
+http="$2"
+[ -e "$liste" ] && find "$liste" -mtime +1h && > "$liste"
+find "$surv/" -mtime -5m ! -name .\* | grep -v "^$surv$" | sed -e 's#//#/#' >> "$liste"
+sort -u < "$liste" > "$liste.0" && mv "$liste.0" "$liste"
+php -r 'while(($l = fgets(STDIN)) !== false) { echo "'"$http"'/".implode("/", array_map("rawurlencode", explode("/", substr(rtrim($l, "\n"), strlen("'"$surv"'") + 1))))."\n"; }' < "$liste" | pbcopy
