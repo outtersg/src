@@ -1,0 +1,14 @@
+#!/bin/sh
+# Peut être pour fiabiliser à la fois intégré à un cron et déclenché sur changement de fichiers.
+
+source="$1"
+dest="$2"
+
+[ -e "$source/.deja.flute" ] || touch "$source/.deja.flute"
+( cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/.nouveaux.flute"
+while true
+do
+	rsync --exclude-from=- < "$source/.deja.flute" -av "$source/" "$dest/" && mv "$source/.nouveaux.flute" "$source/.deja.flute"
+	sleep 2
+	[ `find "$source" -newer "$source/.deja.flute" | wc -l` -eq 0 ] || break
+done
