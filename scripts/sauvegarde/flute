@@ -5,10 +5,10 @@ source="$1"
 dest="$2"
 
 [ -e "$source/.deja.flute" ] || touch "$source/.deja.flute"
-( cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/.nouveaux.flute"
 while true
 do
-	rsync --exclude-from=- < "$source/.deja.flute" -av "$source/" "$dest/" && mv "$source/.nouveaux.flute" "$source/.deja.flute"
+	( cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/.nouveaux.flute"
+	rsync --exclude-from=- < "$source/.deja.flute" -av "$source/" "$dest/" && mv "$source/.nouveaux.flute" "$source/.deja.flute" || break
 	sleep 2
-	[ `find "$source" -newer "$source/.deja.flute" | wc -l` -eq 0 ] || break
+	[ `find "$source" -type f -newer "$source/.deja.flute" | wc -l` -ne 0 ] || break
 done
