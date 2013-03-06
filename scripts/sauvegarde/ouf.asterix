@@ -93,6 +93,7 @@ cat <<TERMINE
 - /Library/xes
 - /Music/iTunes/iTunes Music/
 - /Public/Drop Box/
+- /VirtualBox VMs/
 - /Wine Files/
 - /internet/**/imagettes
 - /internet/**/photos/
