@@ -1,0 +1,71 @@
+#!/bin/sh
+
+set -e
+
+mkdir $HOME/tmp/temp.$$.darcsise
+cd $HOME/tmp/temp.$$.darcsise
+
+d=`date +%Y-%m-%d`
+
+mkdir 006
+ssh 006 "cd /Users/sauvegardes/ && chmod u+rx *.20*/ && tar czf /tmp/hop.tar.gz *.20*/home/gui/src/installs && cd && tar czf /tmp/hap.tar.gz src/installs && scp /tmp/h[ao]p.tar.gz l:`pwd`/006/"
+( cd 006 && tar xzf hop.tar.gz && tar xzf hap.tar.gz )
+
+nom()
+{
+	basename "$1" | sed -e 's#^\([^.]*\).\([-0-9.]*\)#\2.\1#'
+}
+mkdir copies
+for i in 006/*.20*
+do
+	mv "$i/home/gui/src/installs" "copies/`nom "$i"`"
+done
+mv 006/src/installs "copies/$d.asterix2"
+for i in /home/gui/sauvegardes/asterix.2*
+do
+	chmod u+rx "$i"
+	cp -Rl "$i/src/installs" "copies/`nom "$i"`"
+done
+cp -Rl "$HOME/src/installs" "copies/$d.ls2"
+
+rm -R copies/*/liste.* copies/*/liste\ * copies/*/chatlog copies/*/.deps copies/*/haskell/haskell copies/*/installs
+find copies -type l -exec rm {} \;
+
+# On supprime ceux qui, à une date, sont identiques à un fichier déjà rencontré auparavant. Ainsi, si on a d1.A, d2.B, d3.A, avec d3.A = d1.A, on sait que le fichier n'a pas bougé sur la plate-forme A, et donc on n'écrasera pas d2.B par d3.A.
+> liste
+find copies -type f | while read f
+do
+	c=`cksum "$f" | cut -d ' ' -f 1`
+	grep -q ^$c$ < liste && rm "$f" && continue
+	echo "$c" >> liste
+done
+
+mkdir travail
+( cd travail && darcs init )
+darcs get travail sas
+mkdir final
+( cd final && darcs init )
+for i in copies/*
+do
+	( cd $i && tar cf - . ) | ( cd travail && tar xf - )
+	( cd travail && echo "# C'est parti. Enregistrez vos modifs sous darcs, puis quand cet ensemble de fichier aura été traité, passez au suivant en sortant du shell (^D)." >&2 && bash )
+	( cd sas && darcs pull --dry-run -a --xml-output ) | grep hash= | while read i
+	do
+		h="`echo "$i" | sed -e "s/.*hash='//" -e "s/'.*//"`"
+		( cd sas && darcs pull -a --matches="hash $h" )
+		rsync -a --exclude _darcs sas/ final/
+#( cd final && dw -sl ) | cat
+		( cd final && dw -sl ) | grep ^a | cut -c 3- | tr '\012' '\000' > temp.add
+		cat temp.add | ( cd final && xargs -0 darcs add )
+# Alors là on cause, juste parce qu'apparemment si on va trop vite dans notre boucle, darcs perd les pédales.
+#(
+#( cd final && dw -sl ) | cut -c 3-  | tr '\012' '\000' | ( cd travail && xargs -0 stat -f %Sm -t "%Y%m%d%H%M%S" ) | sort | tail -1
+#( cd sas && darcs log --matches="hash $h" ) | sed -e '1s/.*  //' -e '2s/^  \* //' -e '3,$s/^  //'
+#)
+		(
+			( cd final && dw -sl ) | cut -c 3-  | sed -e 's/ [-+][0-9].*//' | tr '\012' '\000' | ( cd travail && xargs -0 stat -f %Sm -t "%Y%m%d%H%M%S" ) | sort | tail -1
+			( cd sas && darcs log --matches="hash $h" ) | sed -e '1s/.*  //' -e '2s/^  \* //' -e '3,$s/^  //'
+		) > temp.record
+		cat temp.record | ( cd final && darcs record -a --pipe )
+	done
+done
