@@ -65,10 +65,31 @@ d
 }' -e 's/^  \* //' -e 's/:.*$//' | tr , '\012' | derniereRevision`
 }
 
-options="-a"
+datation()
+{
+	dernierFichier="`ls -td "$@" 2> /dev/null | head -1`"
+	dateDernierFichier="`stat -f "%m" "$dernierFichier"`"
+	date -r "$dateDernierFichier" "+%Y-%m-%d %H:%M:%S"
+}
+
+#options="-a"
 [ "x$1" = x-d ] && shift && options=
 [ "x$1" = x-n ] && shift && options="$options --no-test"
-echo "$1" > /tmp/$$
+[ "`basename "$0"`" = et ] && tempsFichiers=oui # Bon, au final ça ne marche guère.
+> /tmp/$$
+if [ "$tempsFichiers" = oui ]
+then
+	options="$options --pipe"
+	datation "$@"
+	(
+		while [ ! -d "_darcs" -a ! "`pwd`" = / ]
+		do
+			cd ..
+		done
+		sed -e 's/ *#.*$//' -e '/^ *$/d' < _darcs/prefs/author
+	)
+fi >> /tmp/$$.2
+echo "$1" >> /tmp/$$
 shift
 if [ $# -gt 0 ] ; then
 	echo "$1" | tr '|' '\012'
@@ -76,5 +97,10 @@ if [ $# -gt 0 ] ; then
 else
 	cat
 fi >> /tmp/$$
-$DARCS record $options --logfile=/tmp/$$ "$@"
+if [ "$tempsFichiers" = oui ]
+then
+	( cat /tmp/$$.2 ; cat ) | $DARCS record $options --logfile=/tmp/$$ "$@"
+else
+	$DARCS record $options --logfile=/tmp/$$ "$@"
+fi
 rm /tmp/$$
