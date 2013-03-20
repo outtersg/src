@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <arpa/inet.h>
 
 int main(int argc, char ** argv)
 {
 	char C[256];
-	int pos, val;
+	int pos;
+	uint32_t val;
 	int decalage, bits;
 	signed char c;
 
@@ -32,7 +34,9 @@ int main(int argc, char ** argv)
 			val |= c << decalage;
 			if((decalage -= 6) < 0)
 			{
+				val = htonl(val);
 				fwrite(&val, 1, bits = (26 - decalage) / 8, stdout); /* On écrit tous les octets complets */
+				val = ntohl(val);
 				val <<= (bits *= 8);
 				decalage += bits;
 			}
@@ -40,7 +44,10 @@ int main(int argc, char ** argv)
 	}
 	
 	if(decalage <= 18) /* Si nous avons au moins un octet de "plein" */
+	{
+		val = htonl(val);
 		fwrite(&val, 1, bits = (26 - decalage) / 8, stdout);
+	}
 
 	return(0);
 }
