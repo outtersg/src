@@ -1,0 +1,9 @@
+#!/bin/sh
+
+curl -s http://www.senat.fr/senateurs/senatl.html > /tmp/1
+export LANG=C LC_ALL=C
+grep 'href="/senateur/' < /tmp/1 | sed -e 's#.*href="##' -e 's#".*##' | while read i
+do
+	curl -s http://www.senat.fr$i | grep link-color
+done | sed -e 's#.*href="mailto:##' -e 's#".*##'
+
