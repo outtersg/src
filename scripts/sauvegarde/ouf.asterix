@@ -111,6 +111,6 @@ cat <<TERMINE
 TERMINE
 cat /tmp/temp.$$.ajouts | tr \; '\012'
 echo "$ajouts" | tr \; '\012'
-) | ouf "$options" -v "$dest" 
+) | ouf $options -v "$dest" 
 
 rm /tmp/temp.$$.ajouts
