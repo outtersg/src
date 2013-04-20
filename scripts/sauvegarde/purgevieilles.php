@@ -15,11 +15,15 @@ $periodes = array
 $fichiers = "/Users/gui/Downloads/Mail.%d-%d:%d.tar.gz";
 
 $faire = true;
+$suffixe = null;
 array_shift($argv);
 while(($arg = array_shift($argv)) !== null)
 {
 	switch($arg)
 	{
+		case '--suffixer':
+			$suffixe = array_shift($argv);
+			break;
 		case '-p':
 			$arg = array_shift($argv);
 			$arg = strtr($arg, ',;', '::');
@@ -57,8 +61,10 @@ function extraireDate($fichier, $schemaNomFichiers)
 }
 
 $t = array();
-$fichiersGlob = preg_replace('/%[a-z]/', '*', $fichiers);
+$fichiersGlob = preg_replace('/%[a-z]|\([^)]*\)/', '*', $fichiers);
+$expr = '#^'.preg_replace('#%[a-z]#', '[0-9]+', $fichiers).'$#';
 foreach(glob($fichiersGlob) as $fichier)
+	if(preg_match($expr, $fichier))
 	$t[extraireDate($fichier, $fichiers)] = $fichier;
 ksort($t);
 
@@ -86,6 +92,8 @@ foreach($t as $d => $fichier)
 	
 	if(!$faire)
 		echo '- '.$fichier."\n";
+	else if(isset($suffixe))
+		rename($fichier, $fichier.'.'.$suffixe);
 	else
 		unlink($fichier);
 }
