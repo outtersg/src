@@ -148,7 +148,7 @@ dest="$PREFIXE`date +%Y-%m-%d`"
 	fi
 	[ -z "$P_LIEN" ] && P_LIEN="$PREFIXE"
 	dernier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$P_LIEN"'" && touch -t 197910100826 "'"$P_LIEN"'" && ls -d1 "'"$P_LIEN"'"*/.ouf.complet | grep -v "^'"$P_LIEN"'[^0-9]" | tail -1 | sed -e "s#/.ouf.complet##"' | $SSH "$PANO" sh`"
-num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=0 ; until mkdir '"$dest"'.$((++c)) 2> /dev/null ; do true ; done ; echo $c' | $SSH "$PANO" sh`"
+num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=1 ; until mkdir '"$dest"'.$c 2> /dev/null ; do c=\`expr $c + 1\` ; done ; echo $c' | $SSH "$PANO" sh`"
 [ "$num" = "" ] || dest="$dest.$num"
 	LIEN=(--link-dest="../$dernier")
 	if [ ! -z "$premier" ]
