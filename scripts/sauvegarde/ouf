@@ -55,7 +55,7 @@ auSecours()
 	cat >&2 << TERMINE
 # $nom
 # Sauvegarde du \$HOME
-# © Guillaume Outters 2005
+# © Guillaume Outters 2005-2013
 
 Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<suffixe>)] [-l <plien>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
   -v:                           blablateux.
