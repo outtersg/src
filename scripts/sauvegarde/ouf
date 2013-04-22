@@ -57,7 +57,7 @@ auSecours()
 # Sauvegarde du \$HOME
 # © Guillaume Outters 2005
 
-Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r <n min>] [-l <plien>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
+Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<suffixe>)] [-l <plien>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
   -v:                           blablateux.
   -e:                           écrabouille. La nouvelle sauvegarde écrase
                                 directement <dossier>, plutôt que d'en créer une
@@ -67,8 +67,11 @@ Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r <n min>] [-
   --sans-acl:                   destination semi-intelligente (UFS, etc.):
                                 permissions, mais pas d'ACL.
   -d <dossier>:                 dossier source, plutôt que \$HOME.
-  -r <n min>:                   récupère une ancienne sauvegarde, s'il en existe
-                                plus de n min.
+  -r (<n min>|<suffixe>):       récupère une ancienne sauvegarde, s'il en existe
+                                plus de n min. Si le paramètre n'est pas
+                                numérique, il est vu comme un suffixe: on
+                                cherchera à recycler n'importe quel répertoire
+                                ayant ce suffixe.
   -l <plien>:                   lie ses fichiers à ceux de la dernière
                                 sauvegarde de préfixe <plien>. Par défaut
                                 <préfixe>.
@@ -132,7 +135,17 @@ echo 'cd "$HOME" && cd "'"$DOSSIER"'" && chmod 700 "'"$PREFIXE"'"*/' | $SSH "$PA
 if [ -z "$ECRABOUILLE" ]
 then
 dest="$PREFIXE`date +%Y-%m-%d`"
-	[ -z "$SEUIL_RECUP" ] || premier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE"'" && touch -t 197910100826 "'"$PREFIXE"'" && ls -d1 "'"$PREFIXE"'"*/ | grep -v "^'"$PREFIXE"'[^0-9]" | sort -r | sed -e '\''s#/$##'\'' -e 1,'"$SEUIL_RECUP"'d | tail -1' | $SSH "$PANO" sh`"
+	if [ ! -z "$SEUIL_RECUP" ]
+	then
+		# SEUIL_RECUP numérique: on recycle la nième sauvegarde (ou plus ancienne).
+		if echo "x$SEUIL_RECUP" | grep -q '^x[0-9][0-9]*$'
+		then
+		premier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE"'" && touch -t 197910100826 "'"$PREFIXE"'" && ls -d1 "'"$PREFIXE"'"*/ | grep -v "^'"$PREFIXE"'[^0-9]" | sort -r | sed -e '\''s#/$##'\'' -e 1,'"$SEUIL_RECUP"'d | tail -1' | $SSH "$PANO" sh`"
+		# SEUIL_RECUP alphabétique: on recycle la plus ancienne sauvegarde ainsi suffixée.
+		else
+			premier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$PREFIXE.$SEUIL_RECUP"'" && touch -t 197910100826 "'"$PREFIXE.$SEUIL_RECUP"'" && ls -d1 "'"$PREFIXE"'"*".'"$SEUIL_RECUP"'"/ | sed -e '\''s#/$##'\'' | grep -v "^'"$PREFIXE.$SEUIL_RECUP"'" | head -1' | $SSH "$PANO" sh`"
+		fi
+	fi
 	[ -z "$P_LIEN" ] && P_LIEN="$PREFIXE"
 	dernier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$P_LIEN"'" && touch -t 197910100826 "'"$P_LIEN"'" && ls -d1 "'"$P_LIEN"'"*/.ouf.complet | grep -v "^'"$P_LIEN"'[^0-9]" | tail -1 | sed -e "s#/.ouf.complet##"' | $SSH "$PANO" sh`"
 num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=0 ; until mkdir '"$dest"'.$((++c)) 2> /dev/null ; do true ; done ; echo $c' | $SSH "$PANO" sh`"
