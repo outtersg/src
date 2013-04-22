@@ -1,0 +1,9 @@
+#!/bin/sh
+
+#curl -s http://www.assemblee-nationale.fr/qui/xml/liste_alpha.asp > /tmp/1
+export LANG=C LC_ALL=C
+tr '<' '\012' < /tmp/1 | grep 'href="[^"]*/tribun/fiches_id' | sed -e 's#.*href="##' -e 's#".*##' | while read i
+do
+	curl -s http://www.assemblee-nationale.fr$i
+done | grep 'Mél' | perl -pe 's#^.*Mél.*?href="mailto:##;s#".*##'
+
