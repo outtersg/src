@@ -1,7 +1,13 @@
 #!/bin/sh
 
+LC_ALL=C
+LANG=C
+export LC_ALL LANG
+
 liste="$1"
-sed -e 's#/*$##' < "$liste" > "$liste.1"
+ic=cat
+iconv -f mac < "$liste" > /dev/null 2>&1 && ic="iconv -f mac"
+sed -e 's#/*$##' < "$liste" | $ic > "$liste.1"
 http="http://dd.gclo.fr"
 
 listeEnPressePapier()
