@@ -22,6 +22,7 @@ analyserParametres()
 			-v) OPTIONS_RSYNC="v$OPTIONS_RSYNC" ;;
 			-e) ECRABOUILLE=1 ;;
 			-r) shift ; SEUIL_RECUP="$1" ;;
+			--reprendre) shift ; REPRENDRE="$1" ;;
 			-d) shift ; SOURCE="$1" ;;
 			-l) shift ; P_LIEN="$1." ;;
 			--bete) bete=1 ;;
@@ -57,7 +58,7 @@ auSecours()
 # Sauvegarde du \$HOME
 # © Guillaume Outters 2005-2013
 
-Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<suffixe>)] [-l <plien>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
+Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<suffixe>)] [-l <plien>] [--reprendre <date>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
   -v:                           blablateux.
   -e:                           écrabouille. La nouvelle sauvegarde écrase
                                 directement <dossier>, plutôt que d'en créer une
@@ -75,6 +76,8 @@ Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<s
   -l <plien>:                   lie ses fichiers à ceux de la dernière
                                 sauvegarde de préfixe <plien>. Par défaut
                                 <préfixe>.
+  --reprendre <date>            reprend la sauvegarde du <date> si elle a été
+                                interrompue prématurément.
   -p <port>:                    complément d'<ip>.
   <ip>:                         adresse IP de destination, pour une sauvegarde à
                                 distance.
@@ -134,7 +137,13 @@ echo 'cd "$HOME" && cd "'"$DOSSIER"'" && chmod 700 "'"$PREFIXE"'"*/' | $SSH "$PA
 
 if [ -z "$ECRABOUILLE" ]
 then
+	if [ -z "$REPRENDRE" ]
+	then
 dest="$PREFIXE`date +%Y-%m-%d`"
+	else
+		dest="$PREFIXE$REPRENDRE"
+		echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; rm -f "'"$dest"'/.ouf.complet"' | $SSH "$PANO" sh 
+	fi
 	if [ ! -z "$SEUIL_RECUP" ]
 	then
 		# SEUIL_RECUP numérique: on recycle la nième sauvegarde (ou plus ancienne).
@@ -148,8 +157,11 @@ dest="$PREFIXE`date +%Y-%m-%d`"
 	fi
 	[ -z "$P_LIEN" ] && P_LIEN="$PREFIXE"
 	dernier="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" && mkdir -p "'"$P_LIEN"'" && touch -t 197910100826 "'"$P_LIEN"'" && ls -d1 "'"$P_LIEN"'"*/.ouf.complet | grep -v "^'"$P_LIEN"'[^0-9]" | tail -1 | sed -e "s#/.ouf.complet##"' | $SSH "$PANO" sh`"
+	if [ -z "$REPRENDRE" ]
+	then
 num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=1 ; until mkdir '"$dest"'.$c 2> /dev/null ; do c=\`expr $c + 1\` ; done ; echo $c' | $SSH "$PANO" sh`"
 [ "$num" = "" ] || dest="$dest.$num"
+	fi
 	LIEN=(--link-dest="../$dernier")
 	if [ ! -z "$premier" ]
 	then
