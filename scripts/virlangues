@@ -1,0 +1,3 @@
+#!/bin/sh
+
+for i in Dutch Italian German Japanese Spanish ach af am ar ast be bg bn br ca ca_VA cgg ckb co cs da de el el_GR es et eu fa ff fi fur fut ga gd gl gl_ES he hi hy id is it ja hr hu ka kk km km_KH kmr ko ku lg lt lv mk ml mn mr ms my nb ne nl nn no oc pa pl ps pt pt_BR pt_PT pt-PT ro ru si sk sk_SK sl sq sr sv ta te tet th tl tr uk uz vi wa zh_CN zh-Hans zh-Hant zh_TW zu ; do sudo rm -Rf *.app/Contents/Resources/$i.lproj ; done
