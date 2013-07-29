@@ -3,6 +3,8 @@ on run argv
 		set b to mailbox "INBOX/Spam" of account "Free"
 		repeat with n from 1 to 16
 			set m to message n of b
+			--set titre to subject of m as string
+			--do shell script "echo " & quoted form of ("[" & titre & "]") & " > /dev/tty"
 			if subject of m is item 1 of argv then
 				set titre to subject of m
 				move m to mailbox "INBOX" of account "Famille"
