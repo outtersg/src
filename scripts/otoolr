@@ -1,0 +1,20 @@
+#!/bin/sh
+
+> /tmp/cumul
+for i in "$@"
+do
+	echo "$i"
+done > /tmp/cettepasse
+while true
+do
+	diff /tmp/cumul /tmp/cettepasse | grep '^> ' | cut -c 3- | sort -u > /tmp/nouveaux
+	grep -q . < /tmp/nouveaux || break
+	cat /tmp/nouveaux | while read bib
+	do
+		otool -L "$bib" | sed -e '/^	/!d' -e 's///' -e 's# (.*##' 
+	done > /tmp/lies
+	cat /tmp/cettepasse /tmp/cumul | sort -u > /tmp/nouveaux
+	mv /tmp/nouveaux /tmp/cumul
+	cat /tmp/lies | sort -u > /tmp/cettepasse
+done
+cat /tmp/cumul
