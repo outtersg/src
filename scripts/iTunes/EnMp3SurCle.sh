@@ -15,8 +15,10 @@ do
 	read rien
 done
 
+ic=cat
+iconv -f mac < "$liste" > /dev/null 2>&1 && ic="iconv -f mac"
 mkdir -p "$dest"
-cat "$liste" | while read fichier
+cat "$liste" | $ic | while read fichier
 do
 	echo "=== `basename "$fichier"` ===" >&2
 	case "$fichier" in
