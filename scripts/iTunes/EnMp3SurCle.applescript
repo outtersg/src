@@ -15,7 +15,8 @@ on open of fichiers
 	set {dirname, text item delimiters} to {text 1 thru text item -(i + 1) of moi, TID}
 	-- http://macscripter.net/viewtopic.php?id=32640
 	tell application "Terminal"
-		set fenetre to do script dirname & "/EnMp3SurCle.sh " & cheminTemp & " ; exit"
+		set fenetre to do script dirname & "/EnMp3SurCle.app/Contents/Resources/Scripts/EnMp3SurCle.sh " & cheminTemp & " ; exit"
+		
 		repeat until fenetre's history contains "EnMp3SurCle"
 			delay 1
 		end repeat
