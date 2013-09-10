@@ -6,7 +6,7 @@ export LC_ALL LANG
 
 liste="$1"
 disque="/Volumes/NO NAME"
-disque=/tmp
+#disque=/tmp
 dest="$disque/Musique"
 
 while [ ! -d "$disque" ]
