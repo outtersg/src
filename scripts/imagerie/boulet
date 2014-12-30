@@ -49,9 +49,9 @@ mkdir -p "$TEMP/originaux" "$TEMP/renommes"
 	fi
 done > "$TEMP/fichiers.cecoupci"
 
+rsync -av --link-dest="$TEMP/renommes/" "$TEMP/renommes/" "$FINIS/" # Dans notre répertoire de destination "local" (Clotilde aimerait bien bosser les photos après qu'elles ont transité par son appareil): on fait ça avant de les envoyer vers leur destination distante, car celle-ci les reversera (par réseau en sens inverse) dans notre destination finale; autant donc qu'il y trouve déjà les photos.
 rsync -av -e "ssh -i $HOME/.ssh/rsync_70d_rsa" "$TEMP/renommes/" "$DEST/"
 
 cat "$TEMP/fichiers.cecoupci" >> "$TEMP/fichiers.deja"
 
-rsync -av --link-dest="$TEMP/renommes/" "$TEMP/renommes/" "$FINIS/" && rm -R "$TEMP/renommes/" && rm -R "$TEMP/originaux/"
-# À FAIRE: ce dernier rsync devrait être fait avant le précédent: en effet il copie en local des fichiers qu'on risque de recevoir en retour de notre premier rsync, autant avoir déjà les fichiers ici pour que le secod rsync n'ait plus rien à faire que contrôler, non?
+rm -R "$TEMP/renommes/" && rm -R "$TEMP/originaux/"
