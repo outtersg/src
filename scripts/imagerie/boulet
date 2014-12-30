@@ -1,0 +1,57 @@
+#!/bin/sh
+# ~gui/src/scripts/imagerie/boulet /Volumes/EOS70/DCIM/ ~/Downloads/TransfertEOS70D/ gui@zerozerosix.lan:perso/Photos/201411\ Blandine ~/Pictures/Photos\ Guillaume/
+# Penser à avoir côté zerozerosix.lan une authorized_keys commençant par:
+#   command="rsync --server -logDtpre.iLsf . \"perso/Photos/201411 Blandine/\""
+
+set -e
+
+auSecours()
+{
+	moi="`basename "$0"`"
+	cat >&2 <<TERMINE
+# Transfère les images d'une carte SD utilisée dans un Canon
+# (DCIM/100_…/IMG_xxxx.JPG), vers une structure à plat (100_xxxx.JPG), sur un
+# ordinateur distant.
+# Utilisation: $moi <source> <temp> <dest> <finis>
+#   <source>   Racine à fouiller (chemin incluant DCIM).
+#   <temp>     Dossier de travail, dans lequel seront enregistrés tous les
+#              fichiers en instance de transfert.
+#   <dest>     Dossier distant où copier les images.
+#   <finis>    Dossier où envoyer les images une fois qu'elles ont été
+#              correctement traitées.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	SOURCE="`echo "$1" | sed -e 's#//*$##'`"
+	TEMP="$2"
+	DEST="`echo "$3" | sed -e 's#//*$##' -e 's# #\\\ #g'`" # Pour les rsync distants, un \ est toujours le bienvenu devant un espace dans la destination.
+	FINIS="`echo "$4" | sed -e 's#//*$##'`"
+}
+
+analyserParametres "$@"
+[ -d "$SOURCE" ] || ( echo "# Le dossier source \"$SOURCE\" n'existe pas." >&2 && exit 1 ) || exit 1
+[ -d "$SOURCE" ] || ( echo "# Le dossier source \"$SOURCE\" n'est pas un DCIM." >&2 && exit 1 ) || exit 1
+[ -d "$TEMP" ] || ( echo "# Le dossier de travail \"$TEMP\" n'existe pas." >&2 && exit 1 ) || exit 1
+[ -d "$FINIS" ] || ( echo "# Le dossier des finis \"$FINIS\" n'existe pas." >&2 && exit 1 ) || exit 1
+
+mkdir -p "$TEMP/originaux" "$TEMP/renommes"
+
+# On utilise rsync à tour de bras, plutôt que cp, car rsync nous assure que le fichier n'apparaîtra pas (à son emplacement définitif) avant d'être complet. Or on va simplifier quelques tests en ne vérifiant que la présence des fichiers: un cp mal fini pourrait nous avoir laissé un tel fichier, et donc nous faire considérer qu'il n'est nul besoin de le retransmettre.
+( if [ -e "$TEMP/fichiers.deja" ] ; then sed -e 's#^#- /#' < "$TEMP/fichiers.deja" ; fi ) | rsync -av --exclude-from=- "$SOURCE/" "$TEMP/originaux/"
+# Pour chaque original, on calcule un fichier destination.
+( cd "$TEMP/originaux" && find . -type f | sed -e 's#^\./##' -e h -e 's#^\([0-9][0-9][0-9]\)CANON/[_A-Z][_A-Z][_A-Z]_#\1_#' -e 's#/#_#g' -e G -e 's/\n/ /' ) | while read fdest fsource ; do
+	if [ ! -e "$TEMP/renommes/$fdest" ] ; then
+		ln "$TEMP/originaux/$fsource" "$TEMP/renommes/$fdest"
+		echo "$fsource"
+	fi
+done > "$TEMP/fichiers.cecoupci"
+
+rsync -av -e "ssh -i $HOME/.ssh/rsync_70d_rsa" "$TEMP/renommes/" "$DEST/"
+
+cat "$TEMP/fichiers.cecoupci" >> "$TEMP/fichiers.deja"
+
+rsync -av --link-dest="$TEMP/renommes/" "$TEMP/renommes/" "$FINIS/" && rm -R "$TEMP/renommes/" && rm -R "$TEMP/originaux/"
+# À FAIRE: ce dernier rsync devrait être fait avant le précédent: en effet il copie en local des fichiers qu'on risque de recevoir en retour de notre premier rsync, autant avoir déjà les fichiers ici pour que le secod rsync n'ait plus rien à faire que contrôler, non?
