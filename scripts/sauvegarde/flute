@@ -4,10 +4,18 @@
 source="$1"
 dest="$2"
 
+# On évite de transmettre:
+# - nos fichiers de travail
+# - les fichiers temporaires d'un autre rsync qui serait en train de nous alimenter
+[ -e "$source/.internes.flute" ] || cat > "$source/.internes.flute" <<TERMINE
+- /.*.flute
+- /**/.*.??????
+TERMINE
+
 [ -e "$source/.deja.flute" ] || touch "$source/.deja.flute"
 while true
 do
-	( cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/.nouveaux.flute"
+	( cat "$source/.internes.flute" ; cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/.nouveaux.flute"
 	rsync --exclude-from=- < "$source/.deja.flute" -av "$source/" "$dest/" && mv "$source/.nouveaux.flute" "$source/.deja.flute" || break
 	sleep 2
 	[ `find "$source" -type f -newer "$source/.deja.flute" | wc -l` -ne 0 ] || break
