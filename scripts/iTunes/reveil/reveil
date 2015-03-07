@@ -90,6 +90,42 @@ while [ `date +%Y%m%d%H%M | cut -c $depuis-` -lt "$date" ] ; do
 	sleep 10
 done
 
+parcmus()
+{
+	osascript -e 'tell application "System Events" to set volume '"$VOLUME"
+	osascript -e 'tell application "System Events" to set volume without output muted'
+	echo q | cmus-remote
+	#( sleep 10 && ( echo view 2 ; echo shuffle ; echo win-activate ; echo player-next ) | cmus-remote ) &
+	(
+		sleep 10 &&
+		(
+			echo view 3
+			echo "load $HOME/.cmus/classique.pl"
+			sleep 2
+			echo shuffle
+			echo win-activate
+			echo player-play
+			# Le shuffle cmus est un réordonnement aléatoire de la liste actuelle. Pour peu que le morceau qui était sélectionné se retrouve en fin de liste (les listes ne sont pas cycliques), le réveil risque de s'arrêter après un seul morceau lu. On revient donc en arrière pour s'assurer d'un minimum de morceaux.
+			for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+			do
+				echo player-prev
+			done
+		) | cmus-remote
+	) &
+	cmus
+}
+
+parSonora()
+{
+	osascript -e 'tell application "Sonora" to activate'
+	osascript -e 'tell application "System Events" to set volume '"$VOLUME"
+	osascript -e 'tell application "System Events" to set volume without output muted'
+	osascript -e 'tell application "Sonora" to set the player volume to 0.5'
+	osascript -e 'tell application "Sonora" to play'
+}
+
+parItunes()
+{
 osascript -e 'tell application "iTunes" to activate'
 osascript -e 'tell application "System Events" to set volume '"$VOLUME"
 osascript -e 'tell application "System Events" to set volume without output muted'
@@ -99,5 +135,8 @@ osascript -e 'tell application "iTunes" to play'
 # Parfois iTunes bloque sur un Ogg…
 sleep "$AVANT_SECOURS"
 echo "$SECOURS" | sh
+}
+
+parcmus
 
 menage
