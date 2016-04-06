@@ -2,6 +2,13 @@
 
 # Dans les sauvegardes de photos et vidéos, essaye de retrouver les doublons (du genre un dossier de photos qui a été déplacé sur la machine de départ, générant deux copies de sauvegardes à deux emplacements différents). Ils seront candidats à un lner.
 
+filtrer()
+{
+	fichier="$1"
+	shift
+	"$@" < "$fichier" > /tmp/temp.$$.filtrer && cat /tmp/temp.$$.filtrer > "$fichier"
+}
+
 faire()
 {
 # On cherche tous les doublons potentiels (photos et films) et on les classe par taille, puis nom, puis inode.
@@ -17,6 +24,7 @@ l() { modele="\$1" ; shift ; for i in "\$@" ; do ~/src/scripts/sauvegarde/lner "
 TERMINE
 	awk -F \t '{ if($1 != taille || $2 != fichier) { foutu = 0; mem = $0" \\"; taille = $1; fichier = $2; inode = $3; } else { if($3 != inode && !foutu) { foutu = 1; inode = $3; print ""; print "l \\"; print mem; } if(foutu) print $0" \\"; else mem = mem"\n"$0" \\"; } }END{ print "" }' < /tmp/temp.prelner >> /tmp/temp.prelner.2
 	vim -X /tmp/temp.prelner.2
+	filtrer /tmp/temp.prelner.2 sed -e 's#^[0-9][^"]*"#"#'
 }
 
 if [ $# -eq 0 ]
