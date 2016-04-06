@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# Dans les sauvegardes de photos et vidéos, essaye de retrouver les doublons (du genre un dossier de photos qui a été déplacé sur la machine de départ, générant deux copies de sauvegardes à deux emplacements différents). Ils seront candidats à un lner.
+
+faire()
+{
+# On cherche tous les doublons potentiels (photos et films) et on les classe par taille, puis nom, puis inode.
+	find "$@" \
+		-type f ! -name .DS_Store ! -name Master.apmaster ! -name \*.db ! -name iPhone.savedSearch ! -name \*.apfolder ! -name \*.apdb ! -name \*.apversion ! -name \*.apalbum ! -name .piph.\* ! -name \*.flute ! -name iPhotoLock.data ! -name PkgInfo ! -name \*.plist ! -name \*.xml ! -size 0 -print0 | xargs -0 ls -li | sed -e 's#^ *\([^ ]*\) [^ ]*  *[^ ]*  *[^ ]*  *[^ ]*  *\([^ ]*\)  *[^ ]*  *[^ ]*  *[^ ]*  *\(.*/\)\([^/]*\)$#\2	\4	\1	"\3"#' > /tmp/temp.prelner
+	# Tri là-dessus.
+	filtrer /tmp/temp.prelner sort
+	# Et on élimine les "bons" (ceux dont toutes les occurrences ont le même inode).
+	cat > /tmp/temp.prelner.2 <<TERMINE
+#!/bin/sh
+
+l() { modele="\$1" ; shift ; for i in "\$@" ; do ~/src/scripts/sauvegarde/lner "\$i" "\$modele" ; done }
+TERMINE
+	awk -F \t '{ if($1 != taille || $2 != fichier) { foutu = 0; mem = $0" \\"; taille = $1; fichier = $2; inode = $3; } else { if($3 != inode && !foutu) { foutu = 1; inode = $3; print ""; print "l \\"; print mem; } if(foutu) print $0" \\"; else mem = mem"\n"$0" \\"; } }END{ print "" }' < /tmp/temp.prelner >> /tmp/temp.prelner.2
+	vim -X /tmp/temp.prelner.2
+}
+
+if [ $# -eq 0 ]
+then
+	#faire ~/sauvegardes/falbala.*[0-9]/Pictures ~/sauvegardes/falbala.*[0-9]/Movies ~/sauvegardes/photos
+	faire ~/sauvegardes/falbala.2015-0[8-9]*[0-9]*/Pictures ~/sauvegardes/falbala.2015-0[8-9]*[0-9]*/Movies ~/sauvegardes/photos ~/sauvegardes/asterix.dernier/perso/Photos/201411\ Blandine
+else
+	faire "$@"
+fi
+
+# On peut ensuite, sur le fichier, repérer les répertoires à lner.
+# Dans les blocs, repérer l'inode qui revient le plus souvent, le remonter sous le l \ (il devient référence), et supprimer toutes ses autres occurrences (inutile de lner ceux qui ont déjà le même inode). Laisser par contre toutes les lignes d'inode différent (ce seront elles qui seront écrasées par lner).
+# Une fois que le travail a été fait,
+# :%s#.*"/#"/#
+# :wq
+# chmod a+rx /tmp/temp.prelner.2 ; /tmp/temp.prelner.2
+
+# Pour essayer de comprendre pourquoi deux fichiers diffèrent:
+# x() { cat /tmp/temp.$$ | tr '\012' '\000' | xargs -0 "$@" ; } ; c() { f="$1" ; shift ; for i in "$@" ; do echo "$i/$f" ; done > /tmp/temp.$$ ; x ls -li ; x cksum ; x lsextattr user ; }
