@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+	<dict>
+		<key>Disabled</key>
+		<false/>
+		<key>Label</key>
+		<string>eu.outters.exposerPhotosSauvegardeIPhone</string>
+		<key>Program</key>
+		<string>/Users/gui/src/scripts/sauvegarde/ios/piph</string>
+		<key>ProgramArguments</key>
+		<array>
+			<string>/Users/gui/src/scripts/sauvegarde/ios/piph</string>
+		</array>
+		<key>WatchPaths</key>
+		<array>
+			<string>/Users/clotildedognin/Library/Application\ Support/MobileSync/Backup/3a32e733c42b76bb064002ecffd726778cc62dd1</string>
+		</array>
+		<key>RunAtLoad</key>
+		<false/>
+		<key>onDemand</key>
+		<true/>
+	</dict>
+</plist>

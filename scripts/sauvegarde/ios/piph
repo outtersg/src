@@ -1,0 +1,54 @@
+#!/bin/sh
+# Photos iPhone -> dossiers habituels
+
+#apéricube - 0,40
+#belin: 160 g
+
+set -e
+
+absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } 
+calcScripts() { absolutiseScripts "`command -v "$1"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`" ; }
+calcScripts "$0"
+
+T=/tmp/temp.piph.$$
+
+mkdir "$T"
+cd "$T"
+
+cd "$HOME/Library/Application Support/MobileSync/Backup/"*
+
+lie()
+{
+	mkdir "$2"
+	grep CameraRollDomain::Media/DCIM < "$T/liste" | grep "$1" | sed -e 's/^[^(]*(//' -e 's#)CameraRollDomain::Media/DCIM/[0-9][0-9][0-9]APPLE/#@#' -e 's/ .*//' -e 's/@/ /' | egrep "^[a-f0-9]{40} IMG_[0-9]{4}.$1$" | while read s d
+	do
+		ln "$s" "$2/$d"
+	done
+}
+
+copie()
+{
+	touch "$2/.piph.deja"
+	( cd "$1" && ls ) | sed -e 's#^#- /#' > "$2/.piph.encours"
+	rsync --exclude-from=- -a --link-dest="$1/" "$1/" "$2/" < "$2/.piph.deja"
+	cat "$2/.piph.deja" "$2/.piph.encours" | sort -u > "$1/.piph.deja" && cat "$1/.piph.deja" > "$2/.piph.deja"
+}
+
+touch -t 200001010000 "$T/h"
+
+while [ . -nt "$T/h" -o Manifest.mbdb -nt "$T/h" ]
+do
+	touch "$T/h"
+	
+	python "$SCRIPTS/listeIOs.py" Manifest.mbdb > "$T/liste"
+
+	lie JPG "$T/p"
+	lie MOV "$T/v"
+
+	copie "$T/p" "$HOME/Pictures/Photos iPhone"
+	copie "$T/v" "$HOME/Movies"
+done
+
+sleep 15 # Sans quoi launchd croit que le machin plante (sortie trop rapide).
+
+rm -Rf "$T"
