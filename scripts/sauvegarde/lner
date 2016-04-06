@@ -60,6 +60,8 @@ done
 faireEnPerl()
 {
 perl -e '
+use File::Compare;
+
 sub acombiner
 {
 	(undef, $ino1, undef, undef, undef, undef, undef, $size1, undef, $mtime1, undef, undef, undef) = stat("$_[0]");
@@ -67,6 +69,7 @@ sub acombiner
 	return(0) if($ino1 == $ino2);
 	return(0) if($size1 != $size2);
 #return $mtime1 == $mtime2; # Taille identique, date identique, on fait (en commentant cette ligne on passe par le cksum, plus lourd).
+	return compare($_[0], $_[1]) == 0;
 	$_ = `cksum "$_[0]"`;
 	chomp();
 	$f2 = "$_[1]";
