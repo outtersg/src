@@ -93,7 +93,15 @@ foreach($t as $d => $fichier)
 	if(!$faire)
 		echo '- '.$fichier."\n";
 	else if(isset($suffixe))
-		rename($fichier, $fichier.'.'.$suffixe);
+	{
+		if(!@rename($fichier, $fichier.'.'.$suffixe))
+		{
+			@chmod($fichier, 0700);
+			rename($fichier, $fichier.'.'.$suffixe);
+			@chmod($fichier.'.'.$suffixe, 0000);
+			@chmod($fichier, 0000);
+		}
+	}
 	else
 		unlink($fichier);
 }
