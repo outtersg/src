@@ -64,6 +64,7 @@ esac
 cat <<TERMINE
 - /.Spotlight-V100/
 - /.Trash/
+- /.cabal/
 - /.darcs/cache/
 - /.spring/
 - /.thumbnails/
@@ -91,6 +92,9 @@ cat <<TERMINE
 - /Library/Thunderbird/
 - /Library/VirtualBox/Machines/
 - /Library/xes
+- /Music/iTunes/iTunes Media/Downloads/
+- /Music/iTunes/iTunes Media/Mobile Applications/
+- /Music/iTunes/iTunes Media/Movies/
 - /Music/iTunes/iTunes Music/
 - /Public/Drop Box/
 - /VirtualBox VMs/
