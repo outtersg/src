@@ -58,17 +58,34 @@ esac
 
 (
 cat <<TERMINE
+- /**/.bak.*
+- /**/Autosave Information/
+- /**/Drafts.mbox/
+- /**/Films/
 - /.Spotlight-V100/
 - /.Trash/
 - /.darcs/cache/
+- /.dropbox/
+- /.local/share/marble/maps/
 - /.spring/
 - /.thumbnails/
+- /Desktop/*.avi
+- /Desktop/*.mkv
+- /Desktop/Chorale/
+- /Documents/Films/
+- /Documents/ Partagés/
+- /Documents/Partagés/
 - /Downloads/
+- /Library/Address Book Plug-Ins/
+- /Library/Application Support/CrashReporter/
 - /Library/Application Support/Freeciv/
 - /Library/Application Support/Firefox/
+- /Library/Application Support/GIMP
 - /Library/Application Support/irate/download/
 - /Library/Application Support/mlMac/temp/
 - /Library/Application Support/Freeware Update
+- /Library/Application Support/Skype/Upgrade/
+- /Library/Application Support/Skype/*/media_messaging/emo_cache*/
 - /Library/Caches/
 - /Library/Logs/CrashReporter/
 - /Library/Mail/Envelope Index
@@ -83,7 +100,14 @@ cat <<TERMINE
 - /Library/Thunderbird/
 - /Library/VirtualBox/Machines/
 - /Library/xes
+- /Movies/iMovie*
+- /Music/iTunes/iTunes Media/Mobile Applications/
+- /Music/iTunes/iTunes Media/Downloads/
 - /Music/iTunes/iTunes Music/
+- /Pictures/**/album */
+- /Pictures/A trier/
+- /Pictures/Impressions/
+- /Pictures/Photos Guillaume/
 - /internet/**/imagettes
 - /internet/**/photos/
 - /internet/**/temp
