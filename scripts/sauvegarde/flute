@@ -9,6 +9,7 @@ dest="$2"
 # - les fichiers temporaires d'un autre rsync qui serait en train de nous alimenter
 [ -e "$source/.internes.flute" ] || cat > "$source/.internes.flute" <<TERMINE
 - /.*.flute
+- /.*.??????
 - /**/.*.??????
 TERMINE
 
