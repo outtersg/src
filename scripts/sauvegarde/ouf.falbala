@@ -50,7 +50,7 @@ case "$1" in
 		;;
 	ks)
 		ajouts='- /mp3/;- /perso/Photos/'
-		options=--sans-acl
+		options="--sans-acl -r recycler"
 		;;
 esac
 
