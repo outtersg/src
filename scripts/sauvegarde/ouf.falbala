@@ -29,6 +29,9 @@ case "$1" in
 	ks)
 		dest=k:sauvegardes/falbala.
 		;;
+	l)
+		dest=l:sauvegardes/falbala.
+		;;
 	*)
 		echo "# Utilisation: machin <config à lancer>" >&2
 		exit 1
@@ -48,7 +51,7 @@ case "$1" in
 		ajouts='- /mp3/'
 		options=-e
 		;;
-	ks)
+	ks|l)
 		ajouts='- /mp3/;- /perso/Photos/'
 		options="--sans-acl -r recycler"
 		;;
