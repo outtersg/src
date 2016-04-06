@@ -169,7 +169,7 @@ num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && ex
 		dest="$premier"
 	fi
 else
-	echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir -p '"$dest"' 2> /dev/null ; rm -f "'"$dest"'/.ouf.complet"' | $SSH "$PANO" sh 
+	echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir -p '"$dest"' 2> /dev/null ; rm -f "'"$dest"'/.ouf.complet" ; touch "'"$dest"'"' | $SSH "$PANO" sh 
 	dest="."
 	LIEN=()
 fi
