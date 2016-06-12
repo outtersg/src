@@ -1,0 +1,42 @@
+#!/usr/bin/env php
+<?php
+
+$source = 'Subject: =?ISO-8859-1?Q?10=2F30=2F2015_3=3A01=3A27_PM?=';
+
+function chrHexa($r)
+{
+	return chr(hexdec($r[1]));
+}
+
+function décode($r)
+{
+	switch($r[2])
+	{
+		case 'Q':
+			$déc = preg_replace_callback('#=(..)#', 'chrHexa', $r[3]);
+			break;
+		case 'B':
+			$déc = base64_decode($r[3]);
+			break;
+	}
+	
+	$déc = iconv($r[1], 'UTF-8', $déc);
+	
+	return $déc;
+}
+
+function derfc822($chaîne)
+{
+	return preg_replace_callback('#=\?([^?]+)\?([^?]+)\?([^?]*(?:\?[^=][^?]*)*)\?=#', 'décode', $chaîne);
+}
+
+if(count($argv) > 1)
+{
+	array_shift($argv);
+	foreach($argv as $arg)
+		echo derfc822($arg)."\n";
+}
+else while(($l = fgets(STDIN)) !== false)
+	echo derfc822($l);
+
+?>
