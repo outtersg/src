@@ -87,6 +87,18 @@ faireEntreeStandard()
 	do
 		faire "$slashAuDebut$sansSlash/$ligne"
 	done
+	mv $temp/* /tmp/
+}
+
+transferer()
+{
+	until ping -W 2000 -c 1 falbala.local > /dev/null
+	do
+		sleep 30
+	done
+	rsync -avz "$dest/" falbala.local:"/Users/Shared/Musique\\ Guillaume/"
+	# Pas d'open, car après l'import iTunes joue sans crier gare le premier morceau non des nouveaux mais de tous les importés, donc toujours le même (Shimmy Shake), ce qui est assez lourd à la longue.
+	#ssh falbala.local 'sudo -u clotilde open -a iTunes /Users/Shared/Musique\ Guillaume/'
 }
 
 faireSelection()
@@ -111,12 +123,7 @@ faireSelection()
 	mv $temp/* "$dest/Récup +/$lieu/"
 	if [ $transferer = x ]
 	then
-	until ping -W 2000 -c 1 falbala.lan > /dev/null
-	do
-		sleep 30
-	done
-		rsync -avz "$dest/" falbala.lan:"/Users/Shared/Musique\\ Guillaume/"
-	ssh falbala.lan 'sudo -u clotilde open -a iTunes /Users/Shared/Musique\ Guillaume/'
+		transferer &
 	fi
 }
 
@@ -137,5 +144,7 @@ else
 	faireEntreeStandard "$@"
 fi
 done
+
+wait
 
 rm -R $TMP/
