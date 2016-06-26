@@ -85,7 +85,11 @@ faireEntreeStandard()
 	numero=0
 	ls "$slashAuDebut$sansSlash" | sort -n | while read ligne
 	do
-		faire "$slashAuDebut$sansSlash/$ligne"
+		case "$ligne" in
+			/*) true ;; # Chemin absolu: notre "$1" désignait un fichier, le ls a donc renvoyé son chemin absolu, nul besoin de remettre son chemin devant.
+			*) ligne="$slashAuDebut$sansSlash/$ligne" ;;
+		esac
+		faire "$ligne"
 	done
 	mv $temp/* /tmp/
 }
