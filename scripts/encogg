@@ -50,6 +50,15 @@ function convertir_m4a()
 		"$fichier" < /dev/null # Cet abruti me bouffe mon entrée standard.
 }
 
+placer()
+{
+	champPlace=2
+	[ $classique = oui ] && champPlace=3
+	place="$dest/$sousdest`champ $champPlace | tr / :`"
+	mkdir -p "$place/"
+	mv -i "$1" "$place/"
+}
+
 function faire()
 {
 	true $((++numero))
@@ -66,7 +75,8 @@ function faire()
 	
 	printf "($format) Piste $piste... " > /dev/tty
 	convertir_$format "$@"
-	basename "$fichier" > /dev/tty
+	placer "$fichier"
+	( basename "$fichier" | tr -d '\012' ; printf " -> " ; echo "$place" ) > /dev/tty
 }
 
 faireEntreeStandard()
@@ -91,7 +101,6 @@ faireEntreeStandard()
 		esac
 		faire "$ligne"
 	done
-	mv $temp/* /tmp/
 }
 
 transferer()
@@ -115,6 +124,14 @@ faireSelection()
 		faire -n "$numPiste" "$fichierOrigine"
 	done
 	
+	if [ $transferer = x ]
+	then
+		transferer &
+	fi
+}
+
+lieuCommun()
+{
 	# Les champs qui peuvent nous donner le titre sous lequel classer les morceaux: on prend la première des infos commune à toutes les pistes.
 	for i in 9 10 11 12 13 # Le dernier est un garde-fou, rempli avec toujours la même valeur (Various artists), donc apte à passer le filtre.
 	do
@@ -123,12 +140,6 @@ faireSelection()
 		lieu="`cat $TMP/info`"
 		break
 	done
-	mkdir -p "$dest/Récup +/$lieu/"
-	mv $temp/* "$dest/Récup +/$lieu/"
-	if [ $transferer = x ]
-	then
-		transferer &
-	fi
 }
 
 quefaire=ogg:.:/Users/gui/mp3
@@ -136,10 +147,14 @@ quefaire="m4a:x:/tmp/mp3 $quefaire" # Si c'est pour Clo, c'est pour l'iPhone, do
 
 analyserParametres()
 {
+	classique=non
+	sousdest="Récup +/" # Par défaut on encode vers notre dossier Récup + (Récup comme récupéré, parce qu'on n'a pas acheté nous-mêmes le morceau, + parce que, l'ayant encodé nous-mêmes, on est confiants dans sa qualité).
 	> "$TMP/parametres"
 	while [ $# -gt 0 ]
 	do
 		case "$1" in
+			-c|--classique) classique=oui ;;
+			-m|--moi) sousdest= ;; # Si l'achat est de nous, il va dans le dossier principal.
 			*) echo "$1" >> "$TMP/parametres" ;;
 		esac
 		shift
