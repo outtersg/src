@@ -3,7 +3,11 @@ on run argv
 tell application "iTunes"
 	set liste to selection
 	if number of items of liste is less than 2 then
-		set liste to tracks of source 2
+		repeat with cetteSource in sources
+			if kind of cetteSource is audio CD then
+				set liste to tracks of cetteSource
+			end if
+		end repeat
 	end if
 	try
 		close access cheminTmp
