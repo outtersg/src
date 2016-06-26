@@ -134,18 +134,32 @@ faireSelection()
 quefaire=ogg:.:/Users/gui/mp3
 quefaire="m4a:x:/tmp/mp3 $quefaire" # Si c'est pour Clo, c'est pour l'iPhone, donc AAC.
 
+analyserParametres()
+{
+	> "$TMP/parametres"
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			*) echo "$1" >> "$TMP/parametres" ;;
+		esac
+		shift
+	done
+}
+
+analyserParametres "$@"
+
 for passe in $quefaire
 do
 	format="`echo "$passe" | cut -d : -f 1`"
 	transferer="`echo "$passe" | cut -d : -f 2`"
 	dest="`echo "$passe" | cut -d : -f 3-`"
-if [ x"$1" == x ]
+if grep -q . < "$TMP/parametres"
 then
+	faireEntreeStandard "`cat "$TMP/parametres"`"
+else
 	#echo '### Utilisation: '$0' <disque>'
 	#exit 1
 	faireSelection
-else
-	faireEntreeStandard "$@"
 fi
 done
 
