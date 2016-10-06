@@ -1,3 +1,18 @@
 #!/bin/sh
-/bin/launchctl unload /Users/clotildedognin/Library/LaunchAgents/eu.outters.fichiersCopiesEnPressePapier.plist
-/bin/launchctl load /Users/clotildedognin/Library/LaunchAgents/eu.outters.fichiersCopiesEnPressePapier.plist
+
+exec > /tmp/volumes.log 2>&1
+set -x
+
+for tache in fichiersCopiesEnPressePapier ; do
+	for pref in 'un' '' ; do
+		/bin/launchctl ${pref}load /Users/clotildedognin/Library/LaunchAgents/eu.outters.$tache.plist
+	done
+done
+
+for dossierCanon in EOS70 ; do
+	if [ -d "/Volumes/$dossierCanon" ] ; then
+		/Users/gui/src/scripts/imagerie/boulet "/Volumes/$dossierCanon/DCIM/" "$HOME/Downloads/TransfertEOS70D/" gui@zerozerosix.lan:"perso/Photos/201411 Blandine" "$HOME/Pictures/Photos Guillaume/" && osascript -e 'tell application "Finder" to eject "EOS70"' && osascript -e 'tell application "Finder" to display dialog "Transfert des photos terminé. Vous pouvez maintenant récupérer votre carte mémoire '"$dossierCanon"'."' # hdiutil detach ne veut pas fonctionner depuis launchd ("Autorisation refusée", en français).
+	fi
+done
+
+sleep 15 # Sans quoi launchd s'imagine qu'on s'est vautré.
