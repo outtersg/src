@@ -1,0 +1,28 @@
+#!/bin/sh
+
+absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`"
+
+# Dommage, on peut surveiller un dossier contenant des sous-dossiers accentués, mais pas directement un dossier accentué.
+# http://stackoverflow.com/questions/22450292/how-to-encode-a-path-containing-spaces-in-a-cfstringref
+# (et j'ai essayé de le convertir en toutes les fragrances d'UTF-8 avant de chercher sur internet).
+
+case "`hostname`" in
+	zerozerosix*)
+		nom=zerozerosix.lan
+		source="$HOME/Documents/ Partage"
+		dests="ssh://clotilde@f/Documents/ Partage;ssh://gclo.fr/var/partage"
+		dests="ssh://clotilde@f/Documents/ Partage"
+		;;
+	falbala*)
+		nom=falbala.lan
+		source="$HOME/Documents/ Partage"
+		dests="ssh://gui@zerozerosix.local/Documents/ Partage;ssh://gclo.fr/var/partage"
+		dests="ssh://gui@zerozerosix.local/Documents/ Partage"
+		;;
+esac
+
+PATH="/usr/local/bin:$PATH"
+LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+export PATH LD_LIBRARY_PATH
+
+"$SCRIPTS/partages" -n "$nom" "$source" "$dests"
