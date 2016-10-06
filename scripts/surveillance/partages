@@ -1,0 +1,105 @@
+#!/bin/sh
+
+# Dommage, on peut surveiller un dossier contenant des sous-dossiers accentués, mais pas directement un dossier accentué.
+# http://stackoverflow.com/questions/22450292/how-to-encode-a-path-containing-spaces-in-a-cfstringref
+# (et j'ai essayé de le convertir en toutes les fragrances d'UTF-8 avant de chercher sur internet).
+
+exec >> /tmp/p.log 2>&1
+
+auSecours()
+{
+	moi="`basename "$0"`"
+	cat >&2 <<TERMINE
+# Utilisation: $moi [-n <nom de machine>] <source> <dest> [<dest>...]
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	vars="source dests"
+	source=
+	dests=
+	
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-n) shift ; nom="$1" ;;
+			*)
+				if [ -z "$vars" ]
+				then
+					dests="$dests;$1"
+				else
+					for i in $vars
+					do
+						eval $i="\"$1\""
+						break
+					done
+					vars="`echo "$vars" | sed -e 's/[^ ]* //'`"
+				fi
+				;;
+		esac
+		shift
+	done
+	
+	[ -z "$source" -o -z "$dests" ] && auSecours
+	[ ! -d "$source" ] && echo "# $source inexistant." >&2 && exit 1
+}
+
+menage()
+{
+	kill `cat "$T/pids"`
+	[ -z "$T" ] || rm -Rf "$T"
+	exit 0
+}
+
+initDest()
+{
+	dest="$1"
+	
+	pousse "$dest"
+	
+	numeroDest="`expr $numeroDest + 1`"
+	touch "$T/dest.$numeroDest"
+	(
+		tail -f "$T/dest.$numeroDest" | while read modif
+		do
+			# À FAIRE: nc -z pour savoir si on a quelqu'un au bout. Si non, mettre en file d'attente
+			pousse "$dest"
+		done
+	) &
+	echo $! >> "$T/pids"
+}
+
+pousse()
+{
+	dest="$1"
+	export UNISONLOCALHOSTNAME
+	unison -batch -backups -maxbackups 3 "$source" "$dest"
+}
+
+analyserParametres "$@"
+
+T="/tmp/temp.$$.partages"
+UNISONLOCALHOSTNAME="$nom"
+export UNISONLOCALHOSTNAME
+rm -Rf "$T"
+mkdir "$T"
+numeroDest=0
+
+trap menage INT
+trap menage TERM
+
+echo "$dests" | tr \; '\012' | while read dest
+do
+	initDest "$dest"
+done
+
+fswatch -e ".unison.*.unison.tmp" -e ".bak.*" "$source" | while read f
+do
+	echo "CHANGEMENT $f"
+	for f in "$T"/dest.*
+	do
+		echo 1 >> "$f"
+	done
+done
