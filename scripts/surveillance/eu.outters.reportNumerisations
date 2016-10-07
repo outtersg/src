@@ -1,0 +1,32 @@
+#!/bin/sh
+
+source="$1"
+dest="$2"
+nom="num*.pdf"
+
+temps=10 # Pour que LaunchAgents ne nous trouve pas trop farouches, il faut que nous tenions au moins 10 s à chaque lancement.
+
+while true
+do
+	touch /tmp/h
+	sleep 1
+	find "$source" -depth 1 -type f -name "$nom" ! -newer /tmp/h | while read f
+	do
+		n=0
+		f0="`date +%Y-%m-%d` `basename "$f"`"
+		f1="$f0"
+		while [ -e "$dest/$f1" ]
+		do
+			n=`expr $n + 1`
+			f1="`echo "$f0" | sed -e "s/\\([^.]*\\)$/$n.\\1/"`"
+		done
+		mv "$f" "$dest/$f1"
+	done
+	if [ $temps -gt 0 ]
+	then
+		temps="`expr $temps - 1`"
+	else
+		# Si on a tenu assez longtemps, et qu'il ne reste plus rien à traiter, on peut sortir.
+		find "$source" -depth 1 -type f -name "$nom" | grep -q . || break
+	fi
+done
