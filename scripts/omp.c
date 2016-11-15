@@ -42,7 +42,7 @@ int attends(int f, const char * attente)
 
 		if(strstr(bloc, attente))
 		{
-			fprintf(stdout, bloc);
+			fprintf(stdout, "%s", bloc);
 			fflush(stdout);
 			TRACE(stderr, "trouve\n");
 			return 0;
