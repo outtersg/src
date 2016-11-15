@@ -121,7 +121,7 @@ void injecteEnEtapes(Etape * etape, char * octets, int n, int fdm)
 
 #define TBLOC 0x1000
 
-int maitre(int fdm, int tube, Etape * etape)
+void maitre(int fdm, int tube, Etape * etape)
 {
 	int e = 0;
 	
