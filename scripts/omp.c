@@ -20,6 +20,7 @@ struct Etape
 	int pauseMilli;
 	const char * saisie;
 	Etape * suite;
+	int vus; /* Nombre d'octets de l'attente déjà vus passer. */
 };
 
 int attends(int f, const char * attente)
@@ -49,13 +50,82 @@ int attends(int f, const char * attente)
 	}
 }
 
+/**
+ * @return Si les octets closent l'attente: nombre d'octets consommé; sinon -1 si la chaîne a été absorbée mais que l'on reste en attente de cette étape.
+ */
+int injecteEnEtape(Etape * etape, char * octets, int n)
+{
+	int voulus = strlen(etape->attente);
+	int reste = n;
+	int nVus;
+	
+	while(etape->vus < voulus)
+	{
+		/* On veut avancer dans la chaîne attendue à cette étape. */
+		
+		/* Déjà, a-t-on un octet à lire dans notre source? */
+		
+		if(--reste < 0)
+			return -1;
+		
+		/* Bon, essayons de le faire correspondre au prochain octet attendu. */
+		
+		retente:
+		if(*octets != etape->attente[etape->vus])
+		{
+			/* Si l'octet n'est pas le prochain attendu, on ne remet pas nécessairement notre état à 0; ainsi, si on attend abcabd, et qu'on reçoit abcabcabd, le second c arrivera alors que l'on aura déjà "vu" 5 caractères (abcab), mais le c ne correspondant pas au d alors attendu, on échoue à poursuivre plus loin, cependant on ne remet pas le compteur à 0, mais à 2, car le dernier ab passé (qui correspondait à attente[3..4]) correspond aussi à attente[0..1]. */
+			/* On recherche donc le plus grand dernier segment déjà vu qui puisse être un segment de début. */
+			nVus = etape->vus;
+			while(--etape->vus >= 0)
+			{
+				if(memcmp(etape->attente, &etape->attente[etape->vus], etape->vus))
+					goto retente;
+			}
+			/* Bon, si on était déjà acculé, et qu'on n'a pas trouvé, on ne trouvera pas plus en arrière. On sort, en laissant notre valeur à -1 pour qu'elle repasse à 0 juste après. */
+		}
+		++etape->vus;
+		
+		/* Celui-ci est passé (avec ou sans avancée, on s'en fiche). */
+		
+		++octets;
+	}
+	
+	return reste - n;
+}
+
+void injecteEnEtapes(Etape * etape, char * octets, int n, int fdm)
+{
+	int nc;
+	
+	while(etape)
+	{
+		if(!etape->attente)
+		{
+			etape = etape->suite;
+			continue;
+		}
+		
+		if((nc = injecteEnEtape(etape, octets, n)) < 0)
+			return;
+		
+		TRACE(stderr, "repéré sur le tube: %s\n", etape->attente);
+		usleep(etape->pauseMilli * 1000);
+		write(fdm, etape->saisie, strlen(etape->saisie));
+		write(fdm, "\n", 1);
+		
+		octets += nc;
+		n -= nc;
+		etape = etape->suite;
+	}
+}
+
 #define TBLOC 0x1000
 
 int maitre(int fdm, int tube, Etape * etape)
 {
 	int e = 0;
 	
-	while(etape)
+	while(etape && etape->attente)
 	{
 		attends(fdm, etape->attente);
 		usleep(etape->pauseMilli * 1000);
@@ -153,6 +223,7 @@ int  rc;
 					break;
 				default:
 					TRACE(stderr, "-> Lecture sur tube: %d %02.2x\n", rc, *(char *)(pBlocs[1] + restes[1]));
+					injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, fdm);
 					restes[1] += rc;
 				break;
             }
@@ -174,9 +245,18 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0]->pauseMilli = 300;
 			etapes[0]->saisie = argv[2];
 			etapes[0]->suite = NULL;
+			etapes[0]->vus = 0;
 			etapes = & etapes[0]->suite;
 			argv += 2;
 		}
+		else if(strcmp(argv[0], "-") == 0)
+		{
+			etapes[0] = (Etape *)malloc(sizeof(Etape));
+			etapes[0]->attente = NULL;
+			etapes[0]->suite = NULL;
+			etapes = & etapes[0]->suite;
+		}
+		/* else if(!nEtapes) alors le premier argument est un script à exécuter, façon sed */
 		else
 			break;
 	}
@@ -196,8 +276,10 @@ int main(int argc, char * const argv[])
 	argv = analyserParams(argv, & premiereEtape);
 	if(!premiereEtape || !*argv)
 	{
-fprintf(stderr, "%x\n", premiereEtape);
-		fprintf(stderr, "# Utilisation: sonpty (-e <chaîne attendue> <mdp>)+ <commande> <arg>*\n");
+		fprintf(stderr, "# Utilisation: sonpty (-e <chaîne attendue> <réponse>|-)+ <commande> <arg>*\n");
+		fprintf(stderr, "   -\n");
+		fprintf(stderr, "     ouverture des vannes. À partir de ce -, le stdin est reversé vers le fils\n");
+		fprintf(stderr, "     en même temps que les réponses du scénario.\n");
 		exit(1);
 	}
 	
