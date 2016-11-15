@@ -19,6 +19,8 @@ enum
 	S_SANS_TAMPON
 };
 
+static int g_sansTampon = 0;
+
 typedef struct Etape Etape;
 struct Etape
 {
@@ -110,6 +112,7 @@ void etapeControle(Etape * etape)
 			tcgetattr(0, &t);
 			t.c_lflag &= (~ICANON);
 			tcsetattr(0, TCSANOW, &t); /* ATTENTION: ce faisant on perd même la mise en correspondance ^D -> fin de flux. À corriger, par exemple en insérant en fin d'étapes une étape avec un code qui ne sort jamais (étape finale) mais analyse chaque octet à la recherche d'un ^D, par lequel elle ferme l'entrée standard. */
+			g_sansTampon = 1;
 			break;
 	}
 }
@@ -221,16 +224,34 @@ int  rc;
               {
 				case -1:
                 fprintf(stderr, "Erreur %d sur read entree standard\n", errno);
-				case 0:
+						default:
+							if(rc > 0)
+							{
+								char fermetureForcee = 0;
+								TRACE(stderr, "-> Lecture sur stdin: %d\n", rc);
+								/* Si on n'a pas de tampon, on n'a pas non plus de fermeture de notre flux d'entrée sur réception d'un ^D. On le gère. */
+								/* À FAIRE: en fait il faudrait détecter LF suivi de ^D; sans cela le ^D est un caractère comme un autre. */
+								if(g_sansTampon)
+								{
+									int rc2;
+									for(rc2 = -1; ++rc2 < rc && pBlocs[0][restes[0] + rc2] != (char)0x4;) {}
+									if(rc2 < rc)
+									{
+										fermetureForcee = 1;
+										rc = rc2;
+									}
+								}
+								restes[0] += rc;
+								if(!fermetureForcee)
+									break;
+								/* else on est dans le cas fermeture de stdin. */
+							}
 					TRACE(stderr, "-> Fermeture de stdin: %d\n", rc);
 					close(0);
 					e = -1;
 					if(!restes[0])
 						close(tube);
 					break;
-				default:
-					TRACE(stderr, "-> Lecture sur stdin: %d\n", rc);
-					restes[0] += rc;
             }
           }
           // S'il y a des donnees sur le PTY maitre
