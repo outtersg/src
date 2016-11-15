@@ -13,6 +13,12 @@
 
 #define TRACE if(0) fprintf
 
+enum
+{
+	S_MELEE,
+	S_SANS_TAMPON
+};
+
 typedef struct Etape Etape;
 struct Etape
 {
@@ -93,14 +99,32 @@ int injecteEnEtape(Etape * etape, char * octets, int n)
 	return reste - n;
 }
 
+void etapeControle(Etape * etape)
+{
+	struct termios t;
+	
+	switch((int)etape->saisie)
+	{
+		case (int)S_SANS_TAMPON:
+			/* http://shtrom.ssji.net/skb/getc.html */
+			tcgetattr(0, &t);
+			t.c_lflag &= (~ICANON);
+			tcsetattr(0, TCSANOW, &t); /* ATTENTION: ce faisant on perd même la mise en correspondance ^D -> fin de flux. À corriger, par exemple en insérant en fin d'étapes une étape avec un code qui ne sort jamais (étape finale) mais analyse chaque octet à la recherche d'un ^D, par lequel elle ferme l'entrée standard. */
+			break;
+	}
+}
+
 void injecteEnEtapes(Etape * etape, char * octets, int n, int fdm)
 {
 	int nc;
 	
 	while(etape)
 	{
+		/* Traitement des étapes de contrôle. */
+		
 		if(!etape->attente)
 		{
+			etapeControle(etape);
 			etape = etape->suite;
 			continue;
 		}
@@ -223,7 +247,7 @@ int  rc;
 					break;
 				default:
 					TRACE(stderr, "-> Lecture sur tube: %d %02.2x\n", rc, *(char *)(pBlocs[1] + restes[1]));
-					injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, fdm);
+					injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, fdm); // À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
 					restes[1] += rc;
 				break;
             }
@@ -253,6 +277,15 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 		{
 			etapes[0] = (Etape *)malloc(sizeof(Etape));
 			etapes[0]->attente = NULL;
+			etapes[0]->saisie = (char *)S_MELEE;
+			etapes[0]->suite = NULL;
+			etapes = & etapes[0]->suite;
+		}
+		else if(strcmp(argv[0], "--") == 0)
+		{
+			etapes[0] = (Etape *)malloc(sizeof(Etape));
+			etapes[0]->attente = NULL;
+			etapes[0]->saisie = (char *)S_SANS_TAMPON;
 			etapes[0]->suite = NULL;
 			etapes = & etapes[0]->suite;
 		}
