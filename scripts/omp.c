@@ -117,7 +117,16 @@ void etapeControle(Etape * etape)
 	}
 }
 
-void injecteEnEtapes(Etape * etape, char * octets, int n, int fdm)
+Etape * pousseAuTube(Etape * etape, int tube)
+{
+	TRACE(stderr, "repéré sur le tube: %s\n", etape->attente);
+	usleep(etape->pauseMilli * 1000);
+	write(tube, etape->saisie, strlen(etape->saisie));
+	write(tube, "\n", 1);
+	return etape->suite;
+}
+
+void injecteEnEtapes(Etape * etape, char * octets, int n, int tube)
 {
 	int nc;
 	
@@ -135,14 +144,10 @@ void injecteEnEtapes(Etape * etape, char * octets, int n, int fdm)
 		if((nc = injecteEnEtape(etape, octets, n)) < 0)
 			return;
 		
-		TRACE(stderr, "repéré sur le tube: %s\n", etape->attente);
-		usleep(etape->pauseMilli * 1000);
-		write(fdm, etape->saisie, strlen(etape->saisie));
-		write(fdm, "\n", 1);
+		etape = pousseAuTube(etape, tube);
 		
 		octets += nc;
 		n -= nc;
-		etape = etape->suite;
 	}
 }
 
@@ -155,10 +160,7 @@ void maitre(int fdm, int tube, Etape * etape)
 	while(etape && etape->attente)
 	{
 		attends(fdm, etape->attente);
-		usleep(etape->pauseMilli * 1000);
-		write(fdm, etape->saisie, strlen(etape->saisie));
-		write(fdm, "\n", 1);
-		etape = etape->suite;
+		etape = pousseAuTube(etape, tube);
 	}
 
 	char blocs[2][TBLOC];
@@ -268,7 +270,7 @@ int  rc;
 					break;
 				default:
 					TRACE(stderr, "-> Lecture sur tube: %d %02.2x\n", rc, *(char *)(pBlocs[1] + restes[1]));
-					injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, fdm); // À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
+					injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, tube); // À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
 					restes[1] += rc;
 				break;
             }
