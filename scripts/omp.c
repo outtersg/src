@@ -65,7 +65,6 @@ int injecteEnEtape(Etape * etape, char * octets, int n)
 {
 	int voulus = strlen(etape->attente);
 	int reste = n;
-	int nVus;
 	
 	while(etape->vus < voulus)
 	{
@@ -83,7 +82,6 @@ int injecteEnEtape(Etape * etape, char * octets, int n)
 		{
 			/* Si l'octet n'est pas le prochain attendu, on ne remet pas nécessairement notre état à 0; ainsi, si on attend abcabd, et qu'on reçoit abcabcabd, le second c arrivera alors que l'on aura déjà "vu" 5 caractères (abcab), mais le c ne correspondant pas au d alors attendu, on échoue à poursuivre plus loin, cependant on ne remet pas le compteur à 0, mais à 2, car le dernier ab passé (qui correspondait à attente[3..4]) correspond aussi à attente[0..1]. */
 			/* On recherche donc le plus grand dernier segment déjà vu qui puisse être un segment de début. */
-			nVus = etape->vus;
 			while(--etape->vus >= 0)
 			{
 				if(memcmp(etape->attente, &etape->attente[etape->vus], etape->vus))
@@ -98,7 +96,7 @@ int injecteEnEtape(Etape * etape, char * octets, int n)
 		++octets;
 	}
 	
-	return reste - n;
+	return reste;
 }
 
 void etapeControle(Etape * etape)
