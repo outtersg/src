@@ -272,6 +272,15 @@ int  rc;
 				default:
 					TRACE(stderr, "-> Lecture sur tube: %d %02.2x\n", rc, *(char *)(pBlocs[1] + restes[1]));
 					etape = injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, tube); // À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
+					/* Si plus d'étape dans le scénario, on considère le stdin terminé (sauf si l'appelant a demandé explicitement à maintenir ouvert à la fin). */
+					if(!etape && g_fermeEnFin && isatty(0))
+					{
+						TRACE(stderr, "-> Fermeture de stdin: %d\n", rc);
+						close(0);
+						e = -1;
+						if(!restes[0])
+							close(tube);
+					}
 					restes[1] += rc;
 				break;
             }
@@ -313,6 +322,8 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0]->suite = NULL;
 			etapes = & etapes[0]->suite;
 		}
+		else if(strcmp(argv[0], ".") == 0)
+			g_fermeEnFin = 0;
 		/* else if(!nEtapes) alors le premier argument est un script à exécuter, façon sed */
 		else
 			break;
