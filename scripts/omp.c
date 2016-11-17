@@ -160,7 +160,8 @@ void maitre(int fdm, int tube, Etape * etape)
 	while(etape && etape->attente)
 	{
 		attends(fdm, etape->attente);
-		etape = pousseAuTube(etape, tube);
+		/* Les premières étapes sont généralement celles de demande de mot de passe: on les fournit au PTY plutôt qu'au stdin (s'ils sont différents l'un de l'autre). */
+		etape = pousseAuTube(etape, fdm);
 	}
 
 	char blocs[2][TBLOC];
