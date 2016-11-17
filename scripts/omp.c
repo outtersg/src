@@ -126,7 +126,7 @@ Etape * pousseAuTube(Etape * etape, int tube)
 	return etape->suite;
 }
 
-void injecteEnEtapes(Etape * etape, char * octets, int n, int tube)
+Etape * injecteEnEtapes(Etape * etape, char * octets, int n, int tube)
 {
 	int nc;
 	
@@ -142,13 +142,15 @@ void injecteEnEtapes(Etape * etape, char * octets, int n, int tube)
 		}
 		
 		if((nc = injecteEnEtape(etape, octets, n)) < 0)
-			return;
+			return etape;
 		
 		etape = pousseAuTube(etape, tube);
 		
 		octets += nc;
 		n -= nc;
 	}
+	
+	return etape;
 }
 
 #define TBLOC 0x1000
@@ -270,7 +272,7 @@ int  rc;
 					break;
 				default:
 					TRACE(stderr, "-> Lecture sur tube: %d %02.2x\n", rc, *(char *)(pBlocs[1] + restes[1]));
-					injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, tube); // À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
+					etape = injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, tube); // À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
 					restes[1] += rc;
 				break;
             }
