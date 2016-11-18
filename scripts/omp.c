@@ -19,7 +19,14 @@ enum
 	S_SANS_TAMPON
 };
 
+enum
+{
+	I_PTY = -2,
+	I_STDIN = -3
+};
+
 static int g_sansTampon = 0;
+static int g_fermeEnFin = 1;
 
 typedef struct Etape Etape;
 struct Etape
@@ -29,6 +36,7 @@ struct Etape
 	const char * saisie;
 	Etape * suite;
 	int vus; /* Nombre d'octets de l'attente déjà vus passer. */
+	int injecteur;
 };
 
 int attends(int f, const char * attente)
@@ -115,16 +123,16 @@ void etapeControle(Etape * etape)
 	}
 }
 
-Etape * pousseAuTube(Etape * etape, int tube)
+Etape * pousseAuTube(Etape * etape)
 {
 	TRACE(stderr, "repéré sur le tube: %s\n", etape->attente);
 	usleep(etape->pauseMilli * 1000);
-	write(tube, etape->saisie, strlen(etape->saisie));
-	write(tube, "\n", 1);
+	write(etape->injecteur, etape->saisie, strlen(etape->saisie));
+	write(etape->injecteur, "\n", 1);
 	return etape->suite;
 }
 
-Etape * injecteEnEtapes(Etape * etape, char * octets, int n, int tube)
+Etape * injecteEnEtapes(Etape * etape, char * octets, int n)
 {
 	int nc;
 	
@@ -142,7 +150,7 @@ Etape * injecteEnEtapes(Etape * etape, char * octets, int n, int tube)
 		if((nc = injecteEnEtape(etape, octets, n)) < 0)
 			return etape;
 		
-		etape = pousseAuTube(etape, tube);
+		etape = pousseAuTube(etape);
 		
 		octets += nc;
 		n -= nc;
@@ -153,28 +161,103 @@ Etape * injecteEnEtapes(Etape * etape, char * octets, int n, int tube)
 
 #define TBLOC 0x1000
 
+#define O_CONTROLER 0x1
+#define O_SURVEILLER 0x2
+
+Etape * lire(fd_set * descrs, int * descr, int numBloc, char ** blocs, char ** pBlocs, int * restes, int opt, Etape * etapeCourante)
+{
+	int rc;
+	
+	if(*descr >= 0 && FD_ISSET(*descr, descrs))
+	{
+		if((rc = read(*descr, &pBlocs[numBloc][restes[numBloc]], TBLOC - (pBlocs[numBloc] - blocs[numBloc]) - restes[numBloc])) < 0)
+		{
+			fprintf(stderr, "Erreur %d sur read entree standard\n", errno);
+			return etapeCourante;
+		}
+		
+		if(rc > 0)
+		{
+			char fermetureForcee = 0;
+			if(opt & O_CONTROLER)
+			{
+				/* Si on n'a pas de tampon, on n'a pas non plus de fermeture de notre flux d'entrée sur réception d'un ^D. On le gère. */
+				/* À FAIRE: en fait il faudrait détecter LF suivi de ^D; sans cela le ^D est un caractère comme un autre. */
+				if(g_sansTampon)
+				{
+					int rc2;
+					for(rc2 = -1; ++rc2 < rc && pBlocs[numBloc][restes[numBloc] + rc2] != (char)0x4;) {}
+					if(rc2 < rc)
+					{
+						fermetureForcee = 1;
+						rc = rc2;
+					}
+				}
+			}
+			if(opt & O_SURVEILLER)
+			{
+				// À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
+				etapeCourante = injecteEnEtapes(etapeCourante, pBlocs[numBloc] + restes[numBloc], rc);
+			}
+			restes[numBloc] += rc;
+			if(!fermetureForcee)
+				return etapeCourante;
+			/* else on est dans le cas fermeture de stdin, ci-dessous. */
+		}
+		
+		TRACE(stderr, "-> Fermeture du %d\n", *descr);
+		close(*descr);
+		*descr = -1;
+	}
+	
+	return etapeCourante;
+}
+
 void maitre(int fdm, int tube, Etape * etape)
 {
 	int e = 0;
 	
+	TRACE(stderr, "%d: stdin maître\n", e);
+	TRACE(stderr, "%d: stdin appli\n", tube);
+	TRACE(stderr, "%d: pty appli\n", fdm);
+	
+	/* Maintenant que l'on connaît les descripteurs de fichier réels, on peut brancher l'injecteur des étapes. */
+	
+	Etape * pEtape;
+	for(pEtape = etape; pEtape; pEtape = pEtape->suite)
+	{
+		if(pEtape->attente)
+		{
+			switch(pEtape->injecteur)
+			{
+				case I_STDIN: pEtape->injecteur = tube; break;
+				case I_PTY: pEtape->injecteur = fdm; break;
+			}
+		}
+	}
+	
+	/* On passe les première étapes, avant ouverture du stdin maître vers le stdin appli. */
+	
 	while(etape && etape->attente)
 	{
+		etape->injecteur = fdm;
 		attends(fdm, etape->attente);
 		/* Les premières étapes sont généralement celles de demande de mot de passe: on les fournit au PTY plutôt qu'au stdin (s'ils sont différents l'un de l'autre). */
-		etape = pousseAuTube(etape, fdm);
+		etape = pousseAuTube(etape);
 	}
 
 	char blocs[2][TBLOC];
 	int restes[2];
 	int fmax;
 	char * pBlocs[2];
+	char * debutsBlocs[2];
 int  rc;
   fd_set fd_in;
 	fd_set etatsS;
 	restes[0] = 0;
 	restes[1] = 0;
-	pBlocs[0] = &blocs[0][0];
-	pBlocs[1] = &blocs[1][0];
+	pBlocs[0] = debutsBlocs[0] = &blocs[0][0];
+	pBlocs[1] = debutsBlocs[1] = &blocs[1][0];
     // Code du processus pere
     // Fermeture de la partie esclave du PTY
 	while (fdm >= 0)
@@ -221,70 +304,21 @@ int  rc;
 				}
 			}
 			// S'il y a des donnees sur l'entree standard
-			if (FD_ISSET(0, &fd_in))
-            {
-			switch(rc = read(0, pBlocs[0] + restes[0], &blocs[0][TBLOC] - (pBlocs[0] + restes[0])))
-              {
-				case -1:
-                fprintf(stderr, "Erreur %d sur read entree standard\n", errno);
-						default:
-							if(rc > 0)
-							{
-								char fermetureForcee = 0;
-								TRACE(stderr, "-> Lecture sur stdin: %d\n", rc);
-								/* Si on n'a pas de tampon, on n'a pas non plus de fermeture de notre flux d'entrée sur réception d'un ^D. On le gère. */
-								/* À FAIRE: en fait il faudrait détecter LF suivi de ^D; sans cela le ^D est un caractère comme un autre. */
-								if(g_sansTampon)
-								{
-									int rc2;
-									for(rc2 = -1; ++rc2 < rc && pBlocs[0][restes[0] + rc2] != (char)0x4;) {}
-									if(rc2 < rc)
-									{
-										fermetureForcee = 1;
-										rc = rc2;
-									}
-								}
-								restes[0] += rc;
-								if(!fermetureForcee)
-									break;
-								/* else on est dans le cas fermeture de stdin. */
-							}
-					TRACE(stderr, "-> Fermeture de stdin: %d\n", rc);
+				etape = lire(&fd_in, &e, 0, debutsBlocs, pBlocs, restes, O_CONTROLER, etape);
+				etape = lire(&fd_in, &fdm, 1, debutsBlocs, pBlocs, restes, O_SURVEILLER, etape);
+				
+				/* Si plus d'étape dans le scénario, on considère le stdin terminé (sauf si l'appelant a demandé explicitement à maintenir ouvert à la fin). */
+				if(!etape && g_fermeEnFin && isatty(0))
+				{
+					TRACE(stderr, "-> Fermeture du stdin maître (par fin du scénario)\n");
 					close(0);
 					e = -1;
-					if(!restes[0])
-						close(tube);
-					break;
-            }
-          }
-          // S'il y a des donnees sur le PTY maitre
-          if (FD_ISSET(fdm, &fd_in))
-          {
-			switch(rc = read(fdm, pBlocs[1] + restes[1], &blocs[1][TBLOC] - (pBlocs[1] + restes[1])))
-              {
-				case -1:
-                fprintf(stderr, "Erreur %d sur read PTY maitre\n", errno);
-				case 0:
-					TRACE(stderr, "-> Fermeture du tube: %d\n", rc);
-					close(fdm);
-					fdm = -1;
-					break;
-				default:
-					TRACE(stderr, "-> Lecture sur tube: %d %02.2x\n", rc, *(char *)(pBlocs[1] + restes[1]));
-					etape = injecteEnEtapes(etape, pBlocs[1] + restes[1], rc, tube); // À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
-					/* Si plus d'étape dans le scénario, on considère le stdin terminé (sauf si l'appelant a demandé explicitement à maintenir ouvert à la fin). */
-					if(!etape && g_fermeEnFin && isatty(0))
-					{
-						TRACE(stderr, "-> Fermeture de stdin: %d\n", rc);
-						close(0);
-						e = -1;
-						if(!restes[0])
-							close(tube);
-					}
-					restes[1] += rc;
-				break;
-            }
-          }
+				}
+				if(e < 0 && tube >= 0 && !restes[0])
+				{
+					TRACE(stderr, "-> Fermeture du stdin appli (notre stdin étant fermé)\n");
+					close(tube);
+				}
         }
       } // End switch
     } // End while
@@ -293,6 +327,8 @@ int  rc;
 
 char * const * analyserParams(char * const argv[], Etape ** etapes)
 {
+	int iDefaut = I_PTY;
+	
 	while(*++argv)
 	{
 		if(strcmp(argv[0], "-e") == 0 && argv[1] && argv[2])
@@ -303,6 +339,7 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0]->saisie = argv[2];
 			etapes[0]->suite = NULL;
 			etapes[0]->vus = 0;
+			etapes[0]->injecteur = iDefaut;
 			etapes = & etapes[0]->suite;
 			argv += 2;
 		}
@@ -313,6 +350,8 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0]->saisie = (char *)S_MELEE;
 			etapes[0]->suite = NULL;
 			etapes = & etapes[0]->suite;
+			/* Les étapes après celle-ci injecteront vers le stdin de l'appli, non plus vers son PTY comme initialement. */
+			iDefaut = I_STDIN;
 		}
 		else if(strcmp(argv[0], "--") == 0)
 		{
@@ -321,6 +360,8 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0]->saisie = (char *)S_SANS_TAMPON;
 			etapes[0]->suite = NULL;
 			etapes = & etapes[0]->suite;
+			/* Les étapes après celle-ci injecteront vers le stdin de l'appli, non plus vers son PTY comme initialement. */
+			iDefaut = I_STDIN;
 		}
 		else if(strcmp(argv[0], ".") == 0)
 			g_fermeEnFin = 0;
