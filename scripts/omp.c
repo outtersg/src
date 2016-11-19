@@ -39,6 +39,26 @@ struct Etape
 	int injecteur;
 };
 
+#define NSORTIES 2
+#define TBLOC 0x1000
+
+typedef struct Sortie Sortie;
+struct Sortie
+{
+	char bloc[TBLOC];
+	int reste;
+	char * pBloc;
+	int sortie;
+	
+	char * descr;
+};
+
+typedef struct Maitre Maitre;
+struct Maitre
+{
+	Sortie sorties[NSORTIES];
+};
+
 int attends(int f, const char * attente)
 {
 	int t2;
@@ -69,9 +89,10 @@ int attends(int f, const char * attente)
 /**
  * @return Si les octets closent l'attente: nombre d'octets consommé; sinon -1 si la chaîne a été absorbée mais que l'on reste en attente de cette étape.
  */
-int injecteEnEtape(Etape * etape, char * octets, int n)
+int injecteEnEtape(Etape * etape, char * octets, int * ptrN)
 {
 	int voulus = strlen(etape->attente);
+	int n = *ptrN;
 	int reste = n;
 	
 	while(etape->vus < voulus)
@@ -132,7 +153,7 @@ Etape * pousseAuTube(Etape * etape)
 	return etape->suite;
 }
 
-Etape * injecteEnEtapes(Etape * etape, char * octets, int n)
+Etape * injecteEnEtapes(Etape * etape, char * octets, int * n)
 {
 	int nc;
 	
@@ -159,18 +180,73 @@ Etape * injecteEnEtapes(Etape * etape, char * octets, int n)
 	return etape;
 }
 
-#define TBLOC 0x1000
-
 #define O_CONTROLER 0x1
 #define O_SURVEILLER 0x2
 
-Etape * lire(fd_set * descrs, int * descr, int numBloc, char ** blocs, char ** pBlocs, int * restes, int opt, Etape * etapeCourante)
+void Sortie_init(Sortie * this, int fd, char * descr)
+{
+	this->sortie = fd;
+	this->reste = 0;
+	this->pBloc = &this->bloc[0];
+	
+	this->descr = descr;
+}
+
+int Sortie_ecrire(Sortie * this)
+{
+	int rc;
+	
+	if((rc = write(this->sortie, this->pBloc, this->reste)) > 0)
+	{
+		if((this->reste -= rc) <= 0)
+			this->pBloc = &this->bloc[0];
+		else
+			this->pBloc += rc;
+		TRACE(stderr, "   Transmis %s: %d\n", this->sortie == 1 || this->sortie == 2 ? "↑" : "↓", rc);
+	}
+	
+	return rc;
+}
+
+static inline void preparerSelectEntrant(int f, int placeRestante, fd_set * descrs, int * fmax, char * descr)
+{
+	if(f >= 0 && placeRestante < TBLOC)
+	{
+		FD_SET(f, descrs);
+		if(*fmax < f)
+			*fmax = f;
+		TRACE(stderr, "attends jusqu'à %d octets sur %s\n", placeRestante, descr);
+	}
+}
+
+static inline void Sortie_preparerSelect(Sortie * this, fd_set * descrs, int * fmax)
+{
+	if(this->reste)
+	{
+		FD_SET(this->sortie, descrs);
+		if(*fmax < this->sortie)
+			*fmax = this->sortie;
+		TRACE(stderr, "attends place pour écrire %d octets sur %s\n", this->reste, this->descr);
+	}
+}
+
+static inline int Sortie_ecrireSi(Sortie * this, fd_set * descrs)
+{
+	int rc;
+	
+	if(FD_ISSET(this->sortie, descrs))
+		return Sortie_ecrire(this);
+	
+	return 0;
+}
+
+Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etapeCourante)
 {
 	int rc;
 	
 	if(*descr >= 0 && FD_ISSET(*descr, descrs))
 	{
-		if((rc = read(*descr, &pBlocs[numBloc][restes[numBloc]], TBLOC - (pBlocs[numBloc] - blocs[numBloc]) - restes[numBloc])) < 0)
+		if((rc = read(*descr, &dest->pBloc[dest->reste], TBLOC - (dest->pBloc - &dest->bloc[0]) - dest->reste)) < 0)
 		{
 			fprintf(stderr, "Erreur %d sur read entree standard\n", errno);
 			return etapeCourante;
@@ -186,7 +262,7 @@ Etape * lire(fd_set * descrs, int * descr, int numBloc, char ** blocs, char ** p
 				if(g_sansTampon)
 				{
 					int rc2;
-					for(rc2 = -1; ++rc2 < rc && pBlocs[numBloc][restes[numBloc] + rc2] != (char)0x4;) {}
+					for(rc2 = -1; ++rc2 < rc && dest->pBloc[dest->reste + rc2] != (char)0x4;) {}
 					if(rc2 < rc)
 					{
 						fermetureForcee = 1;
@@ -195,11 +271,8 @@ Etape * lire(fd_set * descrs, int * descr, int numBloc, char ** blocs, char ** p
 				}
 			}
 			if(opt & O_SURVEILLER)
-			{
-				// À FAIRE: injecter après avoir dépilé le restes[1], pour que ce qu'on injecte en réponse apparaisse après l'invite qui a provoqué cette réponse.
-				etapeCourante = injecteEnEtapes(etapeCourante, pBlocs[numBloc] + restes[numBloc], rc);
-			}
-			restes[numBloc] += rc;
+				etapeCourante = injecteEnEtapes(etapeCourante, &dest->pBloc[dest->reste], & rc);
+			dest->reste += rc;
 			if(!fermetureForcee)
 				return etapeCourante;
 			/* else on est dans le cas fermeture de stdin, ci-dessous. */
@@ -246,18 +319,14 @@ void maitre(int fdm, int tube, Etape * etape)
 		etape = pousseAuTube(etape);
 	}
 
-	char blocs[2][TBLOC];
-	int restes[2];
+	Maitre maitre;
+	Sortie_init(&maitre.sorties[0], tube, "stdin fils");
+	Sortie_init(&maitre.sorties[1], 1, "stdout");
+	
 	int fmax;
-	char * pBlocs[2];
-	char * debutsBlocs[2];
 int  rc;
   fd_set fd_in;
 	fd_set etatsS;
-	restes[0] = 0;
-	restes[1] = 0;
-	pBlocs[0] = debutsBlocs[0] = &blocs[0][0];
-	pBlocs[1] = debutsBlocs[1] = &blocs[1][0];
     // Code du processus pere
     // Fermeture de la partie esclave du PTY
 	while (fdm >= 0)
@@ -266,11 +335,11 @@ int  rc;
 		TRACE(stderr, "-> (Attente de mouvement)\n");
       // Attente de données de l'entrée standard et du PTY maître
       FD_ZERO(&fd_in);
-		if(e >= 0 && restes[0] < TBLOC) { FD_SET(e, &fd_in); if(fmax < e) fmax = e; TRACE(stderr, "attends données sur stdin\n");}
-		if(fdm >= 0 && restes[1] < TBLOC) { FD_SET(fdm, &fd_in); if(fmax < fdm) fmax = fdm; TRACE(stderr, "attends données du fils\n");}
+		preparerSelectEntrant(e, maitre.sorties[0].reste, &fd_in, &fmax, "stdin");
+		preparerSelectEntrant(fdm, maitre.sorties[1].reste, &fd_in, &fmax, "TTY fils");
 		FD_ZERO(&etatsS);
-		if(restes[0]) { FD_SET(tube, &etatsS); if(fmax < tube) fmax = tube; TRACE(stderr, "attends place chez fils\n"); }
-		if(restes[1]) { FD_SET(1, &etatsS); if(fmax < 1) fmax = 1; TRACE(stderr, "attends place sur stdout\n"); }
+		Sortie_preparerSelect(&maitre.sorties[0], &etatsS, &fmax);
+		Sortie_preparerSelect(&maitre.sorties[1], &etatsS, &fmax);
 		rc = select(fmax + 1, &fd_in, &etatsS, NULL, NULL);
       switch(rc)
       {
@@ -278,34 +347,13 @@ int  rc;
                   exit(1);
         default :
         {
-			if (FD_ISSET(tube, &etatsS))
-          {
-				if((rc = write(tube, pBlocs[0], restes[0])) > 0)
-            {
-					if((restes[0] -= rc) <= 0)
-						pBlocs[0] = &blocs[0][0];
-					else
-						pBlocs[0] += rc;
-					TRACE(stderr, "   Transmis: %d\n", rc);
-				}
-				if(e < 0 && !restes[0])
-					close(tube);
-            }
-			// S'il y a des donnees sur le PTY maitre
-			if (FD_ISSET(1, &etatsS))
-			{
-				if((rc = write(1, pBlocs[1], restes[1])) > 0)
-				{
-					if((restes[1] -= rc) <= 0)
-						pBlocs[1] = &blocs[1][0];
-            else
-						pBlocs[1] += rc;
-					TRACE(stderr, "   Transmis: %d\n", rc);
-				}
-			}
+				Sortie_ecrireSi(&maitre.sorties[0], &etatsS);
+				Sortie_ecrireSi(&maitre.sorties[1], &etatsS);
+				if(e < 0 && !maitre.sorties[0].reste)
+					close(maitre.sorties[0].sortie);
 			// S'il y a des donnees sur l'entree standard
-				etape = lire(&fd_in, &e, 0, debutsBlocs, pBlocs, restes, O_CONTROLER, etape);
-				etape = lire(&fd_in, &fdm, 1, debutsBlocs, pBlocs, restes, O_SURVEILLER, etape);
+				etape = lire(&fd_in, &e, &maitre.sorties[0], O_CONTROLER, etape);
+				etape = lire(&fd_in, &fdm, &maitre.sorties[1], O_SURVEILLER, etape);
 				
 				/* Si plus d'étape dans le scénario, on considère le stdin terminé (sauf si l'appelant a demandé explicitement à maintenir ouvert à la fin). */
 				if(!etape && g_fermeEnFin && isatty(0))
@@ -314,7 +362,7 @@ int  rc;
 					close(0);
 					e = -1;
 				}
-				if(e < 0 && tube >= 0 && !restes[0])
+				if(e < 0 && tube >= 0 && !maitre.sorties[0].reste)
 				{
 					TRACE(stderr, "-> Fermeture du stdin appli (notre stdin étant fermé)\n");
 					close(tube);
