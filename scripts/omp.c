@@ -27,6 +27,9 @@ enum
 
 static int g_sansTampon = 0;
 static int g_fermeEnFin = 1;
+static int g_pipelette = 1; /* Restitue-t-on sur le TTY maître le contenu de nos échanges scénarisés? */
+
+typedef struct Sortie Sortie;
 
 typedef struct Etape Etape;
 struct Etape
@@ -37,12 +40,21 @@ struct Etape
 	Etape * suite;
 	int vus; /* Nombre d'octets de l'attente déjà vus passer. */
 	int injecteur;
+	Sortie * echo;
+};
+
+typedef struct Insert Insert;
+struct Insert
+{
+	char * pos; /* Dans le bloc de sa sortie. */
+	char * insert;
+	int taille;
+	int dejaEcrits;
 };
 
 #define NSORTIES 2
 #define TBLOC 0x1000
 
-typedef struct Sortie Sortie;
 struct Sortie
 {
 	char bloc[TBLOC];
@@ -50,8 +62,14 @@ struct Sortie
 	char * pBloc;
 	int sortie;
 	
+	Insert * inserts;
+	int nInserts;
+	int nInsertsAlloues;
+	
 	char * descr;
 };
+Insert * Sortie_insert(Sortie * this, char * insert, int taille);
+void Sortie_memmove(Sortie * this, char * dest, char * source, int n);
 
 typedef struct Maitre Maitre;
 struct Maitre
@@ -59,7 +77,15 @@ struct Maitre
 	Sortie sorties[NSORTIES];
 };
 
-int attends(int f, const char * attente)
+void Maitre_ecrire(Maitre * this, int numBloc);
+
+inline static void echo(int sortie, const char * octets, int n)
+{
+	if(g_pipelette && n && sortie >= 0)
+		write(sortie, octets, n);
+}
+
+int attends(int f, const char * attente, Sortie * echo)
 {
 	int t2;
 	char bloc[0x1000];
@@ -72,14 +98,14 @@ int attends(int f, const char * attente)
 			case -1:
 				return -1;
 		}
+		
+		Sortie_insert(echo, &bloc[t], t2);
 
 		t += t2;
 		bloc[t] = 0;
 
 		if(strstr(bloc, attente))
 		{
-			fprintf(stdout, "%s", bloc);
-			fflush(stdout);
 			TRACE(stderr, "trouve\n");
 			return 0;
 		}
@@ -87,13 +113,16 @@ int attends(int f, const char * attente)
 }
 
 /**
- * @return Si les octets closent l'attente: nombre d'octets consommé; sinon -1 si la chaîne a été absorbée mais que l'on reste en attente de cette étape.
+ * @return Si les octets closent l'attente: pointeur sur ce qu'on laisse en non consommé; sinon NULL si la chaîne a été absorbée mais que l'on reste en attente de cette étape.
  */
-int injecteEnEtape(Etape * etape, char * octets, int * ptrN)
+char * injecteEnEtape(Etape * etape, Sortie * travail, int n)
 {
 	int voulus = strlen(etape->attente);
-	int n = *ptrN;
 	int reste = n;
+	int nVus;
+	char * octets = &travail->pBloc[travail->reste - n];
+	char * depart = octets;
+	char * premierGobe = octets;
 	
 	while(etape->vus < voulus)
 	{
@@ -102,21 +131,35 @@ int injecteEnEtape(Etape * etape, char * octets, int * ptrN)
 		/* Déjà, a-t-on un octet à lire dans notre source? */
 		
 		if(--reste < 0)
-			return -1;
+		{
+			/* Si l'on reste coincés au beau milieu d'une étape, on ne sait pas encore si ce qu'on a déjà lu sera finalement consommé par nous, ou libéré (parce que la fin ne correspond pas). Dans ce cas, on fait de la rétention pour le moment, en tronquant avant ce qui nous appartient. */
+			Sortie_memmove(travail, premierGobe, octets, 0);
+			return NULL;
+		}
 		
 		/* Bon, essayons de le faire correspondre au prochain octet attendu. */
+		/* Attention, à la moindre non-concordance, si nous avions déjà considéré comme passés des octets (car ils correspondaient à notre début), il nous faudra les restituer (en nous excusant platement d'avoir fait de la rétention). */
 		
 		retente:
-		if(*octets != etape->attente[etape->vus])
+		if(*octets != etape->attente[nVus = etape->vus])
 		{
 			/* Si l'octet n'est pas le prochain attendu, on ne remet pas nécessairement notre état à 0; ainsi, si on attend abcabd, et qu'on reçoit abcabcabd, le second c arrivera alors que l'on aura déjà "vu" 5 caractères (abcab), mais le c ne correspondant pas au d alors attendu, on échoue à poursuivre plus loin, cependant on ne remet pas le compteur à 0, mais à 2, car le dernier ab passé (qui correspondait à attente[3..4]) correspond aussi à attente[0..1]. */
 			/* On recherche donc le plus grand dernier segment déjà vu qui puisse être un segment de début. */
 			while(--etape->vus >= 0)
 			{
 				if(memcmp(etape->attente, &etape->attente[etape->vus], etape->vus))
+				{
+					/* Restitution de ce qu'on avait mangé par erreur. */
+					if((premierGobe -= (nVus - etape->vus)) < depart) /* Ce qu'on avait gobé dans le bloc mémoire actuellement analysé peut être restitué "logiquement". */
+					{
+						Sortie_insert(travail, (char *)etape->attente, depart - premierGobe); /* Mais si on l'avait gobé sur la précédente injection, il nous faut aller fouiller notre mémoire pour retrouver quoi restituer. Coup de chance, pour une étape "simple" (sans regex), ce qu'on a gobé est à l'octet près notre crible de gobage. */
+						premierGobe = depart;
+					}
 					goto retente;
+				}
 			}
 			/* Bon, si on était déjà acculé, et qu'on n'a pas trouvé, on ne trouvera pas plus en arrière. On sort, en laissant notre valeur à -1 pour qu'elle repasse à 0 juste après. */
+			++premierGobe;
 		}
 		++etape->vus;
 		
@@ -125,7 +168,11 @@ int injecteEnEtape(Etape * etape, char * octets, int * ptrN)
 		++octets;
 	}
 	
-	return reste;
+	/* En ayant passé l'étape, nous avons troué ce qu'il nous a été fourni en entrée. Comblons le trou en recollant ce qui suit le trou à ce qui le précède. */
+	
+	Sortie_memmove(travail, premierGobe, octets, reste);
+	
+	return premierGobe;
 }
 
 void etapeControle(Etape * etape)
@@ -144,18 +191,25 @@ void etapeControle(Etape * etape)
 	}
 }
 
-Etape * pousseAuTube(Etape * etape)
+Etape * pousseAuTube(Etape * etape, int posRelative)
 {
 	TRACE(stderr, "repéré sur le tube: %s\n", etape->attente);
 	usleep(etape->pauseMilli * 1000);
+	if(etape->echo)
+	{
+		etape->echo->reste += posRelative;
+		Sortie_insert(etape->echo, (char *)etape->saisie, strlen(etape->saisie));
+		Sortie_insert(etape->echo, "\n", 1);
+		etape->echo->reste -= posRelative;
+	}
 	write(etape->injecteur, etape->saisie, strlen(etape->saisie));
 	write(etape->injecteur, "\n", 1);
 	return etape->suite;
 }
 
-Etape * injecteEnEtapes(Etape * etape, char * octets, int * n)
+Etape * injecteEnEtapes(Etape * etape, Sortie * travail, int n)
 {
-	int nc;
+	char * ptrReste;
 	
 	while(etape)
 	{
@@ -163,18 +217,19 @@ Etape * injecteEnEtapes(Etape * etape, char * octets, int * n)
 		
 		if(!etape->attente)
 		{
+			TRACE(stderr, "ETAPE %d\n", (int)etape->saisie);
 			etapeControle(etape);
 			etape = etape->suite;
 			continue;
 		}
 		
-		if((nc = injecteEnEtape(etape, octets, n)) < 0)
+		TRACE(stderr, "ETAPE %s\n", etape->attente);
+		if(!(ptrReste = injecteEnEtape(etape, travail, n)))
 			return etape;
 		
-		etape = pousseAuTube(etape);
+		n = &travail->pBloc[travail->reste] - ptrReste;
 		
-		octets += nc;
-		n -= nc;
+		etape = pousseAuTube(etape, -n);
 	}
 	
 	return etape;
@@ -189,14 +244,79 @@ void Sortie_init(Sortie * this, int fd, char * descr)
 	this->reste = 0;
 	this->pBloc = &this->bloc[0];
 	
+	this->inserts = NULL;
+	this->nInsertsAlloues = 0;
+	this->nInserts = 0;
+	
 	this->descr = descr;
+}
+
+Insert * Sortie_insert(Sortie * this, char * insert, int taille)
+{
+	Insert * nouveau;
+	
+	if(this->nInserts >= this->nInsertsAlloues)
+	{
+		Insert * anciens = this->inserts;
+		this->inserts = (Insert *)malloc((++this->nInsertsAlloues) * sizeof(Insert));
+		if(anciens)
+		{
+			memcpy(this->inserts, anciens, this->nInserts * sizeof(Insert));
+			free(this->inserts);
+		}
+	}
+	
+	nouveau = & this->inserts[this->nInserts];
+	nouveau->pos = &this->pBloc[this->reste];
+	nouveau->insert = insert;
+	nouveau->taille = taille;
+	nouveau->dejaEcrits = 0;
+	
+	++this->nInserts;
+	return nouveau;
+}
+
+void Sortie_memmove(Sortie * this, char * dest, char * source, int n)
+{
+	if(source > dest)
+	{
+		if(n > 0)
+			memmove(dest, source, n);
+		this->reste -= source - dest; /* On part du principe que ce qui est supprimé était dans le reste à écrire. */
+		for(n = this->nInserts; --n >= 0;)
+			if(this->inserts[n].pos > source)
+				this->inserts[n].pos -= source - dest;
+			else if(this->inserts[n].pos > dest)
+				this->inserts[n].pos = dest;
+	}
+}
+
+void Sortie_ecrireInsert(Sortie * this)
+{
+	int n;
+	Insert * pInsert = &this->inserts[0];
+	if((n = write(this->sortie, &pInsert->insert[pInsert->dejaEcrits], pInsert->taille - pInsert->dejaEcrits)) >= 0)
+		if((pInsert->dejaEcrits += n) >= pInsert->taille)
+			if(--this->nInserts > 0)
+				memmove(&this->inserts[0], &this->inserts[1], this->nInserts * sizeof(Insert));
 }
 
 int Sortie_ecrire(Sortie * this)
 {
-	int rc;
+	int rc = this->reste;
 	
-	if((rc = write(this->sortie, this->pBloc, this->reste)) > 0)
+	if(this->nInserts)
+	{
+		if(this->pBloc == this->inserts[0].pos)
+		{
+			Sortie_ecrireInsert(this);
+			return 0;
+		}
+		else if(rc > this->inserts[0].pos - this->pBloc)
+			rc = this->inserts[0].pos - this->pBloc;
+	}
+	
+	if((rc = write(this->sortie, this->pBloc, rc)) > 0)
 	{
 		if((this->reste -= rc) <= 0)
 			this->pBloc = &this->bloc[0];
@@ -270,9 +390,9 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 					}
 				}
 			}
-			if(opt & O_SURVEILLER)
-				etapeCourante = injecteEnEtapes(etapeCourante, &dest->pBloc[dest->reste], & rc);
 			dest->reste += rc;
+			if(opt & O_SURVEILLER)
+				etapeCourante = injecteEnEtapes(etapeCourante, dest, rc);
 			if(!fermetureForcee)
 				return etapeCourante;
 			/* else on est dans le cas fermeture de stdin, ci-dessous. */
@@ -293,6 +413,10 @@ void maitre(int fdm, int tube, Etape * etape)
 	TRACE(stderr, "%d: stdin maître\n", e);
 	TRACE(stderr, "%d: stdin appli\n", tube);
 	TRACE(stderr, "%d: pty appli\n", fdm);
+
+	Maitre maitre;
+	Sortie_init(&maitre.sorties[0], tube, "stdin fils");
+	Sortie_init(&maitre.sorties[1], 1, "stdout");
 	
 	/* Maintenant que l'on connaît les descripteurs de fichier réels, on peut brancher l'injecteur des étapes. */
 	
@@ -301,10 +425,10 @@ void maitre(int fdm, int tube, Etape * etape)
 	{
 		if(pEtape->attente)
 		{
-			switch(pEtape->injecteur)
+			switch((int)pEtape->injecteur)
 			{
-				case I_STDIN: pEtape->injecteur = tube; break;
-				case I_PTY: pEtape->injecteur = fdm; break;
+				case I_STDIN: pEtape->injecteur = tube; pEtape->echo = &maitre.sorties[1]; break;
+				case I_PTY: pEtape->injecteur = fdm; pEtape->echo = &maitre.sorties[1]; break;
 			}
 		}
 	}
@@ -313,15 +437,10 @@ void maitre(int fdm, int tube, Etape * etape)
 	
 	while(etape && etape->attente)
 	{
-		etape->injecteur = fdm;
-		attends(fdm, etape->attente);
+		attends(fdm, etape->attente, etape->echo);
 		/* Les premières étapes sont généralement celles de demande de mot de passe: on les fournit au PTY plutôt qu'au stdin (s'ils sont différents l'un de l'autre). */
-		etape = pousseAuTube(etape);
+		etape = pousseAuTube(etape, 0);
 	}
-
-	Maitre maitre;
-	Sortie_init(&maitre.sorties[0], tube, "stdin fils");
-	Sortie_init(&maitre.sorties[1], 1, "stdout");
 	
 	int fmax;
 int  rc;
