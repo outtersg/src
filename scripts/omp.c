@@ -170,6 +170,9 @@ char * injecteEnEtape(Etape * etape, Sortie * travail, int n)
 	
 	/* En ayant passé l'étape, nous avons troué ce qu'il nous a été fourni en entrée. Comblons le trou en recollant ce qui suit le trou à ce qui le précède. */
 	
+	if(etape->echo)
+		premierGobe = octets;
+	else
 	Sortie_memmove(travail, premierGobe, octets, reste);
 	
 	return premierGobe;
@@ -276,6 +279,16 @@ Insert * Sortie_insert(Sortie * this, char * insert, int taille)
 	return nouveau;
 }
 
+void Sortie_recaler(Sortie * this, char * dest, char * source)
+{
+	int n;
+	for(n = this->nInserts; --n >= 0;)
+		if(this->inserts[n].pos > source)
+			this->inserts[n].pos -= source - dest;
+		else if(this->inserts[n].pos > dest)
+			this->inserts[n].pos = dest;
+}
+
 void Sortie_memmove(Sortie * this, char * dest, char * source, int n)
 {
 	if(source > dest)
@@ -283,11 +296,7 @@ void Sortie_memmove(Sortie * this, char * dest, char * source, int n)
 		if(n > 0)
 			memmove(dest, source, n);
 		this->reste -= source - dest; /* On part du principe que ce qui est supprimé était dans le reste à écrire. */
-		for(n = this->nInserts; --n >= 0;)
-			if(this->inserts[n].pos > source)
-				this->inserts[n].pos -= source - dest;
-			else if(this->inserts[n].pos > dest)
-				this->inserts[n].pos = dest;
+		Sortie_recaler(this, dest, source);
 	}
 }
 
@@ -319,7 +328,10 @@ int Sortie_ecrire(Sortie * this)
 	if((rc = write(this->sortie, this->pBloc, rc)) > 0)
 	{
 		if((this->reste -= rc) <= 0)
+		{
+			Sortie_recaler(this, &this->bloc[0], &this->pBloc[rc]);
 			this->pBloc = &this->bloc[0];
+		}
 		else
 			this->pBloc += rc;
 		TRACE(stderr, "   Transmis %s: %d\n", this->sortie == 1 || this->sortie == 2 ? "↑" : "↓", rc);
