@@ -120,6 +120,7 @@ char * injecteEnEtape(Etape * etape, Sortie * travail, int n)
 	int voulus = strlen(etape->attente);
 	int reste = n;
 	int nVus;
+	int pregobes = etape->vus;
 	char * octets = &travail->pBloc[travail->reste - n];
 	char * depart = octets;
 	char * premierGobe = octets;
@@ -147,13 +148,14 @@ char * injecteEnEtape(Etape * etape, Sortie * travail, int n)
 			/* On recherche donc le plus grand dernier segment déjà vu qui puisse être un segment de début. */
 			while(--etape->vus >= 0)
 			{
-				if(memcmp(etape->attente, &etape->attente[etape->vus], etape->vus))
+				if(!memcmp(etape->attente, &etape->attente[etape->vus], etape->vus))
 				{
 					/* Restitution de ce qu'on avait mangé par erreur. */
-					if((premierGobe -= (nVus - etape->vus)) < depart) /* Ce qu'on avait gobé dans le bloc mémoire actuellement analysé peut être restitué "logiquement". */
+					premierGobe += nVus - etape->vus; /* Ce qu'on avait gobé dans le bloc mémoire actuellement analysé peut être restitué "logiquement". */
+					if(pregobes && !etape->echo)
 					{
-						Sortie_insert(travail, (char *)etape->attente, depart - premierGobe); /* Mais si on l'avait gobé sur la précédente injection, il nous faut aller fouiller notre mémoire pour retrouver quoi restituer. Coup de chance, pour une étape "simple" (sans regex), ce qu'on a gobé est à l'octet près notre crible de gobage. */
-						premierGobe = depart;
+						pregobes -= nVus - etape->vus;
+						Sortie_insert(travail, (char *)etape->attente, nVus - etape->vus); /* Mais si on l'avait gobé sur la précédente injection, il nous faut aller fouiller notre mémoire pour retrouver quoi restituer. Coup de chance, pour une étape "simple" (sans regex), ce qu'on a gobé est à l'octet près notre crible de gobage. */
 					}
 					goto retente;
 				}
