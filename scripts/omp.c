@@ -16,7 +16,6 @@
 enum
 {
 	S_MELEE,
-	S_SANS_TAMPON
 };
 
 enum
@@ -25,7 +24,7 @@ enum
 	I_STDIN = -3
 };
 
-static int g_sansTampon = 0;
+static struct termios g_infosStdin;
 static int g_fermeEnFin = 1;
 static int g_pipelette = 1; /* Restitue-t-on sur le TTY maître le contenu de nos échanges scénarisés? */
 
@@ -41,6 +40,7 @@ struct Etape
 	int vus; /* Nombre d'octets de l'attente déjà vus passer. */
 	int injecteur;
 	Sortie * echo;
+	char gobeEchanges;
 };
 
 typedef struct Insert Insert;
@@ -99,7 +99,8 @@ int attends(int f, const char * attente, Sortie * echo)
 				return -1;
 		}
 		
-		Sortie_insert(echo, &bloc[t], t2);
+		if(echo)
+			Sortie_insert(echo, &bloc[t], t2);
 
 		t += t2;
 		bloc[t] = 0;
@@ -152,7 +153,7 @@ char * injecteEnEtape(Etape * etape, Sortie * travail, int n)
 				{
 					/* Restitution de ce qu'on avait mangé par erreur. */
 					premierGobe += nVus - etape->vus; /* Ce qu'on avait gobé dans le bloc mémoire actuellement analysé peut être restitué "logiquement". */
-					if(pregobes && !etape->echo)
+					if(pregobes && etape->gobeEchanges)
 					{
 						pregobes -= nVus - etape->vus;
 						Sortie_insert(travail, (char *)etape->attente, nVus - etape->vus); /* Mais si on l'avait gobé sur la précédente injection, il nous faut aller fouiller notre mémoire pour retrouver quoi restituer. Coup de chance, pour une étape "simple" (sans regex), ce qu'on a gobé est à l'octet près notre crible de gobage. */
@@ -172,35 +173,24 @@ char * injecteEnEtape(Etape * etape, Sortie * travail, int n)
 	
 	/* En ayant passé l'étape, nous avons troué ce qu'il nous a été fourni en entrée. Comblons le trou en recollant ce qui suit le trou à ce qui le précède. */
 	
-	if(etape->echo)
-		premierGobe = octets;
-	else
-	Sortie_memmove(travail, premierGobe, octets, reste);
+	if(etape->gobeEchanges)
+	{
+		Sortie_memmove(travail, premierGobe, octets, reste);
+		octets = premierGobe;
+	}
 	
-	return premierGobe;
+	return octets;
 }
 
 void etapeControle(Etape * etape)
 {
-	struct termios t;
-	
-	switch((int)etape->saisie)
-	{
-		case (int)S_SANS_TAMPON:
-			/* http://shtrom.ssji.net/skb/getc.html */
-			tcgetattr(0, &t);
-			t.c_lflag &= (~ICANON);
-			tcsetattr(0, TCSANOW, &t); /* ATTENTION: ce faisant on perd même la mise en correspondance ^D -> fin de flux. À corriger, par exemple en insérant en fin d'étapes une étape avec un code qui ne sort jamais (étape finale) mais analyse chaque octet à la recherche d'un ^D, par lequel elle ferme l'entrée standard. */
-			g_sansTampon = 1;
-			break;
-	}
 }
 
 Etape * pousseAuTube(Etape * etape, int posRelative)
 {
 	TRACE(stderr, "repéré sur le tube: %s\n", etape->attente);
 	usleep(etape->pauseMilli * 1000);
-	if(etape->echo)
+	if(etape->echo && !etape->gobeEchanges)
 	{
 		etape->echo->reste += posRelative;
 		Sortie_insert(etape->echo, (char *)etape->saisie, strlen(etape->saisie));
@@ -240,7 +230,6 @@ Etape * injecteEnEtapes(Etape * etape, Sortie * travail, int n)
 	return etape;
 }
 
-#define O_CONTROLER 0x1
 #define O_SURVEILLER 0x2
 
 void Sortie_init(Sortie * this, int fd, char * descr)
@@ -338,6 +327,11 @@ int Sortie_ecrire(Sortie * this)
 			this->pBloc += rc;
 		TRACE(stderr, "   Transmis %s: %d\n", this->sortie == 1 || this->sortie == 2 ? "↑" : "↓", rc);
 	}
+	else
+	{
+		close(this->sortie);
+		this->sortie = -1;
+	}
 	
 	return rc;
 }
@@ -368,7 +362,7 @@ static inline int Sortie_ecrireSi(Sortie * this, fd_set * descrs)
 {
 	int rc;
 	
-	if(FD_ISSET(this->sortie, descrs))
+	if(this->sortie >= 0 && FD_ISSET(this->sortie, descrs))
 		return Sortie_ecrire(this);
 	
 	return 0;
@@ -378,6 +372,12 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 {
 	int rc;
 	
+	if(*descr < 0)
+	{
+		TRACE(stderr, "-> Fermeture du %d (%s)\n", dest->sortie, dest->descr);
+		close(dest->sortie);
+		dest->sortie = -1;
+	}
 	if(*descr >= 0 && FD_ISSET(*descr, descrs))
 	{
 		if((rc = read(*descr, &dest->pBloc[dest->reste], TBLOC - (dest->pBloc - &dest->bloc[0]) - dest->reste)) < 0)
@@ -388,26 +388,9 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 		
 		if(rc > 0)
 		{
-			char fermetureForcee = 0;
-			if(opt & O_CONTROLER)
-			{
-				/* Si on n'a pas de tampon, on n'a pas non plus de fermeture de notre flux d'entrée sur réception d'un ^D. On le gère. */
-				/* À FAIRE: en fait il faudrait détecter LF suivi de ^D; sans cela le ^D est un caractère comme un autre. */
-				if(g_sansTampon)
-				{
-					int rc2;
-					for(rc2 = -1; ++rc2 < rc && dest->pBloc[dest->reste + rc2] != (char)0x4;) {}
-					if(rc2 < rc)
-					{
-						fermetureForcee = 1;
-						rc = rc2;
-					}
-				}
-			}
 			dest->reste += rc;
 			if(opt & O_SURVEILLER)
 				etapeCourante = injecteEnEtapes(etapeCourante, dest, rc);
-			if(!fermetureForcee)
 				return etapeCourante;
 			/* else on est dans le cas fermeture de stdin, ci-dessous. */
 		}
@@ -418,6 +401,18 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 	}
 	
 	return etapeCourante;
+}
+
+void Sortie_fermer(Sortie * this)
+{
+	if(this->sortie >= 0)
+	{
+		if(isatty(this->sortie))
+			write(this->sortie, "\n\x04", 2);
+		else
+			close(this->sortie);
+		this->sortie = -1;
+	}
 }
 
 void maitre(int fdm, int tube, Etape * etape)
@@ -432,6 +427,8 @@ void maitre(int fdm, int tube, Etape * etape)
 	Sortie_init(&maitre.sorties[0], tube, "stdin fils");
 	Sortie_init(&maitre.sorties[1], 1, "stdout");
 	
+	Sortie * pseudoEcho = tube == fdm ? NULL : &maitre.sorties[1];
+	
 	/* Maintenant que l'on connaît les descripteurs de fichier réels, on peut brancher l'injecteur des étapes. */
 	
 	Etape * pEtape;
@@ -439,10 +436,12 @@ void maitre(int fdm, int tube, Etape * etape)
 	{
 		if(pEtape->attente)
 		{
+			pEtape->echo = pseudoEcho;
+			pEtape->gobeEchanges = 0;
 			switch((int)pEtape->injecteur)
 			{
-				case I_STDIN: pEtape->injecteur = tube; pEtape->echo = &maitre.sorties[1]; break;
-				case I_PTY: pEtape->injecteur = fdm; pEtape->echo = &maitre.sorties[1]; break;
+				case I_STDIN: pEtape->injecteur = tube; break;
+				case I_PTY: pEtape->injecteur = fdm; break;
 			}
 		}
 	}
@@ -451,7 +450,7 @@ void maitre(int fdm, int tube, Etape * etape)
 	
 	while(etape && etape->attente)
 	{
-		attends(fdm, etape->attente, etape->echo);
+		attends(fdm, etape->attente, etape->gobeEchanges ? NULL : etape->echo);
 		/* Les premières étapes sont généralement celles de demande de mot de passe: on les fournit au PTY plutôt qu'au stdin (s'ils sont différents l'un de l'autre). */
 		etape = pousseAuTube(etape, 0);
 	}
@@ -461,7 +460,6 @@ int  rc;
   fd_set fd_in;
 	fd_set etatsS;
     // Code du processus pere
-    // Fermeture de la partie esclave du PTY
 	while (fdm >= 0)
     {
 		fmax = -1;
@@ -482,23 +480,25 @@ int  rc;
         {
 				Sortie_ecrireSi(&maitre.sorties[0], &etatsS);
 				Sortie_ecrireSi(&maitre.sorties[1], &etatsS);
-				if(e < 0 && !maitre.sorties[0].reste)
-					close(maitre.sorties[0].sortie);
 			// S'il y a des donnees sur l'entree standard
-				etape = lire(&fd_in, &e, &maitre.sorties[0], O_CONTROLER, etape);
+				etape = lire(&fd_in, &e, &maitre.sorties[0], 0, etape);
+				if(fdm == tube) /* tube et fdm sont-ils liés? Si oui, tube devra suivre ld destin d'fdm. */
+					tube = -2;
 				etape = lire(&fd_in, &fdm, &maitre.sorties[1], O_SURVEILLER, etape);
+				if(tube == -2)
+					tube = fdm;
 				
 				/* Si plus d'étape dans le scénario, on considère le stdin terminé (sauf si l'appelant a demandé explicitement à maintenir ouvert à la fin). */
 				if(!etape && g_fermeEnFin && isatty(0))
 				{
 					TRACE(stderr, "-> Fermeture du stdin maître (par fin du scénario)\n");
-					close(0);
 					e = -1;
 				}
 				if(e < 0 && tube >= 0 && !maitre.sorties[0].reste)
 				{
-					TRACE(stderr, "-> Fermeture du stdin appli (notre stdin étant fermé)\n");
-					close(tube);
+					TRACE(stderr, "-> Fermeture du stdin appli (notre stdin étant fermé ou considéré comme tel)\n");
+					Sortie_fermer(&maitre.sorties[0]);
+					tube = -1;
 				}
         }
       } // End switch
@@ -529,16 +529,6 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0] = (Etape *)malloc(sizeof(Etape));
 			etapes[0]->attente = NULL;
 			etapes[0]->saisie = (char *)S_MELEE;
-			etapes[0]->suite = NULL;
-			etapes = & etapes[0]->suite;
-			/* Les étapes après celle-ci injecteront vers le stdin de l'appli, non plus vers son PTY comme initialement. */
-			iDefaut = I_STDIN;
-		}
-		else if(strcmp(argv[0], "--") == 0)
-		{
-			etapes[0] = (Etape *)malloc(sizeof(Etape));
-			etapes[0]->attente = NULL;
-			etapes[0]->saisie = (char *)S_SANS_TAMPON;
 			etapes[0]->suite = NULL;
 			etapes = & etapes[0]->suite;
 			/* Les étapes après celle-ci injecteront vers le stdin de l'appli, non plus vers son PTY comme initialement. */
@@ -580,29 +570,28 @@ int main(int argc, char * const argv[])
 	if((rc = unlockpt(fdm)) < 0) { fprintf(stderr, "Erreur %d sur unlockpt()\n", errno); return 1; }
 	// Ouverture du PTY esclave
 	fds = open(ptsname(fdm), O_RDWR);
-	int tube[2]; // Pour faire suivre le stdin au sous-process.
-	if((rc = pipe(&tube[0])) < 0) { fprintf(stderr, "Erreur %d sur pipe()\n", errno); return 1; }
 	// Création d'un processus fils
 	if (fork())
 	{
-	close(tube[0]);
 	close(fds);
-	maitre(fdm, tube[1], premiereEtape);
+		/* Si notre entrée est un TTY, on laisse le TTY applicatif le gérer à sa guise. */
+		struct termios infosStdin;
+		if(isatty(0))
+		{
+			tcgetattr(0, &g_infosStdin);
+			infosStdin = g_infosStdin;
+			cfmakeraw(&infosStdin);
+			tcsetattr(0, TCSANOW, &infosStdin);
+		}
+		maitre(fdm, fdm, premiereEtape);
+		if(isatty(0))
+			tcsetattr(0, TCSANOW, &g_infosStdin);
   }
   else
   {
-	close(tube[1]);
-  struct termios slave_orig_term_settings; // Saved terminal settings
-  struct termios new_term_settings; // Current terminal settings
     // Code du processus fils
     // Fermeture de la partie maitre du PTY
     close(fdm);
-    // Sauvegarde des parametre par defaut du PTY esclave
-    rc = tcgetattr(fds, &slave_orig_term_settings);
-    // Positionnement du PTY esclave en mode RAW
-    new_term_settings = slave_orig_term_settings;
-    cfmakeraw (&new_term_settings);
-    tcsetattr (fds, TCSANOW, &new_term_settings);
     // Le cote esclave du PTY devient l'entree et les sorties standards du fils
     // Fermeture de l'entrée standard (terminal courant)
     close(0);
@@ -626,8 +615,6 @@ int main(int argc, char * const argv[])
     ioctl(0, TIOCSCTTY, 1);
 
     // Execution du programme
-	close(0);
-	dup(tube[0]);
 	execvp(argv[0], argv);
 	return -1;
   }
