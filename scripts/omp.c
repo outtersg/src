@@ -436,6 +436,7 @@ void maitre(int fdm, int tube, Etape * etape)
 	{
 		if(pEtape->attente)
 		{
+			if(pEtape->echo)
 			pEtape->echo = pseudoEcho;
 			pEtape->gobeEchanges = 0;
 			switch((int)pEtape->injecteur)
@@ -509,6 +510,7 @@ int  rc;
 char * const * analyserParams(char * const argv[], Etape ** etapes)
 {
 	int iDefaut = I_PTY;
+	Sortie * echo = (Sortie *)1;
 	
 	while(*++argv)
 	{
@@ -521,9 +523,12 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0]->suite = NULL;
 			etapes[0]->vus = 0;
 			etapes[0]->injecteur = iDefaut;
+			etapes[0]->echo = echo;
 			etapes = & etapes[0]->suite;
 			argv += 2;
 		}
+		else if(strcmp(argv[0], "-s") == 0)
+			echo = 0;
 		else if(strcmp(argv[0], "-") == 0)
 		{
 			etapes[0] = (Etape *)malloc(sizeof(Etape));
