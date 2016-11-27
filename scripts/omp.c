@@ -48,7 +48,7 @@ struct Etape
 	const char * saisie;
 	Etape * suite;
 	int vus; /* Nombre d'octets de l'attente déjà vus passer. */
-	int injecteur;
+	Sortie * injecteur;
 	Sortie * echo;
 	char gobeEchanges;
 };
@@ -62,7 +62,7 @@ struct Insert
 	int dejaEcrits;
 };
 
-#define NSORTIES 2
+#define NSORTIES 3
 #define TBLOC 0x1000
 
 struct Sortie
@@ -80,6 +80,7 @@ struct Sortie
 	char * descr;
 };
 Insert * Sortie_insert(Sortie * this, char * insert, int taille);
+int Sortie_ecrire(Sortie * this);
 void Sortie_memmove(Sortie * this, char * dest, char * source, int n);
 
 typedef struct Maitre Maitre;
@@ -208,8 +209,10 @@ Etape * pousseAuTube(Etape * etape, int posRelative)
 		Sortie_insert(etape->echo, "\n", 1);
 		etape->echo->reste -= posRelative;
 	}
-	write(etape->injecteur, etape->saisie, strlen(etape->saisie));
-	write(etape->injecteur, "\n", 1);
+	Sortie_insert(etape->injecteur, (char *)etape->saisie, strlen(etape->saisie));
+	Sortie_insert(etape->injecteur, "\n", 1);
+	while(etape->injecteur->nInserts)
+		Sortie_ecrire(etape->injecteur);
 	return etape->suite;
 }
 
@@ -446,6 +449,7 @@ void maitre(int fdm, int tube, Etape * etape)
 	Maitre maitre;
 	Sortie_init(&maitre.sorties[0], tube, "stdin fils");
 	Sortie_init(&maitre.sorties[1], 1, "stdout");
+	Sortie_init(&maitre.sorties[2], fdm, "PTY fils");
 	
 	Sortie * pseudoEcho = tube == fdm ? NULL : &maitre.sorties[1];
 	
@@ -461,8 +465,8 @@ void maitre(int fdm, int tube, Etape * etape)
 			pEtape->gobeEchanges = 0;
 			switch((int)pEtape->injecteur)
 			{
-				case I_STDIN: pEtape->injecteur = tube; break;
-				case I_PTY: pEtape->injecteur = fdm; break;
+				case I_STDIN: pEtape->injecteur = &maitre.sorties[0]; break;
+				case I_PTY: pEtape->injecteur = &maitre.sorties[tube == fdm ? 0 : 2]; break;
 			}
 		}
 	}
@@ -529,7 +533,7 @@ int  rc;
 
 char * const * analyserParams(char * const argv[], Etape ** etapes)
 {
-	int iDefaut = I_PTY;
+	Sortie * iDefaut = (Sortie *)I_PTY;
 	Sortie * echo = (Sortie *)1;
 	
 	while(*++argv)
@@ -557,7 +561,7 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			etapes[0]->suite = NULL;
 			etapes = & etapes[0]->suite;
 			/* Les étapes après celle-ci injecteront vers le stdin de l'appli, non plus vers son PTY comme initialement. */
-			iDefaut = I_STDIN;
+			iDefaut = (Sortie *)I_STDIN;
 		}
 		else if(strcmp(argv[0], ".") == 0)
 			g_fermeEnFin = 0;
