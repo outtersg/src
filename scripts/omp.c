@@ -308,9 +308,12 @@ void Sortie_ecrireInsert(Sortie * this)
 	int n;
 	Insert * pInsert = &this->inserts[0];
 	if((n = write(this->sortie, &pInsert->insert[pInsert->dejaEcrits], pInsert->taille - pInsert->dejaEcrits)) >= 0)
+	{
+		BIT_SI(this->etat, S_DERNIER_RETOUR, pInsert->insert[pInsert->dejaEcrits + n -1] == '\n');
 		if((pInsert->dejaEcrits += n) >= pInsert->taille)
 			if(--this->nInserts > 0)
 				memmove(&this->inserts[0], &this->inserts[1], this->nInserts * sizeof(Insert));
+	}
 }
 
 int Sortie_ecrire(Sortie * this)
@@ -330,6 +333,7 @@ int Sortie_ecrire(Sortie * this)
 	
 	if((rc = write(this->sortie, this->pBloc, rc)) > 0)
 	{
+		BIT_SI(this->etat, S_DERNIER_RETOUR, this->pBloc[rc - 1] == '\n');
 		if((this->reste -= rc) <= 0)
 		{
 			Sortie_recaler(this, &this->bloc[0], &this->pBloc[rc]);
