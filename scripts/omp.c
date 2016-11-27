@@ -546,6 +546,8 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 int main(int argc, char * const argv[])
 {
 	int fdm, fds;
+	int entreePty;
+	int tubeStdinAppli[2];
 	int rc;
 	int pos;
 	Etape * premiereEtape;
@@ -570,21 +572,31 @@ int main(int argc, char * const argv[])
 	if((rc = unlockpt(fdm)) < 0) { fprintf(stderr, "Erreur %d sur unlockpt()\n", errno); return 1; }
 	// Ouverture du PTY esclave
 	fds = open(ptsname(fdm), O_RDWR);
+	/* Si notre stdin est une redirection, on fait de même pour le fiston. */
+	if(!(entreePty = isatty(0)))
+		if((rc = pipe(&tubeStdinAppli[0])) < 0) { fprintf(stderr, "Création du tube pour le stdin de l'appli: %s\n", strerror(rc)); return 1; }
 	// Création d'un processus fils
 	if (fork())
 	{
+		int versStdinAppli;
 	close(fds);
 		/* Si notre entrée est un TTY, on laisse le TTY applicatif le gérer à sa guise. */
 		struct termios infosStdin;
-		if(isatty(0))
+		if(entreePty)
 		{
 			tcgetattr(0, &g_infosStdin);
 			infosStdin = g_infosStdin;
 			cfmakeraw(&infosStdin);
 			tcsetattr(0, TCSANOW, &infosStdin);
+			versStdinAppli = fdm;
 		}
-		maitre(fdm, fdm, premiereEtape);
-		if(isatty(0))
+		else
+		{
+			close(tubeStdinAppli[0]);
+			versStdinAppli = tubeStdinAppli[1];
+		}
+		maitre(fdm, versStdinAppli, premiereEtape);
+		if(entreePty)
 			tcsetattr(0, TCSANOW, &g_infosStdin);
   }
   else
@@ -614,6 +626,12 @@ int main(int argc, char * const argv[])
     // (Obligatoire pour les programmes comme le shell pour faire en sorte qu'ils gerent correctement leurs sorties)
     ioctl(0, TIOCSCTTY, 1);
 
+		if(!entreePty)
+		{
+			close(tubeStdinAppli[1]);
+			close(0);
+			dup(tubeStdinAppli[0]);
+		}
     // Execution du programme
 	execvp(argv[0], argv);
 	return -1;
