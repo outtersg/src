@@ -20,6 +20,16 @@ enum
 
 enum
 {
+	S_PTY = 0x1,
+	S_DERNIER_RETOUR = 0x2,
+};
+
+#define BIT_SI(champ, bit, cond) \
+		{ if(((champ & bit) ? 1 : 0) ^ (cond)) \
+			champ ^= bit; }
+
+enum
+{
 	I_PTY = -2,
 	I_STDIN = -3
 };
@@ -61,6 +71,7 @@ struct Sortie
 	int reste;
 	char * pBloc;
 	int sortie;
+	unsigned int etat;
 	
 	Insert * inserts;
 	int nInserts;
@@ -237,6 +248,7 @@ void Sortie_init(Sortie * this, int fd, char * descr)
 	this->sortie = fd;
 	this->reste = 0;
 	this->pBloc = &this->bloc[0];
+	this->etat = 0;
 	
 	this->inserts = NULL;
 	this->nInsertsAlloues = 0;
@@ -408,7 +420,11 @@ void Sortie_fermer(Sortie * this)
 	if(this->sortie >= 0)
 	{
 		if(isatty(this->sortie))
-			write(this->sortie, "\n\x04", 2);
+		{
+			if(!(this->etat & S_DERNIER_RETOUR))
+				write(this->sortie, "\n", 1);
+			write(this->sortie, "\x04", 1);
+		}
 		else
 			close(this->sortie);
 		this->sortie = -1;
