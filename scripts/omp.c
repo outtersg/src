@@ -78,10 +78,12 @@ struct Sortie
 	int nInsertsAlloues;
 	
 	char * descr;
+	char * fin; /* Si non NULL, message indiquant la raison de la fermeture. La sortie sera alors fermée dès que possible (reste éclusé). */
 };
 Insert * Sortie_insert(Sortie * this, char * insert, int taille);
 int Sortie_ecrire(Sortie * this);
 void Sortie_memmove(Sortie * this, char * dest, char * source, int n);
+void Sortie_fermer(Sortie * this, char * motif);
 
 typedef struct Maitre Maitre;
 struct Maitre
@@ -258,6 +260,7 @@ void Sortie_init(Sortie * this, int fd, char * descr)
 	this->nInserts = 0;
 	
 	this->descr = descr;
+	this->fin = NULL;
 }
 
 Insert * Sortie_insert(Sortie * this, char * insert, int taille)
@@ -352,6 +355,9 @@ int Sortie_ecrire(Sortie * this)
 		this->sortie = -1;
 	}
 	
+	if(this->fin)
+		Sortie_fermer(this, this->fin);
+	
 	return rc;
 }
 
@@ -393,11 +399,7 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 	int rc;
 	
 	if(*descr < 0)
-	{
-		TRACE(stderr, "-> Fermeture du %d (%s)\n", dest->sortie, dest->descr);
-		close(dest->sortie);
-		dest->sortie = -1;
-	}
+		Sortie_fermer(dest, "l'entrée correspondante (%d) étant fermée");
 	if(*descr >= 0 && FD_ISSET(*descr, descrs))
 	{
 		if((rc = read(*descr, &dest->pBloc[dest->reste], TBLOC - (dest->pBloc - &dest->bloc[0]) - dest->reste)) < 0)
@@ -423,9 +425,10 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 	return etapeCourante;
 }
 
-void Sortie_fermer(Sortie * this)
+void Sortie_fermer(Sortie * this, char * motif)
 {
-	if(this->sortie >= 0)
+	this->fin = motif;
+	if(this->sortie >= 0 && !this->reste)
 	{
 		if(isatty(this->sortie))
 		{
@@ -520,10 +523,9 @@ int  rc;
 					TRACE(stderr, "-> Fermeture du stdin maître (par fin du scénario)\n");
 					e = -1;
 				}
-				if(e < 0 && tube >= 0 && !maitre.sorties[0].reste)
+				if(e < 0)
 				{
-					TRACE(stderr, "-> Fermeture du stdin appli (notre stdin étant fermé ou considéré comme tel)\n");
-					Sortie_fermer(&maitre.sorties[0]);
+					Sortie_fermer(&maitre.sorties[0], "notre stdin étant fermé ou considéré comme tel");
 					tube = -1;
 				}
         }
