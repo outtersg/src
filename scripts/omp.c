@@ -355,9 +355,10 @@ int Sortie_ecrire(Sortie * this)
 	return rc;
 }
 
-static inline void preparerSelectEntrant(int f, int placeRestante, fd_set * descrs, int * fmax, char * descr)
+static inline void preparerSelectEntrant(int f, Sortie * dest, fd_set * descrs, int * fmax, char * descr)
 {
-	if(f >= 0 && placeRestante < TBLOC)
+	int placeRestante = TBLOC - (dest->pBloc - &dest->bloc[0]) - dest->reste;
+	if(f >= 0 && placeRestante > 0)
 	{
 		FD_SET(f, descrs);
 		if(*fmax < f)
@@ -491,8 +492,8 @@ int  rc;
 		TRACE(stderr, "-> (Attente de mouvement)\n");
       // Attente de données de l'entrée standard et du PTY maître
       FD_ZERO(&fd_in);
-		preparerSelectEntrant(e, maitre.sorties[0].reste, &fd_in, &fmax, "stdin");
-		preparerSelectEntrant(fdm, maitre.sorties[1].reste, &fd_in, &fmax, "TTY fils");
+		preparerSelectEntrant(e, &maitre.sorties[0], &fd_in, &fmax, "stdin");
+		preparerSelectEntrant(fdm, &maitre.sorties[1], &fd_in, &fmax, "TTY fils");
 		FD_ZERO(&etatsS);
 		Sortie_preparerSelect(&maitre.sorties[0], &etatsS, &fmax);
 		Sortie_preparerSelect(&maitre.sorties[1], &etatsS, &fmax);
