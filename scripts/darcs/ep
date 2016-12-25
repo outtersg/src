@@ -1,0 +1,43 @@
+#!/bin/sh
+# Enregistre dans le Passé
+# Destiné à être inclus dans un shell (pour mémorisation du "début de session").
+
+ep_init()
+{
+	ep_dateRef="`darcs changes --xml . | head -3 | sed -e '/ date=/!d' -e "s/.* date='//" -e "s/'.*//"`"
+	ep_dateRef="`TZ=GMT date -j -f %Y%m%d%H%M%S "$ep_dateRef" +%s`"
+	ep_optionsDateRef=
+	[ -z "$ep_dateRef" ] || ep_optionsDateRef="-r $ep_dateRef"
+	ep_dateRef="`date $ep_optionsDateRef +%Y%m%d%H%M%S`"
+	echo "Date de référence (dernière modif): $ep_dateRef"
+	printf "À quelle date commençons-nous notre session ([[[aaaa]mm]jj]hhmm)? "
+	read ep_date
+	ep_expr_date="`echo "$ep_date" | tr '[0-9]' .`\(..\)$"
+	ep_date="`echo "$ep_dateRef" | sed -e "s/$ep_expr_date/$ep_date\1/"`"
+	ep_a_ce_moment="`date -j -f %Y%m%d%H%M%S "$ep_date" +%s`"
+	ep_maintenant="`date +%s`"
+	ep_decalage="`expr $ep_maintenant - $ep_a_ce_moment`"
+	
+	ep_chemin="`pwd`"
+	while [ "$ep_chemin" != / -a ! -e "$ep_chemin/_darcs/prefs/author" ]
+	do
+		ep_chemin="`dirname "$ep_chemin"`"
+	done
+	ep_auteur="`cat "$ep_chemin/_darcs/prefs/author" 2> /dev/null`"
+	if [ -z "$ep_auteur" ]
+	then
+		printf "Auteur? "
+		read ep_auteur
+	fi
+}
+
+ep()
+{
+	ep_nom="$1" ; shift
+	ep_descr="$1" ; shift
+	[ ! -z "$ep_decalage" ] || ep_init
+	ep_maintenant="`date +%s`"
+	ep_maintenant="`expr $ep_maintenant - $ep_decalage`"
+	ep_maintenant="`TZ=GMT date -r $ep_maintenant +%Y%m%d%H%M%S`"
+	omp - -e 'What is the date? ' $ep_maintenant -e 'Who is the author? ' "$ep_auteur" -e 'What is the patch name? ' "$ep_nom" -e 'What is the log?' "`echo "$ep_descr" | tr \| '\012' | iconv -t cp1252`" darcs record --pipe "$@"
+}
