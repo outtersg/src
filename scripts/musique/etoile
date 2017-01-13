@@ -1,0 +1,90 @@
+#!/bin/sh
+
+menage()
+{
+	rm -f /tmp/temp.$$.etoile
+	stty echo -raw
+	echo
+}
+
+etoilerNote()
+{
+	n=100
+	etoiles=
+	while [ $n -gt 0 ]
+	do
+		if [ $1 -ge $n ]
+		then
+			etoile="*"
+		elif [ $1 -ge `expr $n - 10` ]
+		then
+			etoile="½"
+		else
+			etoile=" "
+		fi
+		etoiles="$etoiles$etoile"
+		n="`expr "$n" - 20`"
+	done
+}
+
+courant()
+{
+	fichier="`cmus-remote -Q | grep ^file | sed -e 's/file *//'`"
+	fichier="`echo "$fichier" | sed -e 's#.*/\([^/]*/[^/]*\)$#\1#'`"
+	echo "$fichier"
+}
+
+afficher()
+{
+	fichier="`courant`"
+	note="0`grep "^[0-9]*	$fichier$" < $HOME/.cmus/classement.pl | head -1 | awk '{print$1}'`"
+	etoilerNote "$note"
+	colonnes="`tput cols`"
+	printf "\r%$colonnes.${colonnes}s\r  %s %s\r" "" "$etoiles" "$fichier"
+}
+
+boucler()
+{
+	while [ -e /tmp/temp.$$.etoile ]
+	do
+		afficher
+		sleep 3
+	done
+}
+
+rentrer()
+{
+	maintenant="`date +%s`"
+
+	ajout=0
+	[ "$maintenant" -le "$valableJusquA" ] && ajout=10
+	val="`expr $1 \* 20 + $ajout`"
+
+	fichier="`courant`"
+	(
+		echo "$val	$fichier"
+		grep -v "^[0-9]*	$fichier$" < $HOME/.cmus/classement.pl
+	) > $HOME/.cmus/classement.pl.temp && mv $HOME/.cmus/classement.pl.temp $HOME/.cmus/classement.pl
+	
+	afficher
+
+	valableJusquA="`expr $maintenant + 1`"
+}
+
+valableJusquA=0
+trap menage EXIT
+
+touch /tmp/temp.$$.etoile
+boucler &
+
+while true
+do
+	stty -echo raw
+	car="`dd bs=1 count=1 2> /dev/null | tr '\003' q`"
+	case "$car" in
+		x|q) break ;;
+		[0-5]) rentrer "$car" ;;
+	esac
+done
+
+rm /tmp/temp.$$.etoile
