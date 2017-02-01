@@ -117,10 +117,20 @@ transferer()
 faireSelection()
 {
 	osascript "$SCRIPTS/encogg.applescript" "$TMP/listeselection"
+	# On se permet une petite copie locale, les lecteurs optiques préférant parfois tourner à plein régime que d'être soumis à une multitude de petits accès durant l'encodage.
+	cat "$TMP/listeselection" | cut -d '	' -f 2 | while read chemin
+	do
+		dirname "$chemin"
+	done | sort -u | while read dossier
+	do
+		rsync -a "$dossier/" "$TMP/source/"
+	done
+	
 	cut -d '	' -f 3- < $TMP/listeselection > $TMP/pistes.encogg
 	numero=0
 	cat $TMP/listeselection | cut -d '	' -f 1,2 | while read numPiste fichierOrigine
 	do
+		fichierOrigine="$TMP/source/`basename "$fichierOrigine"`"
 		faire -n "$numPiste" "$fichierOrigine"
 	done
 	
@@ -180,4 +190,5 @@ done
 
 wait
 
+chmod -R u+w "$TMP/source"
 rm -R $TMP/
