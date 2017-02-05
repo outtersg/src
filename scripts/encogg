@@ -166,7 +166,8 @@ lieuCommun()
 	done
 }
 
-quefaire=ogg:.:/Users/gui/mp3
+#quefaire=ogg:.:/Users/gui/mp3
+quefaire=opus:.:/Users/gui/mp3
 quefaire="m4a:x:/tmp/mp3 $quefaire" # Si c'est pour Clo, c'est pour l'iPhone, donc AAC.
 
 analyserParametres()
