@@ -34,11 +34,16 @@ courant()
 	echo "$fichier"
 }
 
-afficher()
+etoilerNoteCourant()
 {
 	fichier="`courant`"
 	note="0`grep "^[0-9]*	$fichier$" < $HOME/.cmus/classement.pl | head -1 | awk '{print$1}'`"
 	etoilerNote "$note"
+}
+
+afficher()
+{
+	etoilerNoteCourant
 	colonnes="`tput cols`"
 	printf "\r%$colonnes.${colonnes}s\r  %s %s\r" "" "$etoiles" "$fichier"
 }
@@ -71,6 +76,8 @@ rentrer()
 	valableJusquA="`expr $maintenant + 1`"
 }
 
+interfacer()
+{
 valableJusquA=0
 trap menage EXIT
 
@@ -88,3 +95,33 @@ do
 done
 
 rm /tmp/temp.$$.etoile
+}
+
+afficherMoniteur()
+{
+	if [ -z "$TMUX_PANE" ]
+	then
+		echo "]2;$1"
+	else
+		tmux rename-window -t "$TMUX_PANE" "$1"
+	fi
+}
+
+monitorer()
+{
+	sleep 3
+	while cmus-remote -Q > /dev/null 2>&1
+	do
+		etoilerNoteCourant
+		afficherMoniteur "`printf "[%5.5s]" "$etoiles"`"
+		sleep 3
+	done
+	afficherMoniteur "cmus a fini"
+}
+
+if [ "x$1" = x-d ]
+then
+	monitorer
+else
+	interfacer
+fi
