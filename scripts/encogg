@@ -26,6 +26,20 @@ function champs
 	done
 }
 
+function convertir_opus()
+{
+	fichier="$temp/`champ 1 | tr / :`.opus"
+	# Version d'opusenc à la Guillaume, avec track et composer.
+	opusenc --bitrate 192 \
+		--track "$piste" \
+		--title "`champ 1`" \
+		--artist "`champ 2`" \
+		--composer "`champ 3`" \
+		--album "`champ 4`" \
+		--date "`champ 5`" \
+		"$1" "$fichier"
+}
+
 function convertir_ogg()
 {
 	fichier="$temp/`champ 1 | tr / :`.ogg"
