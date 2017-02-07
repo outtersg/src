@@ -15,12 +15,16 @@ case `uname` in
 		;;
 esac
 
+mode=i
+
 menage()
 {
-	rm -f /tmp/temp.$$.etoile /temp/temp.etoile
-	if [ -t 1 ]
+	rm -f /tmp/temp.$$.etoile /tmp/temp.etoile
+	if [ "$mode" = i ]
 	then
 	stty echo -raw
+	else
+		afficherMoniteur "-"
 	fi
 	echo
 }
@@ -62,7 +66,7 @@ etoilerNoteCourant()
 afficher()
 {
 	etoilerNoteCourant
-	if [ -t 1 ]
+	if [ "$mode" = i ]
 	then
 	colonnes="`tput cols`"
 	printf "\r%$colonnes.${colonnes}s\r  %s %s\r" "" "$etoiles" "$fichier"
@@ -78,7 +82,8 @@ boucler()
 		afficher
 		sleep 3
 	done
-	if [ ! -t 1 ]
+	sleep 2
+	if [ -p /tmp/temp.etoile ]
 	then
 		echo q > /tmp/temp.etoile
 	fi
@@ -109,7 +114,7 @@ trap menage EXIT
 touch /tmp/temp.$$.etoile
 boucler &
 
-	if [ -t 1 ]
+	if [ "$mode" = i ]
 	then
 		stty -echo raw
 	else
@@ -159,7 +164,7 @@ balancer()
 }
 
 case "$1" in
-	-d) interfacer < /dev/null > /dev/null 2>&1 ;;
+	-d) mode=d ; interfacer < /dev/null > /dev/null ;;
 	[012345]) balancer "$1" ;;
 	*) interfacer ;;
 esac
