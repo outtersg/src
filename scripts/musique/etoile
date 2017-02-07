@@ -17,8 +17,11 @@ esac
 
 menage()
 {
-	rm -f /tmp/temp.$$.etoile
+	rm -f /tmp/temp.$$.etoile /temp/temp.etoile
+	if [ -t 1 ]
+	then
 	stty echo -raw
+	fi
 	echo
 }
 
@@ -59,17 +62,26 @@ etoilerNoteCourant()
 afficher()
 {
 	etoilerNoteCourant
+	if [ -t 1 ]
+	then
 	colonnes="`tput cols`"
 	printf "\r%$colonnes.${colonnes}s\r  %s %s\r" "" "$etoiles" "$fichier"
+	else
+		afficherMoniteur "`printf "[$etoiles]"`"
+	fi
 }
 
 boucler()
 {
-	while [ -e /tmp/temp.$$.etoile ]
+	while [ -e /tmp/temp.$$.etoile ] && cmus-remote -Q > /dev/null 2>&1
 	do
 		afficher
 		sleep 3
 	done
+	if [ ! -t 1 ]
+	then
+		echo q > /tmp/temp.etoile
+	fi
 }
 
 rentrer()
@@ -86,8 +98,6 @@ rentrer()
 		grep -v "^[0-9]*	$fichier$" < $HOME/.cmus/classement.pl
 	) > $HOME/.cmus/classement.pl.temp && mv $HOME/.cmus/classement.pl.temp $HOME/.cmus/classement.pl
 	
-	afficher
-
 	valableJusquA="`expr $maintenant + 1`"
 }
 
@@ -99,17 +109,26 @@ trap menage EXIT
 touch /tmp/temp.$$.etoile
 boucler &
 
+	if [ -t 1 ]
+	then
+		stty -echo raw
+	else
+		if ! mkfifo /tmp/temp.etoile
+		then
+			echo "# Impossible de créer /tmp/temp.etoile. Une autre instance tourne probablement." >&2
+			exit 1
+		fi
+		exec < /tmp/temp.etoile
+	fi
+	
 while true
 do
-	stty -echo raw
 	car="`dd bs=1 count=1 2> /dev/null | tr '\003' q`"
 	case "$car" in
 		x|q) break ;;
-		[0-5]) rentrer "$car" ;;
+		[0-5]) rentrer "$car" ; afficher ;;
 	esac
 done
-
-rm /tmp/temp.$$.etoile
 }
 
 afficherMoniteur()
@@ -128,15 +147,19 @@ monitorer()
 	while cmus-remote -Q > /dev/null 2>&1
 	do
 		etoilerNoteCourant
-		afficherMoniteur "`printf "[%5.5s]" "$etoiles"`"
+		afficherMoniteur "`printf "[$etoiles]"`"
 		sleep 3
 	done
 	afficherMoniteur "cmus a fini"
 }
 
-if [ "x$1" = x-d ]
-then
-	monitorer
-else
-	interfacer
-fi
+balancer()
+{
+	echo "$1" > /tmp/temp.etoile
+}
+
+case "$1" in
+	-d) interfacer < /dev/null > /dev/null 2>&1 ;;
+	[012345]) balancer "$1" ;;
+	*) interfacer ;;
+esac
