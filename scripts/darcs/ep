@@ -2,6 +2,12 @@
 # Enregistre dans le Passé
 # Destiné à être inclus dans un shell (pour mémorisation du "début de session").
 
+# Darcs 2.10 et suivants gèrent différemment le commentaire de rustine de son titre. Le titre est pris dans l'encodage 'locale', le commentaire interprété comme du CP1252. On convertit donc pour lui plaire.
+case `darcs --version` in
+	2.1[0-9].*) ep_filtrage="iconv -f utf-8 -t cp1252" ;;
+	*) ep_filtrage=cat ;;
+esac
+
 ep_init()
 {
 	ep_dateRef="`darcs changes --xml . | head -3 | sed -e '/ date=/!d' -e "s/.* date='//" -e "s/'.*//"`"
@@ -39,5 +45,5 @@ ep()
 	ep_maintenant="`date +%s`"
 	ep_maintenant="`expr $ep_maintenant - $ep_decalage`"
 	ep_maintenant="`TZ=GMT date -r $ep_maintenant +%Y%m%d%H%M%S`"
-	omp - -e 'What is the date? ' $ep_maintenant -e 'Who is the author? ' "$ep_auteur" -e 'What is the patch name? ' "$ep_nom" -e 'What is the log?' "`echo "$ep_descr" | tr \| '\012' | iconv -t cp1252`" darcs record --pipe "$@"
+	omp - -e 'What is the date? ' $ep_maintenant -e 'Who is the author? ' "$ep_auteur" -e 'What is the patch name? ' "$ep_nom" -e 'What is the log?' "`echo "$ep_descr" | tr \| '\012' | $ep_filtrage`" darcs record --pipe "$@"
 }
