@@ -146,18 +146,6 @@ afficherMoniteur()
 	fi
 }
 
-monitorer()
-{
-	sleep 3
-	while cmus-remote -Q > /dev/null 2>&1
-	do
-		etoilerNoteCourant
-		afficherMoniteur "`printf "[$etoiles]"`"
-		sleep 3
-	done
-	afficherMoniteur "cmus a fini"
-}
-
 balancer()
 {
 	echo "$1" > /tmp/temp.etoile
