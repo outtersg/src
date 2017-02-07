@@ -1,4 +1,16 @@
 #!/bin/sh
+# Mode d'emploi en -d:
+# Modifier ~/.cmus/config et autosave ainsi:
+#   bind common A shell n="0`cat /tmp/cmus-view`" ; cmus-remote -C "view `echo $n - 1 | bc | tee /tmp/cmus-view`"
+#   bind common Z shell n="0`cat /tmp/cmus-view`" ; cmus-remote -C "view `echo $n + 1 | bc | tee /tmp/cmus-view`"
+#   bind common 0 shell $HOME/src/scripts/musique/etoile 0
+#   bind common 1 shell $HOME/src/scripts/musique/etoile 1
+#   bind common 2 shell $HOME/src/scripts/musique/etoile 2
+#   bind common 3 shell $HOME/src/scripts/musique/etoile 3
+#   bind common 4 shell $HOME/src/scripts/musique/etoile 4
+#   bind common 5 shell $HOME/src/scripts/musique/etoile 5
+# Lancer la totale ainsi:
+#   ( $HOME/src/scripts/musique/etoile -d & ) ; cmus
 
 convertisseur=cat
 case `uname` in
