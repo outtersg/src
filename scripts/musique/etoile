@@ -1,5 +1,20 @@
 #!/bin/sh
 
+convertisseur=cat
+case `uname` in
+	Darwin)
+		convertisseur="/usr/bin/iconv -f UTF8-MAC"
+		;;
+	FreeBSD)
+		# Si la musique est servie depuis un montage SMB, en FBSD 10, mount_smbfs plante avec un -E UTF-8:CP850
+		# À FAIRE: vérifier aussi qu'on est depuis un montage SMB.
+		if [ `uname -r | sed -e 's/[^0-9].*//'` -lt 11 ]
+		then
+			convertisseur="iconv -f CP850"
+		fi
+		;;
+esac
+
 menage()
 {
 	rm -f /tmp/temp.$$.etoile
@@ -29,7 +44,7 @@ etoilerNote()
 
 courant()
 {
-	fichier="`cmus-remote -Q | grep ^file | sed -e 's/file *//'`"
+	fichier="`cmus-remote -Q | grep ^file | sed -e 's/file *//' | $convertisseur`"
 	fichier="`echo "$fichier" | sed -e 's#.*/\([^/]*/[^/]*\)$#\1#'`"
 	echo "$fichier"
 }
