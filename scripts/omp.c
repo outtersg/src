@@ -405,10 +405,8 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 		if((rc = read(*descr, &dest->pBloc[dest->reste], TBLOC - (dest->pBloc - &dest->bloc[0]) - dest->reste)) < 0)
 		{
 			fprintf(stderr, "Erreur %d sur read entree standard\n", errno);
-			return etapeCourante;
 		}
-		
-		if(rc > 0)
+		else if(rc > 0)
 		{
 			dest->reste += rc;
 			if(opt & O_SURVEILLER)
