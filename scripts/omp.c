@@ -1,11 +1,16 @@
 // http://rachid.koucha.free.fr/tech_corner/pty_pdip_fr.html
 // Permet d'enrober un psql (ou un pg_dump, en lur balançant < /dev/null pour qu'il n'attende pas éternellement une entrée) pour que la saisie de mot de passe se fasse automatiquement depuis le programme, plutôt que de requérir une saisie dans le terminal.
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE
+#endif
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
+#ifndef __USE_BSD
 #define __USE_BSD
+#endif
 #include <termios.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>
