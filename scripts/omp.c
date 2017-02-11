@@ -37,6 +37,7 @@ enum
 static struct termios g_infosStdin;
 static int g_fermeEnFin = 1;
 static int g_pipelette = 1; /* Restitue-t-on sur le TTY maître le contenu de nos échanges scénarisés? */
+static int g_tuberAussiStderr = 0; /* Si l'on passe aussi le stderr du processus fils par notre crible, ça permet de vraiment tout maîtriser, mais ça peut aussi nous empêcher de voir les messages d'erreur. */
 
 typedef struct Sortie Sortie;
 
@@ -640,12 +641,14 @@ int main(int argc, char * const argv[])
     // Fermeture de la sortie standard (terminal courant)
     close(1);
     // Fermeture de la sortie erreur standard (terminal courant)
+		if(g_tuberAussiStderr)
     close(2);
     // Le PTY devient l'entree standard (0)
     dup(fds);
     // Le PTY devient la sortie standard (1)
     dup(fds);
     // Le PTY devient la sortie erreur standard (2)
+		if(g_tuberAussiStderr)
     dup(fds);
     // Maintenant le descripteur de fichier original n'est plus utile
     close(fds);
