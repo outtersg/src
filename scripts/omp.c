@@ -274,7 +274,7 @@ Insert * Sortie_insert(Sortie * this, char * insert, int taille)
 		if(anciens)
 		{
 			memcpy(this->inserts, anciens, this->nInserts * sizeof(Insert));
-			free(this->inserts);
+			free(anciens);
 		}
 	}
 	
