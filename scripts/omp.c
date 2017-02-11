@@ -405,6 +405,10 @@ Etape * lire(fd_set * descrs, int * descr, Sortie * dest, int opt, Etape * etape
 	{
 		if((rc = read(*descr, &dest->pBloc[dest->reste], TBLOC - (dest->pBloc - &dest->bloc[0]) - dest->reste)) < 0)
 		{
+			/* Divers pétages considérés comme des fermetures normales de flux, à ne pas signaler. */
+			#ifdef EIO
+			if(errno != EIO)
+			#endif
 			fprintf(stderr, "Erreur %d sur read entree standard\n", errno);
 		}
 		else if(rc > 0)
