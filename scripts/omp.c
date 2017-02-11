@@ -671,6 +671,7 @@ int main(int argc, char * const argv[])
 		}
     // Execution du programme
 	execvp(argv[0], argv);
+		fprintf(stderr, "# Impossible de lancer le programme fils: %s\n", strerror(errno));
 	return -1;
   }
   return 0;
