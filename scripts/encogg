@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`"
 
@@ -6,12 +6,12 @@ TMP=/tmp/temp.$$.encogg
 temp=$TMP/morceaux
 mkdir -p "$temp"
 
-function champ
+champ()
 {
 	cat $TMP/pistes.encogg | awk FNR==${numero} | cut -f $1
 }
 
-function champs
+champs()
 {
 	arg=1
 	while [ "$1" ]
@@ -21,12 +21,12 @@ function champs
 		then
 			echo $1=${contenu}
 		fi
-		arg=$((++arg))
+		arg=`expr $arg + 1`
 		shift
 	done
 }
 
-function convertir_opus()
+convertir_opus()
 {
 	fichier="$temp/`champ 1 | tr / :`.opus"
 	# Version d'opusenc à la Guillaume, avec track et composer.
@@ -40,7 +40,7 @@ function convertir_opus()
 		"$1" "$fichier"
 }
 
-function convertir_ogg()
+convertir_ogg()
 {
 	fichier="$temp/`champ 1 | tr / :`.ogg"
 	fichier1=$temp/${numero}.ogg
@@ -51,7 +51,7 @@ function convertir_ogg()
 	rm "$fichier1"
 }
 
-function convertir_m4a()
+convertir_m4a()
 {
 	fichier="$temp/`champ 1 | tr / :`.m4a"
 	ffmpeg -v quiet -i "$1" -ab 160k -strict -2 \
@@ -73,9 +73,9 @@ placer()
 	mv -i "$1" "$place/"
 }
 
-function faire()
+faire()
 {
-	true $((++numero))
+	numero=`expr $numero + 1`
 	if [ "x$1" = x-n ]
 	then
 		shift
