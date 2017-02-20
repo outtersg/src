@@ -2,6 +2,8 @@
 
 absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`"
 
+racines="/Users/gui/mp3:/Users/gui/mp3/Récup +"
+
 TMP=/tmp/temp.$$.encogg
 temp=$TMP/morceaux
 mkdir -p "$temp"
@@ -61,13 +63,65 @@ convertir_m4a()
 		"$fichier" < /dev/null # Cet abruti me bouffe mon entrée standard.
 }
 
+edulcorerChemin()
+{
+	# Filtre sur les futurs noms de fichier pour qu'ils puissent plaire à tout le monde (Windows, Mac, etc.).
+	tr '/:\!' ',  .' | sed -e 's/  */ /g'
+}
+
+normaliserChemin()
+{
+	case `uname` in
+		Darwin) /usr/bin/iconv -f utf8-mac -t utf8 ;;
+		*) cat ;;
+	esac
+}
+
+placement()
+{
+	sep="`echo | tr '\012' '\003'`"
+	champDossier=2
+	[ $classique = oui ] && champDossier=3
+	place="`champ $champDossier`$sep`champ 1`"
+	place="`echo "$place" | edulcorerChemin | tr '\003' /`"
+	exprPlace="`echo "$place" | sed -e 's/[^- A-Za-z0-9]/./g'`"
+	n=-1
+	suffixe=""
+	exprSuffixe=""
+	while grep -q "^$exprPlace$exprSuffixe$" < "$TMP/dejaEnPlace" ; do
+		n="`expr $n + 1`"
+		suffixe=".$n"
+		exprSuffixe="\\$suffixe"
+	done
+	echo "$place$suffixe"
+}
+
+affecterPlacement()
+{
+	# Initialisation.
+	# Les noms de fichier déjà pris sont ceux que l'on trouve dans l'un des dossiers cibles.
+	
+	awk -F '\011' '{ print $4; print $5; }' < "$TMP/listeselection" | edulcorerChemin | sort -u | while read dossier ; do
+		echo "$racines" | tr : '\012' | while read racine ; do
+			( [ ! -z "$dossier" -a -d "$racine/$dossier" ] && cd "$racine/$dossier" 2> /dev/null && ls | sed -e 's/\.[0-9A-Za-z][0-9A-Za-z][0-9A-Za-z]$//' -e "s#^#$dossier/#" )
+		done
+	done | normaliserChemin > "$TMP/dejaEnPlace"
+	
+	# Voyons maintenant nos pistes à encoder.
+	
+	numero=0
+	cut -d '	' -f 3- < $TMP/listeselection > $TMP/pistes.encogg
+	cat "$TMP/listeselection" | cut -d '	' -f 1,2 | while read numero laSuitee
+	do
+		placement | tee -a "$TMP/dejaEnPlace"
+	done | paste - "$TMP/listeselection" > "$TMP/liste"
+}
+
 placer()
 {
-	champPlace=2
-	[ $classique = oui ] && champPlace=3
-	place="$dest/$sousdest`champ $champPlace | tr / :`"
-	mkdir -p "$place/"
-	mv -i "$1" "$place/"
+	place="$dest/$sousdest`cut -d '	' -f 1 < "$TMP/liste" | sed -e $numero\!d`.$format"
+	mkdir -p "`dirname "$place"`"
+	mv -i "$1" "$place"
 }
 
 faire()
@@ -91,28 +145,17 @@ faire()
 	( basename "$fichier" | tr -d '\012' ; printf " -> " ; echo "$place" ) > /dev/tty
 }
 
-faireEntreeStandard()
+preparerEntreeStandard()
 {
 	echo Veuillez afficher dans iTunes les colonnes suivantes, dans cet ordre, et les
 	echo coller ici, puis faites un Ctrl-D sur une ligne vide:
 	echo Titre Interprète Compositeur Album Année Numéro de disque
-	cat > $TMP/pistes.encogg
-
-	if [ ! `echo $1 | cut -d '/' -f 1` ]
-	then
-		slashAuDebut=/
-	fi
-	sansSlash=`echo -n $1 | tr '/ ' ' *'`
-	sansSlash=`echo -n $sansSlash | tr ' *' '/ '`
-	numero=0
-	ls "$slashAuDebut$sansSlash" | sort -n | while read ligne
-	do
-		case "$ligne" in
-			/*) true ;; # Chemin absolu: notre "$1" désignait un fichier, le ls a donc renvoyé son chemin absolu, nul besoin de remettre son chemin devant.
-			*) ligne="$slashAuDebut$sansSlash/$ligne" ;;
-		esac
-		faire "$ligne"
-	done
+	cat > $TMP/pistes.nues.encogg
+	
+	for dossier in "$@" ; do
+		dossier="`echo "$dossier" | sed -e 's#/$##'`"
+		ls "$dossier" | sort -n | sed -e "s#^\([^/]\)#$dossier/\1#"
+	done | awk '{print FNR"	"$0}' | paste - $TMP/pistes.nues.encogg > $TMP/listeselection
 }
 
 transferer()
@@ -126,9 +169,13 @@ transferer()
 	#ssh falbala.local 'sudo -u clotilde open -a iTunes /Users/Shared/Musique\ Guillaume/'
 }
 
-faireSelection()
+preparerSelection()
 {
 	osascript "$SCRIPTS/encogg.applescript" "$TMP/listeselection"
+}
+
+copierLocalement()
+{
 	# On se permet une petite copie locale, les lecteurs optiques préférant parfois tourner à plein régime que d'être soumis à une multitude de petits accès durant l'encodage.
 	cat "$TMP/listeselection" | cut -d '	' -f 2 | while read chemin
 	do
@@ -137,7 +184,10 @@ faireSelection()
 	do
 		rsync -a "$dossier/" "$TMP/source/"
 	done
-	
+}
+
+fairePasse()
+{
 	cut -d '	' -f 3- < $TMP/listeselection > $TMP/pistes.encogg
 	numero=0
 	cat $TMP/listeselection | cut -d '	' -f 1,2 | while read numPiste fichierOrigine
@@ -191,19 +241,19 @@ analyserParametres()
 
 analyserParametres "$@"
 
+if grep -q . < "$TMP/parametres" ; then
+	preparerEntreeStandard "`cat "$TMP/parametres"`"
+else
+	preparerSelection
+fi
+affecterPlacement
+copierLocalement
 for passe in $quefaire
 do
 	format="`echo "$passe" | cut -d : -f 1`"
 	transferer="`echo "$passe" | cut -d : -f 2`"
 	dest="`echo "$passe" | cut -d : -f 3-`"
-if grep -q . < "$TMP/parametres"
-then
-	faireEntreeStandard "`cat "$TMP/parametres"`"
-else
-	#echo '### Utilisation: '$0' <disque>'
-	#exit 1
-	faireSelection
-fi
+	fairePasse
 done
 
 wait
