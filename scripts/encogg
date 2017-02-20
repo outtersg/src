@@ -180,6 +180,11 @@ analyserParametres()
 		case "$1" in
 			-c|--classique) classique=oui ;;
 			-m|--moi) sousdest= ;; # Si l'achat est de nous, il va dans le dossier principal.
+			-d)
+				shift
+				mv "$TMP/parametres" "$1/parametres"
+				TMP="$1"
+				;;
 			*) echo "$1" >> "$TMP/parametres" ;;
 		esac
 		shift
