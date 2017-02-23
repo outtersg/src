@@ -246,6 +246,7 @@ quefaire="m4a:x:/tmp/mp3 $quefaire" # Si c'est pour Clo, c'est pour l'iPhone, do
 
 analyserParametres()
 {
+	editer=oui
 	classique=non
 	sousdest="Récup +/" # Par défaut on encode vers notre dossier Récup + (Récup comme récupéré, parce qu'on n'a pas acheté nous-mêmes le morceau, + parce que, l'ayant encodé nous-mêmes, on est confiants dans sa qualité).
 	> "$TMP/parametres"
@@ -272,6 +273,9 @@ case "`head -1 < "$TMP/parametres"`" in
 	"") preparerSelection ;;
 	*) preparerEntreeStandard "`cat "$TMP/parametres"`" ;;
 esac
+if [ "$editer" = oui ] ; then
+	vim -X "$TMP/listeselection"
+fi
 affecterPlacement
 copierLocalement
 for passe in $quefaire
