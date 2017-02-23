@@ -150,12 +150,38 @@ preparerEntreeStandard()
 	echo Veuillez afficher dans iTunes les colonnes suivantes, dans cet ordre, et les
 	echo coller ici, puis faites un Ctrl-D sur une ligne vide:
 	echo Titre Interprète Compositeur Album Année Numéro de disque
-	cat > $TMP/pistes.nues.encogg
 	
+	preparerDossier "$@"
+}
+
+preparerDossier()
+{
+	cat > $TMP/pistes.nues.encogg
 	for dossier in "$@" ; do
 		dossier="`echo "$dossier" | sed -e 's#/$##'`"
 		ls "$dossier" | sort -n | sed -e "s#^\([^/]\)#$dossier/\1#"
 	done | awk '{print FNR"	"$0}' | paste - $TMP/pistes.nues.encogg > $TMP/listeselection
+}
+
+listePistesParMusicBrainz()
+{
+	php "$SCRIPTS/musicbrainz.php" "`"$SCRIPTS/discid" "$1"`"
+}
+
+listePistes()
+{
+	listePistesParMusicBrainz "$@"
+}
+
+preparerDisque()
+{
+	tab="`echo | tr '\012' '\011'`"
+	disque="$1"
+	case `uname` in
+		Darwin) dMontage="/dev/disk$disque" ; dId="`echo "$dMontage" | sed -e 's/disk/rdisk/g'`" ;;
+	esac
+	montage="`mount | grep "^$dMontage[ $tab]" | sed -e "s/^[^ $tab]*[ $tab]*on[ $tab]*//" -e "s/[ $tab]*([^)]*)$//"`"
+	listePistes "$dId" | preparerDossier "$montage"
 }
 
 transferer()
@@ -241,11 +267,11 @@ analyserParametres()
 
 analyserParametres "$@"
 
-if grep -q . < "$TMP/parametres" ; then
-	preparerEntreeStandard "`cat "$TMP/parametres"`"
-else
-	preparerSelection
-fi
+case "`head -1 < "$TMP/parametres"`" in
+	[0-9]*) preparerDisque "`cat "$TMP/parametres"`" ;;
+	"") preparerSelection ;;
+	*) preparerEntreeStandard "`cat "$TMP/parametres"`" ;;
+esac
 affecterPlacement
 copierLocalement
 for passe in $quefaire
