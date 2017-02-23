@@ -2,6 +2,8 @@
 
 absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`"
 
+set -e
+
 racines="/Users/gui/mp3:/Users/gui/mp3/Récup +"
 
 TMP=/tmp/temp.$$.encogg
