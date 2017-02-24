@@ -97,25 +97,49 @@ class Interro
 			
 			// Les artistes.
 			
+			$artistes = array('c' => array(), 'i' => array());
+			foreach(
+				array
+				(
+					array('t' => $piste->{'artist-credit'}, 'd' => 'c'),
+					array('t' => $piste->recording->{'artist-credit'}, 'd' => 'i'),
+				)
+				as $descrType
+			)
+			{
+				$ajouts = array('i' => array());
 			$séparateurs = array();
-			$artistes = array();
-			$compositeurs = array();
-			foreach($piste->recording->{'artist-credit'} as $artiste)
+				foreach($descrType['t'] as $artiste)
 			{
 				$séparateurs[] = $artiste->joinphrase;
-				$artistes[] = ($nomArtiste = $this->nomArtiste($artiste->artist)) !== null ? $nomArtiste : $artiste->name;
+					$ajouts['i'][] = array
+					(
+						'id' => $artiste->artist->id,
+						'nom' => ($nomArtiste = $this->nomArtiste($artiste->artist)) !== null ? $nomArtiste : $artiste->name,
+					);
 			}
 			
 			// Nomenclature: compositeur; artiste, artiste, artiste.
 			
 			foreach($séparateurs as $num => $sép)
 				if(trim($sép) == ';')
-					$compositeurs = array_splice($artistes, 0, $num + 1, array());
+						$ajouts['c'] = array_splice($ajouts['i'], 0, $num + 1, array());
+				
+				// Si la nomenclature par point-virgule n'a rien donné, on bascule sur la nomenclature habituelle: compositeur artiste du morceau, interprète artiste de l'enregistrement. La destination pour le type en cours de traitement est dans $descrType['d'].
+				if(count($ajouts) == 1)
+					$ajouts = array($descrType['d'] => $ajouts['i']);
+				
+				// On fusionne par id, pour dédoublonner.
+				
+				foreach($ajouts as $classe => $artistesAjout)
+					foreach($artistesAjout as $artiste)
+						$artistes[$classe][$artiste['id']] = $artiste['nom'];
+			}
 			
 			// Finalisation.
 			
-			$p->artistes = $artistes;
-			$p->compositeurs = $compositeurs;
+			$p->artistes = $artistes['i'];
+			$p->compositeurs = $artistes['c'];
 			
 			$retour[$piste->number] = $p;
 		}
