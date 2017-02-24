@@ -78,13 +78,18 @@ class Interro
 				$p['n'] = $alias->name;
 				$possibilités[] = $p;
 			}
-			usort($possibilités, function($a, $b) { return ($a['t'] + $a['l']) - ($b['t'] + $b['l']); });
+			usort($possibilités, array($this, 'sommeTL'));
 			$p = array_pop($possibilités);
 			
 			$this->_nomsArtiste[$entrée->id] = isset($p) ? $p['n'] : $entrée->name;
 		}
 		
 		return $this->_nomsArtiste[$entrée->id];
+	}
+	
+	public function sommeTL($a, $b)
+	{
+		return ($a['t'] + $a['l']) - ($b['t'] + $b['l']);
 	}
 	
 	public function pistes($pistes)
