@@ -51,6 +51,42 @@ class Interro
 		return $listesDePistes;
 	}
 	
+	public function nomArtiste($entrée)
+	{
+		if(!isset($this->_nomsArtiste[$entrée->id]))
+		{
+			$fiche = $this->_req('artist', $entrée->id, array('inc' => 'aliases'));
+			
+			$possibilités = array();
+			foreach($fiche->aliases as $alias)
+			{
+				$p = array();
+				switch($alias->type)
+				{
+					case 'Artist name': $p['t'] = 4; break;
+					default: $p['t'] = 2; break;
+					case 'Search hint': continue 2;
+				}
+				// À FAIRE: la langue de l'artiste devrait entrer en compte. Problème: on n'a pas l'info. Dans l'artiste, on a bien un country, mais va-t'en savoir que 'AT' a pour langue primaire 'de', et ne parlons pas des pays multilingues ('BE', par exemple). De plus, il nous faudrait lier la locale à son script: si c'est du latin, alors ça passe avant l'anglais, sinon on prendra en priorité l'anglais.
+				switch($alias->locale)
+				{
+					case 'fr': $p['l'] = 4; break;
+					case 'en': $p['l'] = 2; break;
+					case '': $p['l'] = 0; break;
+					default: continue 2;
+				}
+				$p['n'] = $alias->name;
+				$possibilités[] = $p;
+			}
+			usort($possibilités, function($a, $b) { return ($a['t'] + $a['l']) - ($b['t'] + $b['l']); });
+			$p = array_pop($possibilités);
+			
+			$this->_nomsArtiste[$entrée->id] = isset($p) ? $p['n'] : $entrée->name;
+		}
+		
+		return $this->_nomsArtiste[$entrée->id];
+	}
+	
 	public function pistes($pistes)
 	{
 		$retour = array();
@@ -67,7 +103,7 @@ class Interro
 			foreach($piste->recording->{'artist-credit'} as $artiste)
 			{
 				$séparateurs[] = $artiste->joinphrase;
-				$artistes[] = $artiste->name;
+				$artistes[] = ($nomArtiste = $this->nomArtiste($artiste->artist)) !== null ? $nomArtiste : $artiste->name;
 			}
 			
 			// Nomenclature: compositeur; artiste, artiste, artiste.
