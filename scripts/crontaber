@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -51,11 +51,11 @@ touch "$S" "$C"
 chmod 700 "$S"
 chmod 600 "$C"
 (
-	retirer="${retirer//\"/\\\"}"
-	chose="${chose//\"/\\\"}"
+	retirer="`echo "$retirer" | sed -e 's#"#\"#g'`"
+	chose="`echo "$chose" | sed -e 's#"#\"#g'`"
 	heure="`echo "$heure" | sed -E -e 's/[^0-9*]+/	/g' -e 's/$/	*	*	*	*	*/' -e 's/^([^	]+	[^	]+	[^	]+	[^	]+	[^	]+).*$/\1/'`"
 	cat << TERMINE
-#!/bin/bash
+#!/bin/sh
 sleep 2 # Si on va trop vite à modifier le fichier, le mtime est égal au ctime, et crontab croit qu'on n'a pas touché au fichier.
 (
 	if [ -z "$retirer" ]
