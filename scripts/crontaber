@@ -24,6 +24,7 @@ TERMINE
 
 analyserParametres()
 {
+	vars="heure chose"
 	retirer=
 	heure=
 	chose=
@@ -35,10 +36,13 @@ analyserParametres()
 			-u) shift ; paramsQui="-u $1" ;;
 			-) shift ; retirer="$1" ;;
 			*)
-				for i in heure chose
+				[ -z "$vars" ] && auSecours
+				for i in $vars
 				do
-					eval test -z \""\$$i"\" && eval $i=\""$1"\" && break
+					export $i="$1"
+					break
 				done
+				vars="`echo "$vars" | sed -e 's/[^ ]* //'`"
 				;;
 		esac
 		shift
@@ -53,21 +57,20 @@ C=/tmp/temp.$$.crontabage
 touch "$S" "$C"
 chmod 700 "$S"
 chmod 600 "$C"
-(
-	retirer="`echo "$retirer" | sed -e 's#"#\"#g'`"
-	chose="`echo "$chose" | sed -e 's#"#\"#g'`"
 	heure="`echo "$heure" | sed -E -e 's/[^0-9*]+/	/g' -e 's/$/	*	*	*	*	*/' -e 's/^([^	]+	[^	]+	[^	]+	[^	]+	[^	]+).*$/\1/'`"
+export retirer heure chose
+(
 	cat << TERMINE
 #!/bin/sh
 sleep 2 # Si on va trop vite à modifier le fichier, le mtime est égal au ctime, et crontab croit qu'on n'a pas touché au fichier.
 (
-	if [ -z "$retirer" ]
+	if [ -z "\$retirer" ]
 	then
 		cat
 	else
-		grep -v "$retirer"
+		grep -v "\$retirer"
 	fi < "\$1"
-	[ -z "$chose" ] || echo "$heure	$chose"
+	[ -z "$chose" ] || echo "\$heure	\$chose"
 ) > "$C" && cat "$C" > "\$1"
 TERMINE
 ) > "$S"
