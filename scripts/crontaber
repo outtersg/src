@@ -10,7 +10,8 @@ auSecours()
 # Ajout propre au crontab
 # © 2007 Guillaume Outters
 
-Utilisation: $nom [- <expr>] [<heure> <chose>]
+Utilisation: $nom [-u <utilisateur>] [- <expr>] [<heure> <chose>]
+  -u <utilisateur>              en tant que quelqu'un d'autre.
   <expr>                        expression à sortir du crontab (ex.: ligne que
                                 remplace celle qu'on ajoute), passable sous
                                 grep.
@@ -26,10 +27,12 @@ analyserParametres()
 	retirer=
 	heure=
 	chose=
+	paramsQui=
 	while [ $# -gt 0 ]
 	do
 		case "$1" in
 			-h) auSecours ;;
+			-u) shift ; paramsQui="-u $1" ;;
 			-) shift ; retirer="$1" ;;
 			*)
 				for i in heure chose
@@ -69,5 +72,5 @@ sleep 2 # Si on va trop vite à modifier le fichier, le mtime est égal au ctime
 TERMINE
 ) > "$S"
 export EDITOR="$S"
-crontab -e
+crontab $paramsQui -e
 rm -f "$S" "$C"
