@@ -87,7 +87,7 @@ placement()
 	place="`champ $champDossier`$sep`champ 1`"
 	place="`echo "$place" | edulcorerChemin | tr '\003' /`"
 	exprPlace="`echo "$place" | sed -e 's/[^- A-Za-z0-9]/./g'`"
-	n=-1
+	n=0
 	suffixe=""
 	exprSuffixe=""
 	while grep -q "^$exprPlace$exprSuffixe$" < "$TMP/dejaEnPlace" ; do
