@@ -161,7 +161,8 @@ preparerDossier()
 	cat > $TMP/pistes.nues.encogg
 	for dossier in "$@" ; do
 		dossier="`echo "$dossier" | sed -e 's#/$##'`"
-		ls "$dossier" | sort -n | sed -e "s#^\([^/]\)#$dossier/\1#"
+		dossierDespe="`echo "$dossier" | sed -e 's#[&]#\\\&#g'`"
+		ls "$dossier" | sort -n | sed -e "s#^\([^/]\)#$dossierDespe/\1#"
 	done | awk '{print FNR"	"$0}' | paste - $TMP/pistes.nues.encogg > $TMP/listeselection
 }
 
