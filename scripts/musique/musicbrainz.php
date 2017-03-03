@@ -16,6 +16,7 @@ class Interro
 		
 		$listesDePistes = array();
 		
+		if(isset($disque->releases))
 		foreach($disque->releases as $sortie)
 		{
 			$titreRecueil = $sortie->title;
