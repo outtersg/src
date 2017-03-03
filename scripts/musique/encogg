@@ -285,11 +285,12 @@ case "`head -1 < "$TMP/parametres"`" in
 	"") preparerDisque ;;
 	*) preparerEntreeStandard "`cat "$TMP/parametres"`" ;;
 esac
+copierLocalement &
 if [ "$editer" = oui ] ; then
 	vim -X "$TMP/listeselection"
 fi
 affecterPlacement
-copierLocalement
+wait # Le copierLocalement
 for passe in $quefaire
 do
 	format="`echo "$passe" | cut -d : -f 1`"
