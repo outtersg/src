@@ -188,9 +188,9 @@ listePistes()
 preparerDisque()
 {
 	tab="`echo | tr '\012' '\011'`"
-	disque="$1"
+	disque="`mount | egrep 'cdda' | head -1 | awk '{print $1}'`"
 	case `uname` in
-		Darwin) dMontage="/dev/disk$disque" ; dId="`echo "$dMontage" | sed -e 's/disk/rdisk/g'`" ;;
+		Darwin) dMontage="$disque" ; dId="`echo "$dMontage" | sed -e 's/disk/rdisk/g'`" ;;
 	esac
 	montage="`mount | grep "^$dMontage[ $tab]" | sed -e "s/^[^ $tab]*[ $tab]*on[ $tab]*//" -e "s/[ $tab]*([^)]*)$//"`"
 	listePistes "$dId" | preparerDossier "$montage"
