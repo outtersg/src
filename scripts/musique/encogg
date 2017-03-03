@@ -281,8 +281,8 @@ analyserParametres()
 analyserParametres "$@"
 
 case "`head -1 < "$TMP/parametres"`" in
-	[0-9]*) preparerDisque "`cat "$TMP/parametres"`" ;;
-	"") preparerSelection ;;
+	--itunes|--iTunes) preparerSelection ;;
+	"") preparerDisque ;;
 	*) preparerEntreeStandard "`cat "$TMP/parametres"`" ;;
 esac
 if [ "$editer" = oui ] ; then
