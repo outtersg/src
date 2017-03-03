@@ -174,7 +174,12 @@ class Poule
 {
 	public function pondre($listesDePistes)
 	{
+		$déjà = false;
 		foreach($listesDePistes as $listeDePistes)
+		{
+			if($déjà)
+				echo "----------------------------------------------------------------\n";
+			
 			foreach($listeDePistes as $num => $piste)
 			{
 				$l = array
@@ -188,6 +193,9 @@ class Poule
 				);
 				echo implode("\t", $l)."\n";
 			}
+			
+			$déjà = true;
+		}
 	}
 }
 
