@@ -32,12 +32,11 @@ champs()
 
 convertir_opus()
 {
-	# Version d'opusenc à la Guillaume, avec track et composer.
 	opusenc --bitrate 192 \
-		--track "$piste" \
+		--comment track="$piste" \
 		--title "`champ 1`" \
 		--artist "`champ 2`" \
-		--composer "`champ 3`" \
+		--comment composer="`champ 3`" \
 		--album "`champ 4`" \
 		--date "`champ 5`" \
 		"$1" "$fichier"
