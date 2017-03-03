@@ -155,13 +155,23 @@ preparerEntreeStandard()
 	preparerDossier "$@"
 }
 
+sep()
+{
+	args="`for arg in "$@" ; do printf "%s" "$arg" ; done`"
+	for sep in ' ' '#' @ '|' "`printf '\t'`" / ; do
+		printf "%s" "$args" | fgrep -q "$sep" || return 0
+	done
+	return 1
+}
+
 preparerDossier()
 {
 	cat > $TMP/pistes.nues.encogg
 	for dossier in "$@" ; do
 		dossier="`echo "$dossier" | sed -e 's#/$##'`"
 		dossierDespe="`echo "$dossier" | sed -e 's#[&]#\\\&#g'`"
-		ls "$dossier" | sort -n | sed -e "s#^\([^/]\)#$dossierDespe/\1#"
+		sep '^\([/]' "$dossierDespe"
+		ls "$dossier" | sort -n | sed -e "s$sep^\([^/]\)$sep$dossierDespe/\1$sep"
 	done | awk '{print FNR"	"$0}' | paste - $TMP/pistes.nues.encogg > $TMP/listeselection
 }
 
