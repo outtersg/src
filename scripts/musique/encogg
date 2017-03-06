@@ -103,7 +103,7 @@ affecterPlacement()
 	# Initialisation.
 	# Les noms de fichier déjà pris sont ceux que l'on trouve dans l'un des dossiers cibles.
 	
-	awk -F '\011' '{ print $4; print $5; }' < "$TMP/listeselection" | edulcorerChemin | sort -u | while read dossier ; do
+	awk -F '\011' '{ print $2; print $3; }' < "$TMP/pistes.encogg" | edulcorerChemin | sort -u | while read dossier ; do
 		echo "$racines" | tr : '\012' | while read racine ; do
 			( [ ! -z "$dossier" -a -d "$racine/$dossier" ] && cd "$racine/$dossier" 2> /dev/null && ls | sed -e 's/\.[0-9A-Za-z][0-9A-Za-z][0-9A-Za-z]$//' -e "s#^#$dossier/#" )
 		done
@@ -112,9 +112,7 @@ affecterPlacement()
 	# Voyons maintenant nos pistes à encoder.
 	
 	numero=0
-	cut -d '	' -f 3- < $TMP/listeselection > $TMP/pistes.encogg
-	cat "$TMP/listeselection" | cut -d '	' -f 1,2 | while read numero laSuitee
-	do
+	cat "$TMP/listeselection" | while read numero poubelle ; do
 		placement | tee -a "$TMP/dejaEnPlace"
 	done | paste - "$TMP/listeselection" > "$TMP/liste"
 }
@@ -167,13 +165,13 @@ sep()
 
 preparerDossier()
 {
-	cat > $TMP/pistes.nues.encogg
+	cat > $TMP/pistes.encogg
 	for dossier in "$@" ; do
 		dossier="`echo "$dossier" | sed -e 's#/$##'`"
 		dossierDespe="`echo "$dossier" | sed -e 's#[&]#\\\&#g'`"
 		sep '^\([/]' "$dossierDespe"
 		ls "$dossier" | sort -n | sed -e "s$sep^\([^/]\)$sep$dossierDespe/\1$sep"
-	done | awk '{print FNR"	"$0}' | paste - $TMP/pistes.nues.encogg > $TMP/listeselection
+	done | awk '{print FNR"	"$0}' > $TMP/listeselection
 }
 
 listePistesParMusicBrainz()
@@ -213,14 +211,15 @@ transferer()
 
 preparerSelection()
 {
-	osascript "$SCRIPTS/encogg.applescript" "$TMP/listeselection"
+	osascript "$SCRIPTS/encogg.applescript" "$TMP/listeselectionetpistes"
+	cut -d '	' -f 1,2 < $TMP/listeselectionetpistes > $TMP/listeselection
+	cut -d '	' -f 3- < $TMP/listeselection > $TMP/pistes.encogg
 }
 
 copierLocalement()
 {
 	# On se permet une petite copie locale, les lecteurs optiques préférant parfois tourner à plein régime que d'être soumis à une multitude de petits accès durant l'encodage.
-	cat "$TMP/listeselection" | cut -d '	' -f 2 | while read chemin
-	do
+	cat "$TMP/listeselection" | while read numPiste chemin ; do
 		dirname "$chemin"
 	done | sort -u | while read dossier
 	do
@@ -230,10 +229,9 @@ copierLocalement()
 
 fairePasse()
 {
-	cut -d '	' -f 3- < $TMP/listeselection > $TMP/pistes.encogg
 	numero=0
-	cat $TMP/listeselection | cut -d '	' -f 1,2 | while read numPiste fichierOrigine
-	do
+	cat $TMP/listeselection | while read numPiste fichierOrigine ; do
+		# Le fichier est (après copierLocalement()) à aller chercher dans /source/.
 		fichierOrigine="$TMP/source/`basename "$fichierOrigine"`"
 		faire -n "$numPiste" "$fichierOrigine"
 	done
@@ -247,9 +245,9 @@ fairePasse()
 lieuCommun()
 {
 	# Les champs qui peuvent nous donner le titre sous lequel classer les morceaux: on prend la première des infos commune à toutes les pistes.
-	for i in 9 10 11 12 13 # Le dernier est un garde-fou, rempli avec toujours la même valeur (Various artists), donc apte à passer le filtre.
+	for i in 7 8 9 10 11 # Le dernier est un garde-fou, rempli avec toujours la même valeur (Various artists), donc apte à passer le filtre.
 	do
-		cat $TMP/listeselection | cut -d '	' -f $i | sort -u > $TMP/info
+		cat $TMP/piste.encogg | cut -d '	' -f $i | sort -u > $TMP/info
 		[ `wc -l < $TMP/info` -eq 1 -a `wc -c < $TMP/info` -gt 1 ] || continue # Il faut que le sort -u nous sort(e) une seule ligne, et composée de plus de caractères que du seul retour à la ligne.
 		lieu="`cat $TMP/info`"
 		break
@@ -292,7 +290,7 @@ case "`head -1 < "$TMP/parametres"`" in
 esac
 copierLocalement &
 if [ "$editer" = oui ] ; then
-	vim -X "$TMP/listeselection"
+	vim -X "$TMP/pistes.encogg"
 fi
 affecterPlacement
 wait # Le copierLocalement
