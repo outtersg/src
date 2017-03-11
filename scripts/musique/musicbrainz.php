@@ -54,6 +54,34 @@ class Interro
 	
 	public function nomArtiste($entrée)
 	{
+		return $this->nomArtisteCorr($entrée);
+	}
+	
+	public function nomArtisteCorr($entrée)
+	{
+		if(!isset($this->_nomsArtiste[$entrée->id]))
+		{
+			$r = $entrée->name;
+			
+			if(!isset($this->_corr))
+			{
+				if(file_exists($cheminCorr = dirname(__FILE__).'/musicbrainz.corr.php'))
+					$this->_corr = include $cheminCorr;
+				else
+					$this->_corr = array();
+			}
+			
+			if(isset($this->_corr[$r]))
+				$r = $this->_corr[$r];
+			
+			$this->_nomsArtiste[$entrée->id] = $r;
+		}
+		
+		return $this->_nomsArtiste[$entrée->id];
+	}
+	
+	public function nomArtisteAliasFr($entrée)
+	{
 		if(!isset($this->_nomsArtiste[$entrée->id]))
 		{
 			$fiche = $this->_req('artist', $entrée->id, array('inc' => 'aliases'));
