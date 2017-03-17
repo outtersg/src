@@ -4,7 +4,7 @@
 sep()
 {
 	sep_collage="`for arg in "$@" ; do printf "%s" "$arg" ; done`"
-	for sep_sep in ' ' '|' '\t' ':' ';' '@' '#' '!' '+' '=' '\r' ; do
+	for sep_sep in '|' ':' ';' '@' '#' '!' '+' '=' '\r' ; do
 		sep_sep="`printf "$sep_sep"`"
 		case "$sep_collage" in
 			*"$sep_sep"*) true ;;
@@ -21,7 +21,6 @@ sep()
 #   garg -a mesParams "param 1" "param 2"
 #   garg -a mesParams "param 3"
 #   garg mesParams echo
-# Bogue: ne gère pas les paramètres vides.
 garg()
 {
 	case "$1" in
