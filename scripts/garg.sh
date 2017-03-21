@@ -15,6 +15,25 @@ sep()
 	return 1
 }
 
+# Règle $garg_sep à la valeur du dernier caractère de $1, à défaut la chaîne vide.
+garg_sep_dernier()
+{
+	# Il est plus rapide de parcourir les valeurs possibles par des fonctions internes, que de forker. On tente d'abord cette solution.
+	for garg_sep in '|' ':' ';' '@' '#' '!' '+' '=' "`printf '\r'`"
+	do
+		case "$1" in
+			*"$garg_sep") return 0 ;;
+		esac
+	done
+	if [ -z "$1" ]
+	then
+		garg_sep=""
+		return 0
+	fi
+	garg_sep="`printf '%s' "$1" | rev`"
+	garg_sep="`printf '%c' "$garg_sep"`"
+}
+
 # Prépare un IFS pour entreposer des paramètres de façon non destructive.
 # Utilisation:
 #   mesParams=
@@ -35,11 +54,10 @@ garg()
 		garg_var="$1"
 		shift
 		eval garg_contenu=\"\$$garg_var\"
-		eval garg_sep=\"\$garg_sep_$garg_var\"
+		garg_sep_dernier "$garg_contenu"
 		if [ $garg_mode = ajoute ] ; then
 			garg_sep0="$garg_sep"
 			garg_sep="`IFS="$garg_sep" ; sep $garg_contenu "$@"`"
-			export garg_sep_$garg_var="$garg_sep"
 			# Il est attendu qu'avec IFS=, une , en fin délimite une fin de paramètre. Ainsi ",," comprend deux paramètres vides, "," un seul paramètre vide, "" aucun paramètre. Ceci est explicitement dit dans la man page de sh sous FreeBSD 11, et pas clair dans la man page de bash, mais en tout cas son implémentation suit.
 			export $garg_var="`IFS="$garg_sep0" ; for param in $garg_contenu "$@" ; do printf "%s%s" "$param" "$garg_sep" ; done`"
 		else
@@ -63,7 +81,9 @@ garg_test()
 		# Test dans le même shell.
 		garg garg_testParams garg_test "au début" > /tmp/temp.$$.garg_test.1
 		# Test par sh -c, en espérant que le shell courant a transmis les variables au sh lancé.
-		sh -c 'f() { echo $# ; for i in "$@" ; do echo "== $i" ; done ; } ; IFS="$garg_sep_garg_testParams" ; f "au début" $garg_testParams' > /tmp/temp.$$.garg_test.2
+		garg_sep_dernier "$garg_testParams"
+		export garg_sep
+		sh -c 'f() { echo $# ; for i in "$@" ; do echo "== $i" ; done ; } ; IFS="$garg_sep" ; f "au début" $garg_testParams' > /tmp/temp.$$.garg_test.2
 		# Dépilage des tests.
 		for garg_testNumTest in 1 2 ; do
 			diff -uw /tmp/temp.$$.garg_test.0 /tmp/temp.$$.garg_test.$garg_testNumTest && echo "C'est tout bon"\! >&2 || echo "# Différence inattendue." >&2
