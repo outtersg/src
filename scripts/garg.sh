@@ -67,6 +67,37 @@ garg()
 	fi
 }
 
+# garg interne
+# Prend en paramètre ce genre de chose:
+# _garg -3 "param libre" "param libre" "param libre" nomVarGarg nomVarGarg : nomVarGargSurLaquelleBoucler nomVarGarg
+_garg()
+{
+	# À FAIRE: s'assurer qu'en cas d'appels récursifs on n'écrase pas nos valeurs. Ou en cas d'appel d'une fonction qui elle-même nous appelle, sur un double for.
+	_garg_params=
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-[0-9]*)
+				_garg_n="`echo "$1" | cut -c 2-`"
+				while [ $_garg_n -gt 0 ]
+				do
+					shift
+					garg -a _garg_params "$1"
+					_garg_n="`expr $_garg_n - 1`"
+				done
+				;;
+			":")
+				true
+				;;
+			*)
+				garg "$1" garg -a _garg_params
+				;;
+		esac
+		shift
+	done
+	garg _garg_params
+}
+
 garg_test()
 {
 	# Test principal.
