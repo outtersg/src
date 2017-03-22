@@ -115,8 +115,10 @@ garg_test()
 		garg_sep_dernier "$garg_testParams"
 		export garg_sep
 		sh -c 'f() { echo $# ; for i in "$@" ; do echo "== $i" ; done ; } ; IFS="$garg_sep" ; f "au début" $garg_testParams' > /tmp/temp.$$.garg_test.2
+		# Test par _garg.
+		_garg -2 garg_test "au début" garg_testParams > /tmp/temp.$$.garg_test.3
 		# Dépilage des tests.
-		for garg_testNumTest in 1 2 ; do
+		for garg_testNumTest in 1 2 3 ; do
 			diff -uw /tmp/temp.$$.garg_test.0 /tmp/temp.$$.garg_test.$garg_testNumTest && echo "C'est tout bon"\! >&2 || echo "# Différence inattendue." >&2
 		done
 		rm -f /tmp/temp.$$.garg_test.*
