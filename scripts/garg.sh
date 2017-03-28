@@ -72,7 +72,14 @@ garg()
 # _garg -3 "param libre" "param libre" "param libre" nomVarGarg nomVarGarg : nomVarGargSurLaquelleBoucler nomVarGarg
 _garg()
 {
-	# À FAIRE: s'assurer qu'en cas d'appels récursifs on n'écrase pas nos valeurs. Ou en cas d'appel d'une fonction qui elle-même nous appelle, sur un double for.
+	# Première passe: pour repérer l'éventuelle première boucle. Si présente, il nous faut mémoriser la version source des paramères, plutôt que la version résolue (en effet dans le corps de boucle un paramètre peut changer, donc il ne faut surtout pas le résoudre dès à présent).
+	
+	if _garg_bouclage_necessaire "$@"
+	then
+		_garg_boucler "$@"
+		return
+	fi
+	
 	_garg_params=
 	while [ $# -gt 0 ]
 	do
@@ -86,9 +93,6 @@ _garg()
 					_garg_n="`expr $_garg_n - 1`"
 				done
 				;;
-			":")
-				true
-				;;
 			*)
 				garg "$1" garg -a _garg_params
 				;;
@@ -96,6 +100,91 @@ _garg()
 		shift
 	done
 	garg _garg_params
+}
+
+_garg_bouclage_necessaire()
+{
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-[0-9]*)
+				_garg_n="`echo "$1" | cut -c 2-`"
+				while [ $_garg_n -gt 0 ]
+				do
+					shift
+					_garg_n="`expr $_garg_n - 1`"
+				done
+				;;
+			":")
+				return 0
+				;;
+		esac
+		shift
+	done
+	return 1
+}
+
+# Principe de tous les appels qui suivent:
+# - à partir du moment où l'on rentre dans une sous-procédure, nos variables locales ne sont plus garanties, exceptées les arguments $1, etc.
+# - on ne peut donc utiliser de variable locale (avec garantie de non-écrasement) que jusqu'à l'appel d'une sous-fonction.
+# - dans une boucle for, le premier tour de boucle avec appel de sous-fonction est susceptible de changer les variables locales.
+# - on ne peut donc utiliser de variable locale que jusqu'au premier for (et non pas jusqu'au premier appel de sous-fonction dans le corps de ce for).
+# Donc, si l'on veut utiliser des variables locales dans une boucle for, le mieux est de les passer à une sous-fonction "juste pour ça" dans laquelle elles seront accessibles, et garanties stables, sous forme d'argument.
+
+_garg_boucler()
+{
+	_garg_params=
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-[0-9]*)
+				garg -a _garg_params "$1"
+				_garg_n="`echo "$1" | cut -c 2-`"
+				while [ $_garg_n -gt 0 ]
+				do
+					shift
+					garg -a _garg_params "$1"
+					_garg_n="`expr $_garg_n - 1`"
+				done
+				;;
+			":")
+				# On ne traite que cette occurrence, et on appellera une sous-instance de _garg pour traiter tout le reste; nous sortons immédiatement après. Ainsi, si la sous-instance nous charcute nos variables, ce n'est pas un problème. Toute variable utilisée par le lanceur de sous-instance est passée par argument, car les argumets sont les seules variables garanties de rester inchangées (par une sous-fonction) pour la fonction appelée.
+				shift
+				eval '_garg_a_boucler="$'$1'"'
+				shift
+				garg_sep_dernier "$_garg_params"
+				_garg_sousboucler "$_garg_a_boucler" "$garg_sep" "$_garg_params" "$@"
+				return
+				;;
+			*)
+				garg -a _garg_params "$1"
+				;;
+		esac
+		shift
+	done
+	garg _garg_params
+}
+
+# _garg_sousboucler <à boucler gargué> <sép prélude> <prélude gargué> <reste>*
+_garg_sousboucler()
+{
+	_garg_sb_a_boucler="$1" ; shift
+	garg_sep_dernier "$_garg_sb_a_boucler"
+	IFS="$garg_sep"
+	for _garg_tour in $_garg_sb_a_boucler
+	do
+		_garg_sousfaire "$_garg_tour" "$@"
+	done
+	unset IFS
+}
+
+_garg_sousfaire()
+{
+	_garg_sf_tour="$1" ; shift
+	IFS="$1" ; shift
+	_garg_sf_prelude="$1" ; shift
+	#shift 3 # On sert d'homme de main à _garg_sousboucler: il nous transmet ses paramètres tels quels, et c'est à nous de faire le ménage (virer les trois premiers qu'il a déjà utilisés): en effet il ne pouvait lui-même faire des "toto=$1 ; shift", car, contenant une boucle for susceptible d'appeler par récursion un autre _garg_sousboucler, les toto risquaient d'être écrasés.
+	_garg $_garg_sf_prelude -1 "$_garg_sf_tour" "$@"
 }
 
 garg_test()
