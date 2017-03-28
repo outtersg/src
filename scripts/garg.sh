@@ -215,6 +215,27 @@ garg_test()
 		for garg_testNumTest in 1 2 3 4 ; do
 			diff -uw /tmp/temp.$$.garg_test.0 /tmp/temp.$$.garg_test.$garg_testNumTest && echo "C'est tout bon"\! >&2 || echo "# Différence inattendue." >&2
 		done
+		# Constitution de la référence pour les tests de boucle.
+		for garg_testParam1 in a b c
+		do
+			for garg_testParam2 in 1 2
+			do
+				for garg_testParam3 in I II III IV
+				do
+					echo "début $garg_testParam1 $garg_testParam2 $garg_testParam3 fin"
+				done
+			done
+		done > /tmp/temp.$$.garg_test.0
+		# Test de _garg avec boucle.
+		garg_testParams1="a+b+c+"
+		garg_testParams2="1:2:"
+		garg_testParams3="I:II:III:IV:"
+		_garg -2 echo début : garg_testParams1 : garg_testParams2 : garg_testParams3 -1 fin > /tmp/temp.$$.garg_test.1
+		# À FAIRE: un test qui s'assure que lorsqu'une variable garg change de contenu pendant une boucle, les dernières itérations de la boucle utilisent la nouvelle valeur.
+		# Dépilage des tests.
+		for garg_testNumTest in 1 ; do
+			diff -uw /tmp/temp.$$.garg_test.0 /tmp/temp.$$.garg_test.$garg_testNumTest && echo "C'est tout bon"\! >&2 || echo "# Différence inattendue." >&2
+		done
 		rm -f /tmp/temp.$$.garg_test.*
 	# Restitution.
 	else
