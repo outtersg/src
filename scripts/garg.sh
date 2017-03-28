@@ -206,8 +206,13 @@ garg_test()
 		sh -c 'f() { echo $# ; for i in "$@" ; do echo "== $i" ; done ; } ; IFS="$garg_sep" ; f "au début" $garg_testParams' > /tmp/temp.$$.garg_test.2
 		# Test par _garg.
 		_garg -2 garg_test "au début" garg_testParams > /tmp/temp.$$.garg_test.3
+		# Test par _garg avec boucle.
+		garg_testParams2="au début#"
+		garg garg_testParams garg -a garg_testParams2
+		echo 4 > /tmp/temp.$$.garg_test.4
+		_garg -2 echo "== " : garg_testParams2 >> /tmp/temp.$$.garg_test.4
 		# Dépilage des tests.
-		for garg_testNumTest in 1 2 3 ; do
+		for garg_testNumTest in 1 2 3 4 ; do
 			diff -uw /tmp/temp.$$.garg_test.0 /tmp/temp.$$.garg_test.$garg_testNumTest && echo "C'est tout bon"\! >&2 || echo "# Différence inattendue." >&2
 		done
 		rm -f /tmp/temp.$$.garg_test.*
