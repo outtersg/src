@@ -10,7 +10,9 @@ class Interro
 	
 	public function discidEnListesDePistes($discid)
 	{
-		$disque = $this->_req('discid', $discid, array('media-format' => 'all', 'inc' => 'recordings artist-credits'));
+		$détailDisques = array();
+		
+		$disque = $this->_req('discid', $discid, array('media-format' => 'all'));
 		
 		// Maintenant on recherche dans le résultat de recherche les disques qui pourraient correspondre vraiment à ce qu'on a demandé.
 		
@@ -35,6 +37,17 @@ class Interro
 					$dateAlbum = $dateRecueil; // À FAIRE.
 					if(isset($sousDisque->id) && $sousDisque->id == $discid)
 					{
+						if(!isset($détailDisques[$sortie->id.'.'.$media->position]))
+						{
+							$sortie = $this->_req('release', $sortie->id, array('inc' => 'work-rels recordings recording-level-rels work-level-rels artist-rels artist-credits'));
+							foreach($sortie->media as $mediaDétaillé)
+								if($mediaDétaillé->position == $media->position)
+								{
+									$détailDisques[$sortie->id.'.'.$media->position] = $mediaDétaillé;
+									break;
+								}
+						}
+						$media = $détailDisques[$sortie->id.'.'.$media->position];
 						$listesDePiste = $this->pistes($media->tracks);
 						foreach($listesDePiste as & $ptrPiste)
 						{
