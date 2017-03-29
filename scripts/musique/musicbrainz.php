@@ -211,6 +211,33 @@ class Interro
 			$p->artistes = $artistes['i'];
 			$p->compositeurs = $artistes['c'];
 			
+			// Date.
+			
+			$typesEnregistrement = array
+			(
+				'conductor',
+				'performance',
+				'performer',
+				'performing orchestra',
+			);
+			$période = array(null);
+			if(isset($piste->recording) && isset($piste->recording->relations))
+				foreach($piste->recording->relations as $rel)
+					if(in_array($rel->type, $typesEnregistrement))
+					{
+						if(isset($rel->begin) && (!isset($période[0]) || strcmp($rel->begin, $période[0]) < 0))
+							$période[0] = $rel->begin;
+						if(isset($rel->end) && (!isset($période[1]) || strcmp($rel->end, $période[1]) < 0))
+							$période[1] = $rel->end;
+					}
+			$dernière = null;
+			foreach($période as $clé => $date)
+				if($date === $dernière) // Que ce soit null en début de période ou la vraie dernière valeur, ça marche.
+					unset($période[$clé]);
+				else
+					$dernière = $date;
+			$p->date = count($période) ? implode(' - ', $période) : null;
+			
 			$retour[$piste->number] = $p;
 		}
 		return $retour;
