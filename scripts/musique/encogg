@@ -68,7 +68,8 @@ convertir_m4a()
 edulcorerChemin()
 {
 	# Filtre sur les futurs noms de fichier pour qu'ils puissent plaire à tout le monde (Windows, Mac, etc.).
-	tr '/:\!' ',  .' | sed -e 's/  */ /g'
+	#tr '/:\!' ',  .' | sed -e 's/  */ /g'
+	sed -e 's# */ *#, #g'
 }
 
 normaliserChemin()
