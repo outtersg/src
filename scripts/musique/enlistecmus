@@ -1,0 +1,67 @@
+#!/bin/sh
+# Copyright (c) 2017 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+SCRIPTS="`command -v "$0"`" ; [ -x "$SCRIPTS" -o ! -x "$0" ] || SCRIPTS="$0" ; case "`basename "$SCRIPTS"`" in *.*) true ;; *sh) SCRIPTS="$1" ;; esac ; case "$SCRIPTS" in /*) ;; *) SCRIPTS="`pwd`/$SCRIPTS" ;; esac ; delie() { while [ -h "$SCRIPTS" ] ; do SCRIPTS2="`readlink "$SCRIPTS"`" ; case "$SCRIPTS2" in /*) SCRIPTS="$SCRIPTS2" ;; *) SCRIPTS="`dirname "$SCRIPTS"`/$SCRIPTS2" ;; esac ; done ; } ; delie ; SCRIPTS="`dirname "$SCRIPTS"`" ; delie
+. "$SCRIPTS/../garg.sh"
+
+auSecours()
+{
+	nom="`basename "$0"`"
+	cat >&2 << TERMINE
+# $nom
+# Ajoute des fichiers de musique à une ou plusieurs listes cmus
+# © 2017 Guillaume Outters
+
+Utilisation: $nom <liste>+ <fichier>+
+  <liste>
+    Identifiant de la liste (enregistrée sous ~/.cmus/<liste>.pl).
+  <fichier>
+    Fichier à ajouter à la liste s'il n'y est déjà. Si le fichier est un
+    dossier, tous ses fichiers seront ajoutés.
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	paramsListes=
+	paramsFichiers=
+	while [ $# -gt 0 ] ; do
+		case "$1" in
+			*/*) garg -a paramsFichiers "$1" ;;
+			*)
+				if [ -e "$1" ]
+				then
+					garg -a paramsFichiers "$1"
+				else
+					garg -a paramsListes -l "$HOME/.cmus/$1.pl"
+				fi
+				;;
+			-h) auSecours ;;
+		esac
+		shift
+	done
+	
+	[ ! -z "$paramsFichiers" ] || auSecours # $paramsListes peut être vide si l'on souhaite juste afficher les fichiers trouvés. Donc contrôle seulement sur $paramsFichiers, qui lui est obligatoire.
+}
+
+analyserParametres "$@"
+garg paramsListes garg paramsFichiers "$SCRIPTS/../enliste" -s mp3:ogg:opus
