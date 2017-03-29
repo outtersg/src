@@ -134,6 +134,24 @@ class Interro
 		return ($a['t'] + $a['l']) - ($b['t'] + $b['l']);
 	}
 	
+	public function compositeurs($enr)
+	{
+		$r = array();
+		
+		if(isset($enr->relations)) foreach($enr->relations as $relEnr)
+			if($relEnr->type == 'performance')
+			{
+				if(isset($relEnr->work->relations)) foreach($relEnr->work->relations as $relExécution)
+					if(in_array($relExécution->type, array('composer', 'writer')))
+					{
+						$artiste = $relExécution->artist;
+						$r[$artiste->id] = $this->nomArtiste($artiste);
+					}
+			}
+		
+		return $r;
+	}
+	
 	public function pistes($pistes)
 	{
 		$retour = array();
@@ -172,8 +190,13 @@ class Interro
 				if(trim($sép) == ';')
 						$ajouts['c'] = array_splice($ajouts['i'], 0, $num + 1, array());
 				
+				// Primauté du compositeur de l'œuvre, si ladite œuvre a été liée à l'enregistrement.
+				
+				foreach($this->compositeurs($piste->recording) as $id => $compositeur)
+					$ajouts['c'][] = array('id' => $id, 'nom' => $compositeur);
+				
 				// Si la nomenclature par point-virgule n'a rien donné, on bascule sur la nomenclature habituelle: compositeur artiste du morceau, interprète artiste de l'enregistrement. La destination pour le type en cours de traitement est dans $descrType['d'].
-				if(count($ajouts) == 1)
+				if(count($ajouts) == 1 && isset($ajouts['i']))
 					$ajouts = array($descrType['d'] => $ajouts['i']);
 				
 				// On fusionne par id, pour dédoublonner.
