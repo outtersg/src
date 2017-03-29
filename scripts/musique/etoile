@@ -124,6 +124,7 @@ valableJusquA=0
 trap menage EXIT
 
 touch /tmp/temp.$$.etoile
+	sleep 1 # Pour attendre un éventuel cmus en cours de démarrage.
 boucler &
 
 	if [ "$mode" = i ]
