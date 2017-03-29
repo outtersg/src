@@ -21,8 +21,8 @@ class Interro
 		{
 			$titreRecueil = $sortie->title;
 			$dateRecueil = null;
-			if(isset($sortie->{'release-event-list'}))
-				foreach($sortie->{'release-event-list'} as $événement)
+			if(isset($sortie->{'release-events'}))
+				foreach($sortie->{'release-events'} as $événement)
 					if(isset($événement->date))
 						$dateRecueil = $événement->date;
 			foreach($sortie->media as $media)
