@@ -53,7 +53,13 @@ analyserParametres()
 			-h) auSecours ;;
 			-l) shift ; garg -a listes "$1" ;;
 			-s) shift ; suffixes="$suffixes `echo "$1" | tr ':,' '  '`" ;;
-			*) garg -a paramsFind "$1" ;;
+			*)
+				case "$1" in
+					/*) f="$1" ;;
+					*) f="`pwd`/$1" ;;
+				esac
+				garg -a paramsFind "` echo "$f" | sed -e 's#//*$##'`"
+				;;
 		esac
 		shift
 	done
