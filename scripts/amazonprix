@@ -1,0 +1,61 @@
+#!/bin/sh
+# Consigne les prix Amazon à partir d'une "liste de changements de prix Amazon" (les machins qu'on a mis de côté dans notre panier et dont, lorsqu'on va sur le panier, Amazon nous dit "tel machin a baissé, tel machin a augmenté").
+
+for ref in "$1" "/Users/gui/Documents/ Partage/Liste promos Amazon.txt" "/home/jails/sauvegardes/home/sauvegardes/sauvegardes/partage/Liste promos Amazon.txt" /dev/null
+do
+	[ -e "$ref" ] && break
+done
+
+filtrer()
+{
+	f="$1" ; shift
+	"$@" < "$f" > "$f.filtrage" && cat "$f.filtrage" > "$f"
+	rm "$f.filtrage"
+}
+
+lire()
+{
+	sed -E -e 's/["; ]["; ]*/ /g' -e 's/^/- /' -e 's/^- (.*) a (baissé|augmenté), passant de EUR ([0-9,]*) à EUR ([0-9,]*)/+ \1;\3;\4/' | while read signe ligne
+	do
+		case "$signe" in
+			+) echo "$ligne" ;;
+			*) echo "Ligne non comprise: $ligne" >&2 ;;
+		esac
+	done
+}
+
+centimes()
+{
+	sed -e 's/$/00/' -e 's/,\(..\).*$/\1/'
+}
+
+ajouter()
+{
+	while read chose avant apres
+	do
+		ligneref="`grep -F "$chose;" < "$ref"`"
+		if [ -z "$ligneref" ]
+		then
+			ligneref="$chose;$avant"
+		else
+			filtrer "$ref" grep -v -F "$chose;"
+		fi
+		if echo "$ligneref" | grep -v -q ";$avant$"
+		then
+			ligneref="$ligneref;$avant"
+		fi
+		ligneref="$ligneref;$apres"
+		echo "$ligneref" >> "$ref"
+		
+		# Calcul du min.
+		
+		min="`echo "$ligneref" | tr \; '\012' | sed -e 1d | centimes | sort -n | head -1`"
+		lui="`echo "$apres" | centimes`"
+		if [ "$lui" = "$min" ]
+		then
+			echo "$chose [32m$apres[0m"
+		fi
+	done
+}
+
+lire | IFS=";" ajouter
