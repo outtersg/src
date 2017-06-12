@@ -253,6 +253,10 @@ class Interro
 	
 	protected function _req($type, $id, $params = array())
 	{
+		// https://wiki.musicbrainz.org/XML_Web_Service/Rate_Limiting
+		if(isset($this->_dernièreRequête) && ($écoulé = microtime(true) - $this->_dernièreRequête) < 1.0)
+			usleep(ceil(1000000 * (1.0 - $écoulé)));
+		
 		foreach($params as $clé => $val)
 			$params[$clé] = $clé.'='.urlencode($val);
 		
@@ -264,6 +268,8 @@ class Interro
 		
 		$r = curl_exec($c);
 		curl_close($c);
+		
+		$this->_dernièreRequête = microtime(true);
 		
 		return ($r1 = json_decode($r)) !== null ? $r1 : $r;
 	}
