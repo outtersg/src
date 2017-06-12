@@ -67,6 +67,11 @@ class Interro
 	
 	public function nomArtiste($entrée)
 	{
+		$cache = dirname(__FILE__).'/musicbrainz.cache.php';
+		
+		if(!isset($this->_nomsArtiste) && file_exists($cache))
+			$this->_nomsArtiste = unserialize(file_get_contents($cache));
+		
 		if(!isset($this->_nomsArtiste[$entrée->id]))
 		{
 			$nom = $this->nomArtisteCorr($entrée);
@@ -74,6 +79,8 @@ class Interro
 				$nom = $this->nomArtisteAliasFr($entrée);
 			
 			$this->_nomsArtiste[$entrée->id] = $nom;
+			
+			file_put_contents($cache, serialize($this->_nomsArtiste));
 		}
 		
 		return $this->_nomsArtiste[$entrée->id];
