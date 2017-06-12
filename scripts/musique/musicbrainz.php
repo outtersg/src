@@ -108,38 +108,50 @@ class Interro
 	{
 			$fiche = $this->_req('artist', $entrée->id, array('inc' => 'aliases'));
 			
-			$possibilités = array();
-			foreach($fiche->aliases as $alias)
-			{
-				$p = array();
-				switch($alias->type)
-				{
-					case 'Artist name': $p['t'] = 4; break;
-					default: $p['t'] = 2; break;
-					case 'Search hint': continue 2;
-				}
-				// À FAIRE: la langue de l'artiste devrait entrer en compte. Problème: on n'a pas l'info. Dans l'artiste, on a bien un country, mais va-t'en savoir que 'AT' a pour langue primaire 'de', et ne parlons pas des pays multilingues ('BE', par exemple). De plus, il nous faudrait lier la locale à son script: si c'est du latin, alors ça passe avant l'anglais, sinon on prendra en priorité l'anglais.
-				switch($alias->locale)
-				{
-					case 'fr': $p['l'] = 4; break;
-					case 'en': $p['l'] = 2; break;
-					case '': $p['l'] = 0; break;
-					default: continue 2;
-				}
-				$p['n'] = $alias->name;
-				$possibilités[] = $p;
-			}
-			usort($possibilités, array($this, 'sommeTL'));
-			$p = array_pop($possibilités);
+		$possibilités = array(array($fiche->name, 1.0));
+		
+		$pAlias = 0.8;
+		$pNonPrimaire = 0.5;
+		$pLangue = array('fr' => 2.0, 'de' => 0.8, 'it' => 0.8, 'en' => 0.6, '' => 0.2);
+		$pType = array('Artist name' => 1.0, 'Search hint' => 0.0, '' => 0.3);
+		$pNonLatin = 0.9 * $pAlias * $pNonPrimaire * $pLangue[''] * $pType['']; // En non-latin, on passe derrière pas mal de choses.
+		
+		foreach($fiche->aliases as $alias)
+		{
+			$p = $pAlias;
+			if(!isset($alias->primary) || $alias->primary != 'primary')
+				$p *= $pNonPrimaire;
 			
-		$nom = isset($p) ? $p['n'] : $entrée->name;
+			$type = $alias->type;
+			$type || $type = '';
+			isset($pType[$type]) || $type = '';
+			if(!isset($pType[$type])) continue;
+			$p *= $pType[$type];
+			
+			$langue = $alias->locale;
+			$langue || $langue = '';
+			isset($pLangue[$langue]) || $langue = '';
+			if(!isset($pLangue[$langue])) continue;
+			$p *= $pLangue[$langue];
+			
+			$possibilités[] = array($alias->name, $p);
+		}
+		foreach($possibilités as & $ptrP)
+		{
+			$latin = strlen(preg_replace('/[^-, a-z0-9A-Z]/', '', $ptrP[0])) / strlen($ptrP[0]);
+			$latin >= 0.5 || $ptrP[1] *= $pNonLatin;
+		}
+		// Mini-tri stable.
+		$nom = null;
+		$max = -1.0;
+		foreach($possibilités as $p)
+			if($p[1] > $max)
+			{
+				$max = $p[1];
+				$nom = $p[0];
+			}
 		
 		return $nom;
-	}
-	
-	public function sommeTL($a, $b)
-	{
-		return ($a['t'] + $a['l']) - ($b['t'] + $b['l']);
 	}
 	
 	public function compositeurs($enr)
