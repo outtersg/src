@@ -70,6 +70,8 @@ class Interro
 		if(!isset($this->_nomsArtiste[$entrée->id]))
 		{
 			$nom = $this->nomArtisteCorr($entrée);
+			if($nom == $entrée->name)
+				$nom = $this->nomArtisteAliasFr($entrée);
 			
 			$this->_nomsArtiste[$entrée->id] = $nom;
 		}
