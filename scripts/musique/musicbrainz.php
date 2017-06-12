@@ -67,13 +67,18 @@ class Interro
 	
 	public function nomArtiste($entrée)
 	{
-		return $this->nomArtisteCorr($entrée);
+		if(!isset($this->_nomsArtiste[$entrée->id]))
+		{
+			$nom = $this->nomArtisteCorr($entrée);
+			
+			$this->_nomsArtiste[$entrée->id] = $nom;
+		}
+		
+		return $this->_nomsArtiste[$entrée->id];
 	}
 	
 	public function nomArtisteCorr($entrée)
 	{
-		if(!isset($this->_nomsArtiste[$entrée->id]))
-		{
 			$r = $entrée->name;
 			
 			if(!isset($this->_corr))
@@ -86,17 +91,12 @@ class Interro
 			
 			if(isset($this->_corr[$r]))
 				$r = $this->_corr[$r];
-			
-			$this->_nomsArtiste[$entrée->id] = $r;
-		}
 		
-		return $this->_nomsArtiste[$entrée->id];
+		return $r;
 	}
 	
 	public function nomArtisteAliasFr($entrée)
 	{
-		if(!isset($this->_nomsArtiste[$entrée->id]))
-		{
 			$fiche = $this->_req('artist', $entrée->id, array('inc' => 'aliases'));
 			
 			$possibilités = array();
@@ -123,10 +123,9 @@ class Interro
 			usort($possibilités, array($this, 'sommeTL'));
 			$p = array_pop($possibilités);
 			
-			$this->_nomsArtiste[$entrée->id] = isset($p) ? $p['n'] : $entrée->name;
-		}
+		$nom = isset($p) ? $p['n'] : $entrée->name;
 		
-		return $this->_nomsArtiste[$entrée->id];
+		return $nom;
 	}
 	
 	public function sommeTL($a, $b)
