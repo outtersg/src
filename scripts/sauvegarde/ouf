@@ -117,6 +117,12 @@ rsyncssh()
 	rsync -e "$SSH" "$@"
 }
 
+affleger()
+{
+	# https://stackoverflow.com/a/13154756/1346819
+	"$@" | grep -E '^deleting|[^/]$'
+}
+
 [ -z "$SSH" ] && SSH="ssh $OPTIONS_SSH" # BOGUE: ce faisant, on ne peut avoir d'espace dans les OPTIONS_SSH.
 RSYNC="rsyncssh"
 if [ "$PANO" = "$DOSSIER" ]
@@ -211,7 +217,7 @@ else
 			;;
 	esac
 fi
-( if [ -z "$FILTRE" ] ; then cat ; else echo "$FILTRE" | tr ';' '\012' ; fi ; echo "- /.ouf.complet" ) | $RSYNC --delete --exclude-from=- $LIEN -$OPTIONS_RSYNC "$SOURCEREL" "$PANOP$DOSSIER/$dest/" || [ $? -eq 23 -o $? -eq 24 ] # On ne sort pas en erreur pour des Permission denied ou fichiers modifiés.
+( if [ -z "$FILTRE" ] ; then cat ; else echo "$FILTRE" | tr ';' '\012' ; fi ; echo "- /.ouf.complet" ) | affleger $RSYNC --delete --exclude-from=- $LIEN -$OPTIONS_RSYNC "$SOURCEREL" "$PANOP$DOSSIER/$dest/" || [ $? -eq 23 -o $? -eq 24 ] # On ne sort pas en erreur pour des Permission denied ou fichiers modifiés.
 
 # Marquage comme dernière sauvegarde complète.
 
