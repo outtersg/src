@@ -17,7 +17,12 @@ analyserParametres()
 	else # Version Apple.
 		OPTIONS_RSYNC=E
 	fi
-	OPTIONS_RSYNC="az$OPTIONS_RSYNC"
+	compression=z
+	if [ -e /sbin/adbd ]
+	then
+		compression=zz
+	fi
+	OPTIONS_RSYNC="a$compression$OPTIONS_RSYNC"
 	while [ $# -gt 0 ] ; do
 		case "$1" in
 			-v) OPTIONS_RSYNC="v$OPTIONS_RSYNC" ;;
