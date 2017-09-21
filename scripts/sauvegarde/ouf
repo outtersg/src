@@ -7,6 +7,7 @@ analyserParametres()
 	DOSSIER=
 	FILTRE=
 	ECRABOUILLE=
+	SSH=
 	OPTIONS_SSH=
 	OPTIONS_RSYNC=
 	SOURCE=$HOME
@@ -27,6 +28,7 @@ analyserParametres()
 			-l) shift ; P_LIEN="$1." ;;
 			--bete) bete=1 ;;
 			--sans-acl) bebete=1 ;;
+			--ssh) shift ; SSH="$1" ;;
 			*)
 				[ -z "$DOSSIER" ] && case "$1" in # Tout ce que l'on reconnaît avant le DOSSIER est une option à passer à ssh.
 					-p)
@@ -56,7 +58,7 @@ auSecours()
 # Sauvegarde du \$HOME
 # © Guillaume Outters 2005-2013
 
-Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<suffixe>)] [-l <plien>] [--reprendre <date>] [-p <port>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
+Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<suffixe>)] [-l <plien>] [--reprendre <date>] [-p <port>|--ssh <ssh>] [<ip>:]<dossier>[/<préfixe>.] <filtre>
   -v:                           blablateux.
   -e:                           écrabouille. La nouvelle sauvegarde écrase
                                 directement <dossier>, plutôt que d'en créer une
@@ -76,6 +78,7 @@ Utilisation: $nom [-v] [-e] [--bete] [--sans-acl] [-d <dossier>] [-r (<n min>|<s
                                 <préfixe>.
   --reprendre <date>            reprend la sauvegarde du <date> si elle a été
                                 interrompue prématurément.
+  --ssh <ssh>                   commande SSH à passer en -e à rsync.
   -p <port>:                    complément d'<ip>.
   <ip>:                         adresse IP de destination, pour une sauvegarde à
                                 distance.
@@ -109,7 +112,7 @@ rsyncssh()
 	rsync -e "$SSH" "$@"
 }
 
-SSH="ssh $OPTIONS_SSH" # BOGUE: ce faisant, on ne peut avoir d'espace dans les OPTIONS_SSH.
+[ -z "$SSH" ] && SSH="ssh $OPTIONS_SSH" # BOGUE: ce faisant, on ne peut avoir d'espace dans les OPTIONS_SSH.
 RSYNC="rsyncssh"
 if [ "$PANO" = "$DOSSIER" ]
 then
