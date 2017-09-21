@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 analyserParametres()
@@ -7,7 +7,7 @@ analyserParametres()
 	DOSSIER=
 	FILTRE=
 	ECRABOUILLE=
-	OPTIONS_SSH=()
+	OPTIONS_SSH=
 	OPTIONS_RSYNC=
 	SOURCE=$HOME
 	if rsync --version | grep -q xattrs # Version 3, sans doute, avec gestion des xattrs et tout par la communauté.
@@ -30,10 +30,8 @@ analyserParametres()
 			*)
 				[ -z "$DOSSIER" ] && case "$1" in # Tout ce que l'on reconnaît avant le DOSSIER est une option à passer à ssh.
 					-p)
-						OPTIONS_SSH[${#OPTIONS_SSH[@]}]="$1"
-						shift
-						OPTIONS_SSH[${#OPTIONS_SSH[@]}]="$1"
-						shift
+						OPTIONS_SSH="$OPTIONS_SSH $1 $2" # À FAIRE: avec utils.params.sh.
+						shift ; shift
 						continue
 						;;
 				esac
@@ -45,9 +43,9 @@ analyserParametres()
 		esac
 		shift
 	done
-	[ -z "$bete" ] || OPTIONS_RSYNC=${OPTIONS_RSYNC//a/vrltD}
-	[ -z "$bete" ] || OPTIONS_RSYNC=${OPTIONS_RSYNC//[AXE]/}
-	[ -z "$bebete" ] || OPTIONS_RSYNC=${OPTIONS_RSYNC//A/}
+	[ -z "$bete" ] || OPTIONS_RSYNC="`echo "$OPTIONS_RSYNC" | sed -e 's/a/vrltD/g'`"
+	[ -z "$bete" ] || OPTIONS_RSYNC="`echo "$OPTIONS_RSYNC" | tr -d AXE`"
+	[ -z "$bebete" ] || OPTIONS_RSYNC="`echo "$OPTIONS_RSYNC" | tr -d A`"
 }
 
 auSecours()
@@ -95,8 +93,8 @@ exit 0
 }
 
 analyserParametres "$@"
-PANO=${DOSSIER%%:*}
-DOSSIER=${DOSSIER#*:}
+PANO="`echo "$DOSSIER" | cut -d : -f 1`"
+DOSSIER="`echo "$DOSSIER" | cut -d : -f 2-`"
 
 # Local ou distant?
 
@@ -106,26 +104,36 @@ fauxsshlocal()
 	"$@"
 }
 
-SSH="ssh ${OPTIONS_SSH[@]}" # BOGUE: ce faisant, on ne peut avoir d'espace dans les OPTIONS_SSH.
-SSHRS=(-e "$SSH")
+rsyncssh()
+{
+	rsync -e "$SSH" "$@"
+}
+
+SSH="ssh $OPTIONS_SSH" # BOGUE: ce faisant, on ne peut avoir d'espace dans les OPTIONS_SSH.
+RSYNC="rsyncssh"
 if [ "$PANO" = "$DOSSIER" ]
 then
 	SSH=fauxsshlocal
-	SSHRS=()
-	[[ "$DOSSIER" = /* ]] || PANOP="$HOME/" # Un chemin absolu est nécessaire si on travaille en local, car sinon il y aura confusion entre le répertoire de travail $SOURCE et la racine de destination $HOME.
+	RSYNC=rsync
+	case "$DOSSIER" in
+		/*) true ;;
+		*)  PANOP="$HOME/" ;; # Un chemin absolu est nécessaire si on travaille en local, car sinon il y aura confusion entre le répertoire de travail $SOURCE et la racine de destination $HOME.
+	esac
 else
 	PANOP="$PANO:"
 fi
 
 # Chemin spécifié ou à déterminer?
 
-if [[ "$DOSSIER" == *. ]]
-then
-	PREFIXE=${DOSSIER##*/}
-	[[ "$DOSSIER" == */* ]] && DOSSIER=${DOSSIER%/*} || DOSSIER=.
-else
+case "$DOSSIER" in
+	*.)
+		PREFIXE="`echo "$DOSSIER" | sed -e 's#.*/##'`"
+		DOSSIER="`dirname "$DOSSIER"`"
+		;;
+	*)
 	PREFIXE="`hostname -s | tr '[A-Z]' '[a-z]'`." # Par défaut; un tr derrière, car Mac OS X hésite chez moi: un jour en majuscules, l'autre en minuscules.
-fi
+		;;
+esac
 
 [ -z "$PANO" -o -z "$PREFIXE" ] && auSecours
 
@@ -162,7 +170,7 @@ dest="$PREFIXE`date +%Y-%m-%d`"
 num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && exit 0 ; c=1 ; until mkdir '"$dest"'.$c 2> /dev/null ; do c=\`expr $c + 1\` ; done ; echo $c' | $SSH "$PANO" sh`"
 [ "$num" = "" ] || dest="$dest.$num"
 	fi
-	LIEN=(--link-dest="../$dernier")
+	LIEN=--link-dest="../$dernier/"
 	if [ ! -z "$premier" ]
 	then
 		postdest="$dest"
@@ -171,7 +179,7 @@ num="`echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir '"$dest"' 2> /dev/null && ex
 else
 	echo 'cd "$HOME" && cd "'"$DOSSIER"'" ; mkdir -p '"$dest"' 2> /dev/null ; rm -f "'"$dest"'/.ouf.complet" ; touch "'"$dest"'"' | $SSH "$PANO" sh 
 	dest="."
-	LIEN=()
+	LIEN=
 fi
 
 # Copie.
@@ -195,15 +203,15 @@ else
 			;;
 	esac
 fi
-( if [ -z "$FILTRE" ] ; then cat ; else echo "$FILTRE" | tr ';' '\012' ; fi ; echo "- /.ouf.complet" ) | rsync "${SSHRS[@]}" --delete --exclude-from=- "${LIEN[@]}" -$OPTIONS_RSYNC "$SOURCEREL" "$PANOP$DOSSIER/$dest/" || [ $? -eq 23 -o $? -eq 24 ] # On ne sort pas en erreur pour des Permission denied ou fichiers modifiés.
+( if [ -z "$FILTRE" ] ; then cat ; else echo "$FILTRE" | tr ';' '\012' ; fi ; echo "- /.ouf.complet" ) | $RSYNC --delete --exclude-from=- $LIEN -$OPTIONS_RSYNC "$SOURCEREL" "$PANOP$DOSSIER/$dest/" || [ $? -eq 23 -o $? -eq 24 ] # On ne sort pas en erreur pour des Permission denied ou fichiers modifiés.
 
 # Marquage comme dernière sauvegarde complète.
 
 (
-	echo -n 'cd "$HOME" && cd "'"$DOSSIER"'" && touch "'"$dest"'/.ouf.complet"'
-	[ ! -z "$postdest" ] && echo -n " && [ \`ls '$postdest' | wc -l\` = 0 ] && rm -R '$postdest' && mv '$dest' '$postdest'" && dest="$postdest" # postdest a normalement été créé juste un peu au-dessus, donc on peut le supprimer sans soucis.
-	echo -n ' && chmod 000 "'"$PREFIXE"'"*/ && chmod 700 "'"$dest"'"' # Afin d'éviter que les recherches système ne parcourent toutes les sauvegardes, on ne rend lisible que l'actuelle.
-	[ -z "$ECRABOUILLE" ] && echo -n ' && rm -f "'"$PREFIXE"'dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'dernier"'
+	printf "%s" 'cd "$HOME" && cd "'"$DOSSIER"'" && touch "'"$dest"'/.ouf.complet"'
+	[ ! -z "$postdest" ] && printf "%s" " && [ \`ls '$postdest' | wc -l\` = 0 ] && rm -R '$postdest' && mv '$dest' '$postdest'" && dest="$postdest" # postdest a normalement été créé juste un peu au-dessus, donc on peut le supprimer sans soucis.
+	printf "%s" ' && chmod 000 "'"$PREFIXE"'"*/ && chmod 700 "'"$dest"'"' # Afin d'éviter que les recherches système ne parcourent toutes les sauvegardes, on ne rend lisible que l'actuelle.
+	[ -z "$ECRABOUILLE" ] && printf "%s" ' && rm -f "'"$PREFIXE"'dernier" && ln -s "'"$dest"'" "'"$PREFIXE"'dernier"'
 	echo
 ) | $SSH "$PANO" sh
 
