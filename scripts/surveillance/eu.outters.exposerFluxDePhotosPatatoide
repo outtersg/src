@@ -1,0 +1,12 @@
+#!/bin/sh
+absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`dirname "$2"`/$SCRIPTS" ; } ; absolutiseScripts "`command -v "$0"`" "`pwd`/." ; while [ -h "$SCRIPTS" ] ; do absolutiseScripts "`readlink "$SCRIPTS"`" "$SCRIPTS" ; done ; SCRIPTS="`dirname "$SCRIPTS"`"
+
+set -e
+
+patatoide=/Users/sauvegardes/patatoide.dernier/DCIM/Camera
+moi=/Users/gui/perso/Photos/Patatoide
+elle=clotilde@f:"Pictures/Photos Guillaume"
+
+set -x
+rsync -a --link-dest="$patatoide/" "$patatoide/" "$moi/"
+"$SCRIPTS/../sauvegarde/flute" "$moi" "$elle"
