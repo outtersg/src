@@ -68,10 +68,12 @@ cat <<TERMINE
 - /.Trash/
 - /.android
 - /.cabal/
+- /.cargo/registry/
 - /.darcs/cache/
 - /.gradle
 - /.spring/
 - /.thumbnails/
+- /Documents/ Partage/
 - /Documents/Partagés/
 - /Downloads/
 - /Library/Android
@@ -85,6 +87,7 @@ cat <<TERMINE
 - /Library/Caches/
 - /Library/Logs/
 - /Library/Mail/Envelope Index
+- /Library/Mail/EWS-guillout@mail.bt0d0000.w2k.bouyguestelecom.fr/
 - /Library/Mail/IMAP-guout@*/
 - /Library/Mail/*/*.imapmbox/Attachments/
 - /Library/Mail/LSMMap2
