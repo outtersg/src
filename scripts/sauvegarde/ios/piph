@@ -17,6 +17,11 @@ cd "$T"
 
 cd "$HOME/Library/Application Support/MobileSync/Backup/"*
 
+listeSqlite()
+{
+	sqlite3 "$1" "select '('||substr(fileID, 1, 2)||'/'||fileID||')'||domain||'::'||relativePath from Files"
+}
+
 lie()
 {
 	mkdir "$2"
@@ -40,7 +45,13 @@ while [ . -nt "$T/h" -o Manifest.mbdb -nt "$T/h" ]
 do
 	touch "$T/h"
 	
+	if [ -f Manifest.mbdb ]
+	then
 	python "$SCRIPTS/listeIOs.py" Manifest.mbdb > "$T/liste"
+	elif [ -f Manifest.db ]
+	then
+		listeSqlite Manifest.db > "$T/liste"
+	fi
 
 	lie JPG "$T/p"
 	lie MOV "$T/v"
