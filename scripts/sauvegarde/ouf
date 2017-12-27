@@ -26,6 +26,7 @@ analyserParametres()
 	OPTIONS_RSYNC="a$compression$OPTIONS_RSYNC"
 	while [ $# -gt 0 ] ; do
 		case "$1" in
+			-x) OPTIONS_RSYNC="x$OPTIONS_RSYNC" ;;
 			-v) OPTIONS_RSYNC="v$OPTIONS_RSYNC" ;;
 			-e) ECRABOUILLE=1 ;;
 			-r) shift ; SEUIL_RECUP="$1" ;;
