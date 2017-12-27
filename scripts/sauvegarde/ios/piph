@@ -20,7 +20,7 @@ cd "$HOME/Library/Application Support/MobileSync/Backup/"*
 lie()
 {
 	mkdir "$2"
-	grep CameraRollDomain::Media/DCIM < "$T/liste" | grep "$1" | sed -e 's/^[^(]*(//' -e 's#)CameraRollDomain::Media/DCIM/[0-9][0-9][0-9]APPLE/#@#' -e 's/ .*//' -e 's/@/ /' | egrep "^[a-f0-9]{40} IMG_[0-9]{4}.$1$" | while read s d
+	grep CameraRollDomain::Media/DCIM < "$T/liste" | grep "$1" | sed -e 's/^[^(]*(//' -e 's#)CameraRollDomain::Media/DCIM/\([0-9][0-9][0-9]\)APPLE/IMG_#@\1_#' -e 's/ .*//' -e 's/@/ /' | egrep "^[a-f0-9]{40} [0-9]{3}_[0-9]{4}.$1$" | while read s d
 	do
 		ln "$s" "$2/$d"
 	done
