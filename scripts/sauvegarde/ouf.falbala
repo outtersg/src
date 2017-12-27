@@ -76,6 +76,7 @@ cat <<TERMINE
 - /Desktop/*.mkv
 - /Desktop/Chorale/
 - /Documents/Films/
+- /Documents/ Partage/
 - /Documents/ Partagés/
 - /Documents/Partagés/
 - /Downloads/
@@ -89,6 +90,7 @@ cat <<TERMINE
 - /Library/Application Support/Freeware Update
 - /Library/Application Support/Skype/Upgrade/
 - /Library/Application Support/Skype/*/media_messaging/emo_cache*/
+- /Library/Containers/com.apple.mail/Data/Library/Caches/WebKit/NetworkCache
 - /Library/Caches/
 - /Library/Logs/CrashReporter/
 - /Library/Mail/Envelope Index
@@ -104,8 +106,10 @@ cat <<TERMINE
 - /Library/VirtualBox/Machines/
 - /Library/xes
 - /Movies/iMovie*
+- /Music/iTunes/Album Artwork/Cache/
 - /Music/iTunes/iTunes Media/Mobile Applications/
 - /Music/iTunes/iTunes Media/Downloads/
+- /Music/iTunes/iTunes Media/Movies/
 - /Music/iTunes/iTunes Music/
 - /Pictures/**/album */
 - /Pictures/A trier/
