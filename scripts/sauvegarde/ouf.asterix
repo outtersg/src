@@ -66,12 +66,15 @@ shift
 cat <<TERMINE
 - /.Spotlight-V100/
 - /.Trash/
+- /.android
 - /.cabal/
 - /.darcs/cache/
+- /.gradle
 - /.spring/
 - /.thumbnails/
 - /Documents/Partagés/
 - /Downloads/
+- /Library/Android
 - /Library/Application Support/CrashReporter/
 - /Library/Application Support/Freeciv/
 - /Library/Application Support/Firefox/
@@ -105,6 +108,8 @@ cat <<TERMINE
 - /internet/**/photos/
 - /internet/**/temp
 - /mp3/-[Classement]-
+- /src/projets/*/app/build
+- /src/projets/*/build
 - /tmp/autres/
 - /tmp/fonds/
 - /tmp/mp3/
