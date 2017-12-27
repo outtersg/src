@@ -11,6 +11,7 @@ analyserParametres()
 	OPTIONS_SSH=
 	OPTIONS_RSYNC=
 	SOURCE=$HOME
+	SOURCES="/"
 	if rsync --version | grep -q xattrs # Version 3, sans doute, avec gestion des xattrs et tout par la communauté.
 	then
 		OPTIONS_RSYNC=AX
@@ -34,6 +35,7 @@ analyserParametres()
 			--bete) bete=1 ;;
 			--sans-acl) bebete=1 ;;
 			--ssh) shift ; SSH="$1" ;;
+			+*) SOURCES="$SOURCES `echo "$1" | sed -e 's/^+//' -e 's#/*$#/#'`" ;;
 			*)
 				[ -z "$DOSSIER" ] && case "$1" in # Tout ce que l'on reconnaît avant le DOSSIER est une option à passer à ssh.
 					-p)
@@ -200,24 +202,52 @@ fi
 
 if [ -d "$SOURCE" ]
 then
-	SOURCEREL="./"
+	SOURCEREL="."
 	cd "$SOURCE"
 else
 	SOURCEREL="$SOURCE"
 	SOURCE=.
 	case "$SOURCEREL" in
-		*:)
-			SOURCEREL="$SOURCEREL./"
-			;;
-		*/)
-			true
-			;;
-		*)
-			SOURCEREL="$SOURCEREL/"
-			;;
+		*:) SOURCEREL="$SOURCEREL." ;;
+		*/) SOURCEREL="`echo "$SOURCEREL" | sed -e 's#//*$##'`" ;;
 	esac
 fi
-( if [ -z "$FILTRE" ] ; then cat ; else echo "$FILTRE" | tr ';' '\012' ; fi ; echo "- /.ouf.complet" ) | affleger $RSYNC --delete --exclude-from=- $LIEN -$OPTIONS_RSYNC "$SOURCEREL" "$PANOP$DOSSIER/$dest/" || [ $? -eq 23 -o $? -eq 24 ] # On ne sort pas en erreur pour des Permission denied ou fichiers modifiés.
+
+( if [ -z "$FILTRE" ] ; then cat ; else echo "$FILTRE" | tr ';' '\012' ; fi ; echo "- /.ouf.complet" ) > /tmp/temp.$$.filtre
+
+# Transforme une liste de - /home/totor/plurk en - /plurk lorsque $1 vaut /home/totor/
+filtrePourSousRacine()
+{
+	# À FAIRE: savoir reconnaître aussi les **.
+	expSource="`echo "$source" | sed -e 's#\([^/][^/]*\)#(\1|\\\\\\\\*)#g' -e 's#^#^#' -e 's#/$#(/|$)#'`"
+	(
+		# Les autres sources sont exclues (car elles seront traitées par un autre rsync).
+		for autreSource in $SOURCES
+		do
+			[ "$autreSource" = "$source" ] || echo "- $autreSource"
+		done
+		# Le filtre d'origine
+		cat /tmp/temp.$$.filtre
+	) | awk \
+	'
+		# Pour la source courante, seules les entrées non enracinées, ou celles enracinées à ladite source, sont conservées.
+		/^#/{next}
+		/^[-+] *[^ \/]/{print;next}
+		{
+			chemin = $0
+			gsub(/^[+-] */, "", chemin)
+			if(!match(chemin, "'"$expSource"'")) next
+			print $1" /"substr(chemin, RLENGTH + 1)
+		}
+	'
+}
+
+for source in $SOURCES
+do
+	pointsPointsPourSousRacine="`echo "$source" | sed -e 's#/[^/][^/]*#/..#g'`"
+	lienPourSousRacine="`echo "$LIEN" | sed -e "s#\\.\\./#..$pointsPointsPourSousRacine#" -e 's#/$##'`$source"
+	filtrePourSousRacine "$source" | affleger $RSYNC --delete --exclude-from=- $lienPourSousRacine -$OPTIONS_RSYNC "$SOURCEREL$source" "$PANOP$DOSSIER/$dest$source" || [ $? -eq 23 -o $? -eq 24 ] # On ne sort pas en erreur pour des Permission denied ou fichiers modifiés.
+done
 
 # Marquage comme dernière sauvegarde complète.
 
