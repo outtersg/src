@@ -9,6 +9,7 @@ analyserParametres()
 	ECRABOUILLE=
 	SSH=
 	OPTIONS_SSH=
+	PARAMS_RSYNC=
 	OPTIONS_RSYNC=
 	SOURCE=$HOME
 	SOURCES="/"
@@ -127,11 +128,11 @@ affleger()
 }
 
 [ -z "$SSH" ] && SSH="ssh $OPTIONS_SSH" # BOGUE: ce faisant, on ne peut avoir d'espace dans les OPTIONS_SSH.
-RSYNC="rsyncssh"
+RSYNC="rsyncssh $PARAMS_RSYNC"
 if [ "$PANO" = "$DOSSIER" ]
 then
 	SSH=fauxsshlocal
-	RSYNC=rsync
+	RSYNC="rsync $PARAMS_RSYNC"
 	case "$DOSSIER" in
 		/*) true ;;
 		*)  PANOP="$HOME/" ;; # Un chemin absolu est nécessaire si on travaille en local, car sinon il y aura confusion entre le répertoire de travail $SOURCE et la racine de destination $HOME.
