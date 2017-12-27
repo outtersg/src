@@ -27,6 +27,7 @@ analyserParametres()
 	OPTIONS_RSYNC="a$compression$OPTIONS_RSYNC"
 	while [ $# -gt 0 ] ; do
 		case "$1" in
+			--prune-empty-dirs) PARAMS_RSYNC="$PARAMS_RSYNC $1" ;;
 			-x) OPTIONS_RSYNC="x$OPTIONS_RSYNC" ;;
 			-v) OPTIONS_RSYNC="v$OPTIONS_RSYNC" ;;
 			-e) ECRABOUILLE=1 ;;
