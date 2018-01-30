@@ -112,7 +112,7 @@ analyserParametresEtFaire()
 						trouve=1
 						faireConf "$conf"
 					done
-					[ -n "$trouve" ] || echo "Aucun fichier .conf.flute dans $d" >&2
+					[ -n "$trouve" ] || erreur "Aucun fichier .conf.flute dans $d" >&2
 				)
 			fi
 		done
