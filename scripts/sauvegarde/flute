@@ -33,6 +33,23 @@ erreur() { couleur 31 "$@" ; }
 tvb() { couleur 32 "$@" ; }
 #- Couleurs -#
 
+adest()
+{
+	if echo "$dest" | grep -q '^[^/]*:'
+	then
+		local hote="`echo "$dest" | cut -d : -f 1`"
+		local dossier="`echo "$dest" | cut -d : -f 2-`"
+		( ssh "$hote" "cd \"$dossier\" && $*" )
+	else
+		( cd "$dest" && "$@" )
+	fi
+}
+
+asource()
+{
+	( cd "$source" && "$@" )
+}
+
 internes()
 {
 	cat <<TERMINE
