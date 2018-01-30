@@ -21,6 +21,8 @@
 
 # Peut être pour fiabiliser à la fois intégré à un cron et déclenché sur changement de fichiers.
 
+DELAI_MAX=20 # Combien de minutes est-on prêts à attendre qu'un verrou se relâche avant d'abandonner?
+
 set -e
 
 SCRIPTS="`command -v "$0"`" ; [ -x "$SCRIPTS" -o ! -x "$0" ] || SCRIPTS="$0" ; case "`basename "$SCRIPTS"`" in *.*) true ;; *sh) SCRIPTS="$1" ;; esac ; case "$SCRIPTS" in /*) ;; *) SCRIPTS="`pwd`/$SCRIPTS" ;; esac ; delie() { while [ -h "$SCRIPTS" ] ; do SCRIPTS2="`readlink "$SCRIPTS"`" ; case "$SCRIPTS2" in /*) SCRIPTS="$SCRIPTS2" ;; *) SCRIPTS="`dirname "$SCRIPTS"`/$SCRIPTS2" ;; esac ; done ; } ; delie ; MOI="$SCRIPTS" ; SCRIPTS="`dirname "$SCRIPTS"`" ; delie
@@ -59,12 +61,113 @@ internes()
 TERMINE
 }
 
+pondreDeverrouiller()
+{
+	echo "#!/bin/sh"
+	sed -e '/^#= Couleurs/,/^#- Couleurs/!d' < "$MOI"
+	
+	case "$1" in
+		source)
+			cat <<TERMINE
+if ps axo pid,command | egrep -q '^$$[ 	][ 	]*([^ 	]*sh )?[^ 	]*flute '
+then
+	[ -z "\$1" ] || info "(\$1: verrouillé par la tâche locale $$ en cours d'exécution)" >&2
+	exit 1
+fi
+TERMINE
+			;;
+		dest)
+			cat <<TERMINE
+if ps axo command | grep -q '^[^ ]*rsync .*--link-dest .verrou.flute/$idarbofactice/'
+then
+	[ -z "\$1" ] || info "(\$1: verrouillé par la tâche distante $idarbofactice en cours d'exécution)" >&2
+	exit 1
+fi
+TERMINE
+			;;
+	esac
+	
+	cat <<TERMINE
+[ -z "\$1" ] || info "\$1: verrou caduque (la tâche qui l'a posé ne tourne plus); on le supprime." >&2
+# Si le rsync n'existe plus, alors ce ./deverrouiller est caduque. Afin qu'il ne soit plus appelé, on marque le dossier comme "en cours de constitution" ("donc ne cherchez pas ./deverrouiller, il n'existe peut-être pas ou peut-être pas complètement").
+touch .verrou.flute
+exit 0
+TERMINE
+}
+
+verrouiller()
+{
+	local ou="$1"
+	local libelle="$2"
+	if ! $ou sh -c 'mkdir .verrou.flute 2> /dev/null'
+	then
+		# Si le verrou existe, est-il récent (pas encore prêt à l'usage)?
+		if $ou find .verrou.flute -maxdepth 0 -mtime -20s | grep -q .
+		then
+			[ -z "$libelle" ] || info "($libelle: verrou posé par une tâche concurrente tout juste lancée)" >&2
+			return 1
+		fi
+		# S'il peut être considéré comme définitif, il est censé contenir un script vérifiant s'il (le verrou) est encore exploité.
+		if ! $ou .verrou.flute/deverrouiller "$libelle"
+		then
+			return 1
+		fi
+	fi
+	
+	return 0
+}
+
+biverrou()
+{
+	# NOTE: Verrouillage
+	# Un dossier peut être verrouillé, aussi bien comme source que comme destination. Chaque typologie de verrou embarque son déverrouilleur:
+	# - par PID pour le source (si ce PID tourne encore au moment de la tentative de déverrouillage, c'est qu'il bosse)
+	# - par option passée à rysnc pour la destination (si un ps | grep cette option voit quelque chose, c'est qu'il bosse)
+	verrouiller asource "à la source ($source)" || return 1
+	if ! verrouiller adest "à la cible ($dest)"
+	then
+		# Bon c'est foutu: on sort, non sans avoir libéré notre verrou local.
+		rm -R "$source/.verrou.flute"
+		return 1
+	fi
+	# On a le verrou! On y prépare notre possible "mort trop brutale pour faire le ménage".
+	pondreDeverrouiller source > "$source/.verrou.flute/deverrouiller" && chmod a+x "$source/.verrou.flute/deverrouiller"
+	pondreDeverrouiller dest | adest sh -c "cat > .verrou.flute/deverrouiller && chmod a+x .verrou.flute/deverrouiller && mkdir .verrou.flute/$idarbofactice/"
+}
+
 faire()
 {
 	local prefixe=
 	[ "x$1" = x-p ] && shift && prefixe="$1" && shift || true
 source="$1"
 dest="$2"
+	
+	# Tentative d'acquérir le verrou.
+	# Nécessaire car on n'est peut-être pas le seul à alimenter la destination… Voire elle est en train d'alimenter une de ses propres cibles, voire même c'est peut-être nous sa cible.
+	
+	local tmax="`date +%s`"
+	tmax="`expr $tmax + \( $DELAI_MAX \* 60 \)`"
+	
+	local idarbofactice="`hostname`.$$"
+	
+	while ! biverrou
+	do
+		if [ `date +%s` -gt $tmax ]
+		then
+			alerte "# Impossible d'acquérir le verrou au bout de $DELAI_MAX mn." >&2
+			return 3
+		fi
+		sleep 20
+	done
+	
+	_faire
+	
+	rm -R "$source/.verrou.flute"
+	adest rm -R .verrou.flute
+}
+
+_faire()
+{
 
 # On évite de transmettre:
 # - nos fichiers de travail
@@ -77,7 +180,7 @@ do
 		( cat "$source/$prefixe.internes.flute" ; cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/$prefixe.nouveaux.flute"
 		# Si c'est un rsync distant, il faut mettre des \ devant les espaces (merci rsync utilisant ssh et son interprétation shell!).
 		destrsync="`echo "$dest" | sed -e '/^[^/]*:/s# #\\\\ #g'`"
-		rsync --exclude-from=- < "$source/$prefixe.deja.flute" -av "$source/" "$destrsync/" && mv "$source/$prefixe.nouveaux.flute" "$source/$prefixe.deja.flute" || break
+		rsync --link-dest .verrou.flute/$idarbofactice/ --exclude-from=- < "$source/$prefixe.deja.flute" -av "$source/" "$destrsync/" && mv "$source/$prefixe.nouveaux.flute" "$source/$prefixe.deja.flute" || break
 	sleep 2
 		[ `find "$source" -type f -newer "$source/$prefixe.deja.flute" | wc -l` -ne 0 ] || break
 done
