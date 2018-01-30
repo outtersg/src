@@ -25,6 +25,14 @@ set -e
 
 SCRIPTS="`command -v "$0"`" ; [ -x "$SCRIPTS" -o ! -x "$0" ] || SCRIPTS="$0" ; case "`basename "$SCRIPTS"`" in *.*) true ;; *sh) SCRIPTS="$1" ;; esac ; case "$SCRIPTS" in /*) ;; *) SCRIPTS="`pwd`/$SCRIPTS" ;; esac ; delie() { while [ -h "$SCRIPTS" ] ; do SCRIPTS2="`readlink "$SCRIPTS"`" ; case "$SCRIPTS2" in /*) SCRIPTS="$SCRIPTS2" ;; *) SCRIPTS="`dirname "$SCRIPTS"`/$SCRIPTS2" ;; esac ; done ; } ; delie ; MOI="$SCRIPTS" ; SCRIPTS="`dirname "$SCRIPTS"`" ; delie
 
+#= Couleurs =#
+couleur() { local couleur="$1" ; shift ; echo "[${couleur}m$*[0m" ; }
+info() { couleur 90 "$@" ; }
+alerte() { couleur 33 "$@" ; }
+erreur() { couleur 31 "$@" ; }
+tvb() { couleur 32 "$@" ; }
+#- Couleurs -#
+
 internes()
 {
 	cat <<TERMINE
