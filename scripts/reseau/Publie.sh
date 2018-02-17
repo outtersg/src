@@ -8,7 +8,7 @@ liste="$1"
 ic=cat
 iconv -f mac < "$liste" > /dev/null 2>&1 && ic="iconv -f mac"
 sed -e 's#/*$##' < "$liste" | $ic > "$liste.1"
-http="http://dd.gclo.fr"
+http="http://tmp.outters.eu"
 
 listeEnPressePapier()
 {
@@ -63,7 +63,7 @@ listeEnPressePapier
 
 convertir
 
-echo "gclo.fr:internet/partage/" >> "$liste.1"
+echo "m:/tmp/tmp/" >> "$liste.1"
 tr '\012' '\000' < "$liste.1" | xargs -0 rsync -av --progress
 echo "Transfert terminé. Vous pouvez terminer le programme en faisant un Ctrl-C. Cette fenêtre s'éteindra sinon d'elle-même d'ici une heure." >&2
 sleep 3600
