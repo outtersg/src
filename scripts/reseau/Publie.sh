@@ -48,7 +48,7 @@ convertir()
 			d="`dirname "$fichier"`"
 			f="`basename "$fichier"`"
 			mkdir -p "$tmp"
-			( cd "$d" && find "$f" -print | cpio -p -al "$tmp" )
+			( cd "$d" && find "$f" -print | while read i ; do ln "$i" "$tmp/" ; done )
 			echo "$tmp/$f"
 			( cd "$tmp" && find "$f" -name \*.MOV | retaillerFilm )
 			( cd "$tmp" && find "$f" -name \*.JPG -or -name \*.jpg | retaillerImage )
