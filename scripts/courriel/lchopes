@@ -1,0 +1,25 @@
+#!/bin/sh
+
+n=40
+
+t=/tmp/temp.lchopes.$$
+
+ls -tr | grep -e -D$ | tail -$n > $t.fichiers
+
+tr '\012' '\000' < $t.fichiers | xargs -0 rspamc | LC_ALL=C awk '/^Results for file:/{f=$4}/^Score:/{p=$2;printf("%s%.2f%s %s\n", (p>=18.0?"\033[32m":(p>=15.0?"\033[33m":"\033[31m")), p, "\033[0m\t", f)}' > $t.resultats &
+
+while read f
+do
+	while ! grep -q -F "$f" < $t.resultats
+	do
+		sleep 1
+	done
+	grep -F "$f" < $t.resultats | while read n f
+	do
+		printf "%s\t" "$n"
+		ls -l "$f" | awk '{printf("%s\t%s\t%s\t%s\t%s\t",$5,$6,$7,$8,$9)}'
+		grep ^Subject: < "$f" | head -1 | cut -d ' ' -f 2-
+	done
+done < $t.fichiers | /tmp/tmp/derfc822
+
+rm -f $t.*
