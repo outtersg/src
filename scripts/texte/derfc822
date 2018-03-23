@@ -16,6 +16,7 @@ function décode($r)
 			$déc = preg_replace_callback('#=(..)#', 'chrHexa', $r[3]);
 			break;
 		case 'B':
+		case 'b':
 			$déc = base64_decode($r[3]);
 			break;
 	}
