@@ -1,0 +1,6 @@
+#!/bin/sh
+
+touch /tmp/zebu
+rspamc "$@"
+mv /tmp/zebu /tmp/yebu
+vi /tmp/yebu
