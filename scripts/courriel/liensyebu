@@ -1,0 +1,3 @@
+#!/bin/sh
+
+tr -d '	' < /tmp/yebu | sed -e 's#<a#	<a#g' -e 's#</a>#</a>	#g' | tr '\011' '\012' | grep '<a' | sed -e 's#\(href="https*://[^/"]*/\)[^"]*"#\1[…]"#g'
