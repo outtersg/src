@@ -46,12 +46,17 @@ class Groupe extends Fiche
 		parent::__construct($entrée);
 	}
 	
+	/**
+	 * Renvoie true si l'ajout est effectif, false si finalement la fiche y figurait déjà.
+	 */
 	public function ajouter(Personne $p)
 	{
-if(!isset($this->gens[$p->uid()]))
-echo "+++ ".$p->nom().' -> '.$this->nom()."\n";
+		if(!isset($this->gens[$p->uid()]))
+		{
 		$this->gens[$p->uid()] = $p;
 		$p->_notifGroupe($this);
+			return true;
+		}
 	}
 	
 	public function pousser()
@@ -218,7 +223,8 @@ foreach($groupées as $groupée)
 			echo "-> On ajoute les fiches aux ".count($tous)." groupes.\n";
 			foreach($tous as $cléGroupe => $true)
 				foreach($groupée as $fiche)
-					$groupes[$cléGroupe]->ajouter($fiche);
+					if($groupes[$cléGroupe]->ajouter($fiche))
+						$exécutant->grouper($fiche, $groupes[$cléGroupe]);
 		}
 	}
 	if(!$diffèrent)
