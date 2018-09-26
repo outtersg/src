@@ -84,9 +84,26 @@ echo "+++ ".$p->nom().' -> '.$this->nom()."\n";
 	}
 }
 
+function analyserParametres($argv)
+{
+	$r = array();
+	for($i = 0; ++$i < count($argv);)
+		switch($argv[$i])
+		{
+			case '-s': $r['s'] = $argv[++$i]; break;
+			case '-b': $r['b'] = $argv[++$i]; break;
+			default:
+				$r[isset($r['u']) ? 'mdp' : 'u'] = $argv[$i];
+				break;
+		}
+	return $r;
+}
+
+$params = analyserParametres($argv);
+
 $g_regrouper = true;
 
-$p = new BaïkalBase($argv[1], $argv[2]);
+$p = new BaïkalBase($params['b'], $params['u']);
 
 $groupes = $p->groupes();
 
