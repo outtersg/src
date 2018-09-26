@@ -84,6 +84,27 @@ echo "+++ ".$p->nom().' -> '.$this->nom()."\n";
 	}
 }
 
+class Exécutant
+{
+	protected $serveur;
+	protected $lier = true;
+	protected $dédoublonner = true;
+	
+	public function __construct($serveur)
+	{
+		$this->serveur = $serveur;
+	}
+	
+	public function grouper($p, $g)
+	{
+		echo "+++ ".$p->nom().' -> '.$g->nom()."\n";
+		if($this->lier && $this->serveur)
+		{
+			$this->serveur->grouper($p, $g);
+		}
+	}
+}
+
 function analyserParametres($argv)
 {
 	$r = array();
@@ -104,6 +125,10 @@ $params = analyserParametres($argv);
 $g_regrouper = true;
 
 $p = new BaïkalBase($params['b'], $params['u']);
+$serveur = null;
+if(isset($params['s']) && isset($params['mdp']))
+	$serveur = new BaïkalDav($params['s'], $params['u'], $params['mdp']);
+$exécutant = new Exécutant($serveur);
 
 $groupes = $p->groupes();
 
