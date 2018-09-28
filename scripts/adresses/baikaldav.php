@@ -22,6 +22,7 @@ class BaïkalDav
 		$enTêtes = array
 		(
 			'User-Agent: Mimine 1.0',
+			'Expect:',
 		);
 		if($contenu)
 		{
