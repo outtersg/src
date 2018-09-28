@@ -26,6 +26,8 @@ class BaïkalDav
 		if($contenu)
 		{
 			$enTêtes[] = 'Content-Type: text/vcard';
+			if(isset($contenu->etag))
+				$enTêtes[] = 'If-Match: '.$contenu->etag;
 		}
 		
 		$enTêtesRetour = array();
@@ -66,6 +68,8 @@ class BaïkalDav
 		$f = new FicheDav();
 		$f->uri = $uri;
 		$f->contenu = $r;
+		if(isset($enTêtesRetour['ETag']))
+			$f->etag = strtr($enTêtesRetour['ETag'][0], array("\n" => '', "\r" => ''));
 		
 		return $f;
 	}
