@@ -74,6 +74,14 @@ class BaïkalDav
 		
 		return $f;
 	}
+	
+	public function grouper($p, $g)
+	{
+		$fiche = $this->fiche($g->uid());
+		$uidp = $p->uid();
+		$fiche->contenu = preg_replace("#([\r\n]+)(END:VCARD)#", "\\1X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:$uidp\\1\\2", $fiche);
+		$this->fiche($g->uid(), 'PUT', $fiche, null);
+	}
 }
 
 ?>
