@@ -28,6 +28,8 @@ class BaïkalDav
 			$enTêtes[] = 'Content-Type: text/vcard';
 		}
 		
+		$enTêtesRetour = array();
+		
 		$c = curl_init($this->url.(substr($this->url, -1) == '/' ? '' : '/').urlencode($this->qui).'/default/'.$uri.'.vcf');
 		curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($c, CURLOPT_CUSTOMREQUEST, $méthode);
@@ -39,6 +41,14 @@ class BaïkalDav
 			curl_setopt($c, CURLOPT_POST, 1);
 			curl_setopt($c, CURLOPT_POSTFIELDS, $contenu->__toString());
 		}
+		$fEnTêtes = function($c, $enTête) use(& $enTêtesRetour)
+		{
+			$bouts = explode(': ', $enTête, 2);
+			if(count($bouts) == 2)
+				$enTêtesRetour[$bouts[0]][] = $bouts[1];
+			return strlen($enTête);
+		};
+		curl_setopt($c, CURLOPT_HEADERFUNCTION, $fEnTêtes);
 		$r = curl_exec($c);
 		
 		if($r === false)
