@@ -95,6 +95,7 @@ class Groupe extends Fiche
 	}
 }
 
+// À FAIRE: faire tampon pour les modifs de groupes. Si on supprime par exemple 7 doublons d'un groupe, autant les supprimer en une fois plutôt qu'en 7 appels.
 class Exécutant
 {
 	protected $serveur;
@@ -112,6 +113,26 @@ class Exécutant
 		if($this->lier && $this->serveur)
 		{
 			$this->serveur->grouper($p, $g);
+		}
+	}
+	
+	public function dédoublonner($fiches)
+	{
+		echo 'Contenus identiques.'."\n";
+		if($this->dédoublonner && $this->serveur)
+		{
+			// On choisit la fiche d'ID minimal (a priori la fiche historique) pour référence, on supprime les autres.
+			$minId = null;
+			foreach($fiches as $f)
+				if(!isset($minId) || $minId > $f->id)
+					$minId = $f->id;
+			echo "On conserve $minId, on supprime ".(count($fiches) - 1)." fiches.\n";
+			foreach($fiches as $f)
+				if($f->id != $minId)
+				{
+					echo "- ".$f->uid()."\n";
+					$this->serveur->supprimer($f);
+				}
 		}
 	}
 }
@@ -209,6 +230,8 @@ foreach($groupées as $groupée)
 			echo trim($contenu)."\n";
 		}
 	}
+	// À FAIRE: effectuer dans la même passe le lien et la suppression des doublons.
+	// À FAIRE alors: ne pas lier aux groupes les fiches que l'on va supprimer. Seule la fiche qui sera conservée est à lier aux groupes des fiches que l'on va supprimer. S'assurer alors que tous les groupes ont été rapatriés avant de supprimer les doublons, car après on n'aura plus l'info des groupes supplémentaires.
 	if(count($groupesFiche) > 1)
 	{
 		$diffèrent = true;
@@ -236,7 +259,7 @@ foreach($groupées as $groupée)
 		}
 	}
 	if(!$diffèrent)
-		echo 'Contenus identiques.'."\n";
+		$exécutant->dédoublonner($groupée);
 }
 
 // Poussage des regroupements.
