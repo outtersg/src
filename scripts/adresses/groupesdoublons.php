@@ -7,8 +7,14 @@ class Fiche
 {
 	public function __construct($entrée)
 	{
+		$this->id = $entrée['id'];
 		$this->contenu = $entrée['carddata'];
 		$this->uri = $entrée['uri'];
+	}
+	
+	public function __toString()
+	{
+		return $this->contenu;
 	}
 	
 	public function uid()
