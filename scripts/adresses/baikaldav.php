@@ -87,6 +87,21 @@ class BaïkalDav
 		$fiche->contenu = preg_replace("#([\r\n]+)(END:VCARD)#", "\\1X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:$uidp\\1\\2", $fiche);
 		$this->fiche($g->uid(), 'PUT', $fiche, null);
 	}
+	
+	public function dégrouper($p, $g)
+	{
+		$fiche = $this->fiche($g->uid());
+		$uidp = $p->uid();
+		$fiche->contenu = preg_replace("#^X-ADDRESSBOOKSERVER-MEMBER:urn:uuid:$uidp([\r]*\n|$)#m", '', $fiche->contenu);
+		$this->fiche($g->uid(), 'PUT', $fiche, null);
+	}
+	
+	public function supprimer($p)
+	{
+		foreach($p->groupes as $g)
+			$this->dégrouper($p, $g);
+		$this->fiche($p->uid(), 'DELETE');
+	}
 }
 
 ?>
