@@ -168,11 +168,13 @@ function contenu($contenu)
 		(
 			'/\n(CATEGORIES|PRODID|REV|UID):.*/',
 			'/[ \t\r\n]+\n/',
+			'/\nPHOTO(;[^:]*)*:.*(\n .*)*/',
 		),
 		array
 		(
 			'',
 			"\n",
+			'PHOTO:<quelque chose>',
 		),
 		$contenu
 	);
