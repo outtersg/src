@@ -61,7 +61,12 @@ class BaïkalDav
 			return null;
 		}
 		
+		$statutHttp = curl_getinfo($c, CURLINFO_HTTP_CODE);
+		
 		curl_close($c);
+		
+		if(!in_array($statutHttp, array(200, 201, 204)))
+			throw new Exception('Réponse HTTP '.$statutHttp);
 		
 		if(!$r)
 			return null;
