@@ -21,7 +21,7 @@ function décode($r)
 			break;
 	}
 	
-	$déc = iconv($r[1], 'UTF-8', $déc);
+	$déc = iconv($r[1], 'UTF-8//IGNORE', $déc);
 	
 	return $déc;
 }
