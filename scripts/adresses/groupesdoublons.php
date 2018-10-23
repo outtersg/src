@@ -187,7 +187,8 @@ function contenu($contenu)
 	(
 		array
 		(
-			'/\n(CATEGORIES|PRODID|REV|UID):.*/',
+			//'/\n(CATEGORIES|PRODID|REV|UID):.*/', // If faudrait reprendre les CATEGORIES comme des groupes. En attendant de savoir faire, on les considère comme des infos à reprendre impérativement avant de pouvoir fusionner des fiches.
+			'/\n(PRODID|REV|UID):.*/',
 			'/[ \t\r\n]+\n/',
 			'/\nPHOTO(;[^:]*)*:.*(\n .*)*/',
 		),
