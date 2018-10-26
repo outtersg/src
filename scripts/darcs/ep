@@ -4,7 +4,7 @@
 
 # Darcs 2.10 et suivants gèrent différemment le commentaire de rustine de son titre. Le titre est pris dans l'encodage 'locale', le commentaire interprété comme du CP1252. On convertit donc pour lui plaire.
 case `darcs --version` in
-	2.1[0-9].*) ep_filtrage="iconv -f utf-8 -t cp1252" ;;
+	2.1[0-2].*) ep_filtrage="iconv -f utf-8 -t cp1252" ;;
 	*) ep_filtrage=cat ;;
 esac
 
