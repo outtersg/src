@@ -112,3 +112,113 @@ var g_daterPistes = function(d, f, piste)
 {
 	piste.find('.recording .link-phrase, .works > .ar > .link-phrase').filter(function(i, x) { return g_relationsDatees.indexOf($(x).text()) >= 0; }).each(function(i, x) { g_datageLien(d, f, x); });
 };
+
+// http://stackoverflow.com/a/1997811/1346819
+(function() {
+if ( typeof Object.id == "undefined" ) {
+var id = 0;
+Object.id = function(o) {
+if ( typeof o.__uniqueid == "undefined" ) {
+Object.defineProperty(o, "__uniqueid", {
+value: ++id,
+enumerable: false,
+// This could go either way, depending on your 
+// interpretation of what an "id" is
+writable: false
+});
+}
+return o.__uniqueid;
+};
+}
+})();
+
+var g =
+{
+	depilement: [],
+	empilements: [], // Les empilements sont des pointeurs sur le membre empilement d'empilables.
+	enCours: false,
+	tourner: function()
+	{
+		if(g.enCours) return;
+		
+		g.enCours = true;
+		
+		var actuel, papa;
+		var onContinue;
+		
+		while(g.depilement.length)
+		{
+			// On recalcule l'actuel à chaque tour de boucle, car les fonctions appelées par le précédent tour ont pu modifier les piles.
+			for(actuel = g; actuel.depilement && actuel.depilement.length; papa = actuel, actuel = actuel.depilement[0]) {}
+			g.empilements.push(actuel);
+			onContinue = actuel.apply(this);
+			g.empilements.pop();
+			if(onContinue !== 'encore')
+			{
+				// On supprime l'entrée qu'on vient de traiter… en n'oubliant pas de reprendre ses sous-entrées qui auraient été ajoutées entre-temps.
+				papa.depilement.splice(0, 1);
+				if(actuel.depilement && actuel.depilement.length)
+					papa.depilement.unshift.apply(papa.depilement, actuel.depilement);
+			}
+			if(typeof onContinue == 'number')
+			{
+				setTimeout(function() { g.enCours = false; g.tourner(); }, onContinue);
+				return;
+			}
+		}
+		
+		g.enCours = false;
+	},
+	empiler: function(f)
+	{
+		if(!g.empilements.length)
+			g.empilements = [ g ];
+		var empilable = g.empilements[g.empilements.length - 1];
+		if(!empilable.depilement)
+			empilable.depilement = [];
+		empilable.depilement.push(f);
+		
+		g.tourner();
+	},
+	puis: function(f)
+	{
+		// On empile non pas f mais une encapsulation, afin d'être sûrs de ne pas laisser filer le retour de f vers tourner().
+		g.empiler(function() { f.apply(this, arguments); });
+		return g;
+	},
+	pause: function(millisecondes)
+	{
+		g.empiler(function() { return millisecondes; });
+		return g;
+	},
+	attendre: function(fTest)
+	{
+		var f = function()
+		{
+			if(!fTest.apply(this))
+			{
+				g.pause(100); // Ira s'immiscer avant notre prochain test.
+				// Et on dit à l'ordonnanceur de ne pas nous retirer, on retentera notre chance la prochaine fois.
+				return 'encore';
+			}
+		};
+		g.empiler(f);
+		return g;
+	},
+	// ( cat musicbrainz.js ; echo "g.tester();" ) | node
+    tester: function()
+	{
+		var res = [];
+		var n = 3;
+		g
+			.puis(function() { res.push(0); })
+			.pause(0)
+			.puis(function() { res.push(1); })
+			.puis(function() { g.puis(function() { res.push(2); }); })
+			.attendre(function() { res.push(n); return ++n >= 7; })
+			.puis(function() { g.puis(function() { res.push(7); }); })
+			.puis(function() { res.push(8); })
+			.puis(function() { console.log(res); })
+		;
+	}
+};
