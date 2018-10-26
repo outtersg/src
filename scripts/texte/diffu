@@ -1,0 +1,25 @@
+#!/bin/sh
+
+awk '
+function aff() {
+	if(!enTete) return;
+	gsub(/,[0-9]*/, ",;", enTete);
+	sub(/;/, navant, enTete);
+	sub(/;/, napres, enTete);
+	print enTete;
+	# Pas de for, qui fait un tri alphabétique (18, 19, 2, 20, 21, etc.).
+	for(n = 0; ++n <= taille(lignes);)
+		print lignes[n];
+	enTete = "";
+}
+function taille(t) { taille_n = 0; for(taille_i in t) if((0 + taille_i) > taille_n) taille_n = 0 + taille_i; return taille_n; }
+function push(t, e) { t[taille(t) + 1] = e; }
+/^[^-+ ]/ { aff(); }
+END { aff(); }
+/^@@/ { enTete = $0; navant = 0; napres = 0; delete lignes; }
+/^[- ]/ { ++navant; }
+/^[+ ]/ { ++napres; }
+/^$/ { ++navant; ++napres; push(lignes, " "); } # Les lignes vides sont des lignes avec juste un espace, en fait.
+/^[-+ ]/ { push(lignes, $0); }
+!enTete { print; }
+'
