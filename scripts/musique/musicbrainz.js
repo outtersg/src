@@ -39,6 +39,19 @@ var g_daterCochees = function(d, f)
 	});
 };
 
+var g_creditsVersLiens = function()
+{
+	$('.recording input:checked').each(function(i, x)
+	{
+		var enr = $(x).closest('td');
+		var ajout = enr.find('.add-rel');
+		enr.find('a[href^="/artist/"]').each(function(i, x)
+		{
+			console.log($(x).text());
+		});
+	});
+};
+
 /*- Interne ------------------------------------------------------------------*/
 
 var g_relationsDatees =
