@@ -51,7 +51,13 @@ var g_relationsDatees =
 	
 	'hautbois',
 	'piano',
+	'piano solo',
 	'violon',
+	'violoncelle',
+	'violoncelle solo',
+	
+	'voix de soprano solo',
+	'voix de ténor solo',
 	
 	'-'
 ];
