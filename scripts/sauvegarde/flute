@@ -1,6 +1,8 @@
 #!/bin/sh
 # Peut être pour fiabiliser à la fois intégré à un cron et déclenché sur changement de fichiers.
 
+faire()
+{
 source="$1"
 dest="$2"
 
@@ -22,3 +24,6 @@ do
 	sleep 2
 	[ `find "$source" -type f -newer "$source/.deja.flute" | wc -l` -ne 0 ] || break
 done
+}
+
+faire "$@"
