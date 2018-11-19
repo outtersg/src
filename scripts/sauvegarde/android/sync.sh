@@ -27,15 +27,30 @@ export LD_LIBRARY_PATH="/data/data/com.termux/files/usr/lib"
 export TMPDIR="$HOME/tmp"
 mkdir -p "$TMPDIR"
 
+testerDest()
+{
+	local n=0
+	[ "x$1" = x-n ] && shift && n="$1" && shift || true
+	local hote dest="$1"
+	hote="`echo "$dest" | cut -d : -f 1`"
+	$ssh -o ConnectTimeout=5 "$hote" true < /dev/null && echo "$dest" > "$TMPDIR/`printf "%03.3d" "$n"`.`echo "$dest" | sed -e 's/[^_a-zA-Z0-9]//g'`.dest"
+}
+
 dests()
 {
-	cat "$R/sync.dests"
+	local numLigne=0
+	rm -f "$TMPDIR/"*.dest 2> /dev/null
+	while read dest
+	do
+		numLigne=`expr $numLigne + 1`
+		testerDest -n $numLigne "$dest" &
+	done < "$R/sync.dests"
+	wait
+	cat "$TMPDIR/"*.dest | head -1
 }
 
 dests | while read dest
 do
-	hote="`echo "$dest" | cut -d : -f 1`"
-	$ssh -o ConnectTimeout=5 "$hote" true || continue
 	export TMPDIR="$HOME/tmp" # Va savoir pourquoi, si je ne réexporte pas, il est incapable de le détecter lorsque le répertoire vient d'être créé, pour le heredoc suivant.
 	sh "$R/bin/ouf" --sans-acl -r recycler -v --ssh "$ssh" -d /mnt/sdcard/ "$dest." <<TERMINE
 - **/.thumbnails
