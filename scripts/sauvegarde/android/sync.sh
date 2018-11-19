@@ -29,14 +29,7 @@ mkdir -p "$TMPDIR"
 
 dests()
 {
-	cat <<TERMINE
-z:/Users/sauvegardes/patatoide
-z0:/Users/sauvegardes/patatoide
-z1:/Users/sauvegardes/patatoide
-z2:/Users/sauvegardes/patatoide
-z3:/Users/sauvegardes/patatoide
-sauvegardes:sauvegardes/patatoide
-TERMINE
+	cat "$R/sync.dests"
 }
 
 dests | while read dest
