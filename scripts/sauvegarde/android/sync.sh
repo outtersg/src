@@ -27,13 +27,19 @@ export LD_LIBRARY_PATH="/data/data/com.termux/files/usr/lib"
 export TMPDIR="$HOME/tmp"
 mkdir -p "$TMPDIR"
 
-for dest in \
- z:/Users/sauvegardes/patatoide \
- z0:/Users/sauvegardes/patatoide \
- z1:/Users/sauvegardes/patatoide \
- z2:/Users/sauvegardes/patatoide \
- z3:/Users/sauvegardes/patatoide \
- sauvegardes:sauvegardes/patatoide
+dests()
+{
+	cat <<TERMINE
+z:/Users/sauvegardes/patatoide
+z0:/Users/sauvegardes/patatoide
+z1:/Users/sauvegardes/patatoide
+z2:/Users/sauvegardes/patatoide
+z3:/Users/sauvegardes/patatoide
+sauvegardes:sauvegardes/patatoide
+TERMINE
+}
+
+dests | while read dest
 do
 	hote="`echo "$dest" | cut -d : -f 1`"
 	$ssh -o ConnectTimeout=5 "$hote" true || continue
