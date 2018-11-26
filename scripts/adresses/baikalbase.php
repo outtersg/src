@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__FILE__).'/baikalstruct.php';
+
 class BaïkalBase
 {
 	public function __construct($cheminBdd, $qui)
