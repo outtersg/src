@@ -21,6 +21,9 @@ class BaïkalBase
 	
 	protected function _brancherGensAuxGroupes()
 	{
+		if(!isset($this->groupes) || !isset($this->gens))
+			return;
+		
 		foreach($this->groupes as $groupe)
 		{
 			preg_match_all('#\nX-ADDRESSBOOKSERVER-MEMBER:urn:uuid:([-a-zA-Z0-9]*)#', $groupe->contenu, $r);
@@ -50,7 +53,6 @@ class BaïkalBase
 			$this->groupes[$gid] = $g;
 		}
 		
-		if(isset($this->gens))
 			$this->_brancherGensAuxGroupes();
 		
 		return $this->groupes;
@@ -74,7 +76,6 @@ class BaïkalBase
 			$this->gens[$uid] = $p;
 		}
 		
-		if(isset($this->groupes))
 			$this->_brancherGensAuxGroupes();
 		
 		return $this->gens;
