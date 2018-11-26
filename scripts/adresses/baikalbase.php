@@ -12,6 +12,7 @@ class BaïkalBase
 		if(count($ids) != 1)
 			throw new Exception(count($ids)." résultat(s) pour l'agenda de $qui");
 		$this->idCarnet = $ids[0]['id'];
+		$this->avecCatégories = false;
 	}
 	
 	public function err($truc)
@@ -21,6 +22,7 @@ class BaïkalBase
 	
 	protected function _brancherGensAuxGroupes()
 	{
+		// On a besoin des gens et des groupes pour tirer le lien. Même pour les catégories, qui en théorie sont calculables à partir des seuls gens, mais qui, peuplant $this->groupes de groupes virtuels, pourraient laisser penser que $this->groupe est complet alors qu'on n'a pas récupéré les "vrais" groupes.
 		if(!isset($this->groupes) || !isset($this->gens))
 			return;
 		
@@ -33,6 +35,17 @@ class BaïkalBase
 				else
 					$this->err('Le groupe '.$groupe->nom().' fait référence à la fiche inexistance '.$idp);
 		}
+		
+		foreach($this->gens as $gen)
+			if(preg_match('#\nCATEGORIES(?:;[^:]*)?:(.*(?:\r?\n .*)*)#', $gen->contenu, $r))
+			{
+				$catégories = explode(',', preg_replace('#\r?\n #', '', trim($r[1])));
+				foreach($catégories as $catégorie)
+				{
+					isset($this->groupes['$'.$catégorie]) || $this->groupes['$'.$catégorie] = new Catégorie($catégorie);
+					$this->groupes['$'.$catégorie]->ajouter($gen);
+				}
+			}
 	}
 	
 	public function groupes()
