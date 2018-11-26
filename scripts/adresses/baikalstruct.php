@@ -92,4 +92,22 @@ class Groupe extends Fiche
 	}
 }
 
+class Catégorie extends Groupe
+{
+	public function __construct($nom)
+	{
+		$this->nom = $nom;
+	}
+	
+	public function uid()
+	{
+		return '$'.$this->nom;
+	}
+	
+	public function nom()
+	{
+		return $this->nom;
+	}
+}
+
 ?>
