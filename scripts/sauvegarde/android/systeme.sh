@@ -30,12 +30,14 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - **/*.so.[0-9]*
 - /acct
 - /cache
+- /config/usb_gadget
 - /dev
 - /data/clipboard
 - /data/dalvik-cache
 - /data/data/com.android.captiveportallogin
 - /data/data/com.google.android.apps.maps/files/DATA_ShortTermStorage*
 - /data/data/com.google.android.gms/app_bound_sslcache
+- /data/data/com.google.android.gms/app_place_inference_data_index
 - /data/data/com.google.android.gms/databases/playlog.db*
 - /data/data/com.google.android.gms/files/AppDataSearch
 - /data/data/com.google.android.gms/snet/leveldb/snet_sb_blacklist_*
@@ -56,6 +58,7 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - /data/media
 - /data/misc/profiles
 - /data/misc/tima
+- /data/misc/wifi/sockets
 - /data/system/dropbox
 - /data/system/gps
 - /data/system/notification_log.db*
