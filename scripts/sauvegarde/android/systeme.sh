@@ -54,6 +54,7 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - /data/data/com.waze/waze
 - /data/data/de.axelspringer.yana.zeropage
 - /data/data/edu.berkeley.cs.amplab.carat.android
+- /data/lineageos_updates
 - /data/magisk.img
 - /data/media
 - /data/misc/profiles
