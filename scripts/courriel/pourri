@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+chemin="$1"
+dossier="`dirname "$chemin"`"
+fichier="`basename "$chemin"`"
+horo="`echo "$fichier" | cut -d . -f 1`"
+nouveau="`expr "$horo" + 1`.`echo "$fichier" | cut -d . -f 2-`"
+mv -i "$chemin" ../pourris
+cp "../pourris/$fichier" "../pourris/$nouveau"
+vi "../pourris/$nouveau"
+touch -r "../pourris/$fichier" "../pourris/$nouveau"
+mv "../pourris/$nouveau" "$dossier/"
