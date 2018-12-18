@@ -1,0 +1,157 @@
+#!/bin/sh
+# Copyright (c) 2018 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+SCRIPTS="`command -v "$0"`" ; [ -x "$SCRIPTS" -o ! -x "$0" ] || SCRIPTS="$0" ; case "`basename "$SCRIPTS"`" in *.*) true ;; *sh) SCRIPTS="$1" ;; esac ; case "$SCRIPTS" in /*) ;; *) SCRIPTS="`pwd`/$SCRIPTS" ;; esac ; delie() { while [ -h "$SCRIPTS" ] ; do SCRIPTS2="`readlink "$SCRIPTS"`" ; case "$SCRIPTS2" in /*) SCRIPTS="$SCRIPTS2" ;; *) SCRIPTS="`dirname "$SCRIPTS"`/$SCRIPTS2" ;; esac ; done ; } ; delie ; SCRIPTS="`dirname "$SCRIPTS"`" ; delie
+
+set -e
+
+# cd ~/Downloads/sauvegardes
+# ( cd frigovide.dernier/DCIM/Camera && d=../../../Photos/frigovide && find . -type f | while read f ; do [ -e "$d/$f" ] || ln "$f" "$d/$f" ; done )
+# cd Photos/frigovide
+# [ -f .photocopie.conf ] || ( echo d=../triees ; echo prefixe=frigovide ) > .photocopie.conf
+# photocopie .
+
+# À FAIRE: purger au bout d'un certain temps (on imagine les fichiers transférés). Ne s'applique qu'aux dossiers de transit (comment les marquer?). Purger alors le .deja (inutile de conserver des expressions de fichiers qu'on ne retrouvera plus).
+
+jaune()
+{
+	echo "[;33m$1[0m"
+}
+
+auSecours()
+{
+	nom=`basename "$0"`
+	cat >&2 << TERMINE
+# $nom
+# Flux de photos d'un appareil vers un dossier à noms normalisés
+# © Guillaume Outters 2018
+
+Utilisation: $nom [-p <préfixe>] <dossier source> [<dossier dest>]
+  -p <préfixe>
+    Préfixer les photos de cet élément dans <dossier dest>, pour les distinguer
+    de photos provenant d'une autre source.
+  <dossier source>
+    Dossier contenant les photos au nommage brut de sortie d'appareil.
+  <dossier dest>
+    Destination des photos au nom normalisé.
+    Si non précisé, une variable d=… est attendue dans un fichier de conf
+    <dossier source>/.photocopie.conf
+    Ce fichier de conf contiendra aussi éventuellement un prefixe=… qui
+    permettra de distinguer les photos issues de <dossier source>.
+TERMINE
+	exit 1
+}
+
+normaliser()
+{
+	local prefixe= dossier=
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-d) shift ; dossier="$1" ;;
+		esac
+		shift
+	done
+	normaliserParNom
+}
+
+normaliserParNom()
+{
+	sed -E -e '/^((IMG_|VID_)*)([^_]*(_[^_]*)*)_*(20[0-4][0-9][0-1][0-9][0-3][0-9])_*([0-2][0-9][0-5][0-9][0-5][0-9])[._]*(.*)$/{
+h
+s//\5_\6.\7/
+s/[._]*\.[._]*/./g
+s/__*/_/g
+H
+x
+y/\n/'"$sep"'/
+}'
+}
+
+# Effectue la copie.
+# Utilisation: faire <source> <dest>
+faire()
+{
+	local sep="`echo | tr '\012' '\003'`"
+	local s="$1"
+	local d=
+	local prefixe="$prefixe"
+	if [ -f "$s/.photocopie.conf" ]
+	then
+		. "$s/.photocopie.conf"
+	fi
+	if [ ! -z "$2" ]
+	then
+		d="$2"
+	else
+		case "$d" in
+			/*) true ;;
+			*) d="$s/$d" # Chemin relatif: par rapport à $s.
+		esac
+	fi
+	local fs fd
+	
+	case "$prefixe" in
+		""|.*) true ;;
+		*) prefixe=".$prefixe" ;;
+	esac
+	
+	[ -e "$s/.photocopie.deja" ] || echo "# A priori aucun fichier de ce nom." > "$s/.photocopie.deja" # Il faut au moins une ligne dans le fichier pour que le grep -v nous renvoie quelque chose.
+	cut -d '	' -f 1 < "$s/.photocopie.deja" > "$T"
+	( cd "$s" && find . -type f -not -name ".photocopie.*" ) | sed -e 's#^\./##' | grep -v -F -x -f "$T" | normaliser -d "$s" > "$s/.photocopie.nouveaux"
+	grep -v "$sep.*\\." < "$s/.photocopie.nouveaux" | while read f
+	do
+		jaune "# Impossible d'horodater $f" >&2
+	done
+	grep "$sep.*\\." < "$s/.photocopie.nouveaux" | sed -e "s#\\($sep[^.]*\\)\.#\\1$prefixe.#" | \
+	(
+		IFS="$sep"
+		while read fs fd
+		do
+			ln "$s/$fs" "$d/$fd"
+			echo "$fs"
+		done >> "$s/.photocopie.deja"
+	)
+	rm "$s/.photocopie.nouveaux"
+}
+
+T=/tmp/temp.photocopie.$$
+prefixe=
+if [ "x$1" = "x-p" ]
+then
+	prefixe="$2"
+	shift
+	shift
+fi
+# Deux possibilités d'appel:
+# - photocopie <source> <dest>
+# - photocopie <source> # Et on s'attend à trouver un <source>/.photocopie.conf avec tous les paramètres nécessaires.
+if [ $# = 2 -a -f "$1/.photocopie.conf" -a ! -f "$2/.photocopie.conf" ]
+then
+	faire "$@"
+else
+	for s in "$@"
+	do
+		faire "$s"
+	done
+fi
+
+rm -f $T*
