@@ -141,8 +141,9 @@ faire()
 		while read fs fd
 		do
 			ln "$s/$fs" "$d/$fd"
-			echo "$fs"
-		done >> "$s/.photocopie.deja"
+			echo "$fs" >&3
+			trace "$fs -> $fd"
+		done 3>> "$s/.photocopie.deja"
 	)
 	rm "$s/.photocopie.nouveaux"
 }
