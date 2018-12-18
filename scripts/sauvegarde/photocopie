@@ -36,6 +36,20 @@ jaune()
 	echo "[;33m$1[0m"
 }
 
+g_trace=1
+trace()
+{
+	local niveau=1
+	case "$1" in
+		[0-9]) niveau="$1" ; shift
+	esac
+	local texte="$1"
+	if [ $g_trace -ge $niveau ]
+	then
+		echo "$texte"
+	fi
+}
+
 auSecours()
 {
 	nom=`basename "$0"`
