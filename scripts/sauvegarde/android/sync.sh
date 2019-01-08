@@ -43,7 +43,32 @@ testerDest()
 
 dests()
 {
+	# A-t-on des hôtes à adresse dynamique (à retrouver sur le réseau local)?
+	if grep -q '^<' < "$R/sync.dests"
+	then
+		gris "Résolution des alias dynamiques sur le réseau local…" >&2
+		TMP="$TMPDIR"
+		. "$R/bin/voisinage.sh"
+		rl_voisinsCopainsSsh "$R/.ssh/known_hosts" | while read ip proto cle rien
+		do
+			# Retrouve-t-on l'alias correspondant à cette clé dans notre known_hosts?
+			grep -F "$cle" | while read alias rien
+			do
+				echo "/^Host $alias/{
+a\\
+HostName $ip
+a\\
+HostKeyAlias $alias
+}"
+			done < "$R/.ssh/known_hosts" || true
+		done > "$TMPDIR/reconfig.sed"
+		sed -f "$TMPDIR/reconfig.sed" < "$R/.ssh/config" > "$TMPDIR/config"
+		tr -d '<>' < "$R/sync.dests" > "$TMPDIR/sync.dests"
+		ssh="`echo "$ssh" | sed -e "s#-F [^ ]*/config#-F $TMPDIR/config#"`"
+		_dests "$TMPDIR/sync.dests"
+	else
 		_dests "$R/sync.dests"
+	fi
 }
 
 _dests()
