@@ -43,13 +43,19 @@ testerDest()
 
 dests()
 {
+		_dests "$R/sync.dests"
+}
+
+_dests()
+{
+	local fDests="$1"
 	local numLigne=0
 	rm -f "$TMPDIR/"*.dest 2> /dev/null
 	while read dest
 	do
 		numLigne=`expr $numLigne + 1`
 		testerDest -n $numLigne "$dest" &
-	done < "$R/sync.dests"
+	done < "$fDests"
 	wait
 	cat "$TMPDIR/"*.dest | head -1
 }
