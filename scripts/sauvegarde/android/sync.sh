@@ -48,6 +48,7 @@ dests()
 
 _dests()
 {
+	gris "Recherche des serveurs de sauvegarde disponibles…" >&2
 	local fDests="$1"
 	local numLigne=0
 	rm -f "$TMPDIR/"*.dest 2> /dev/null
