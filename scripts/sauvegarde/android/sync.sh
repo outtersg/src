@@ -12,6 +12,11 @@
 
 R=/mnt/sdcard/sauvegardes
 
+gris()
+{
+	echo "[90m$*[0m"
+}
+
 echo "=== Sauvegarde système ==="
 
 su -c "sh < $R/bin/systeme.sh"
