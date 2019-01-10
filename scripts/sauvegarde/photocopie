@@ -162,6 +162,7 @@ faire()
 		d="$2"
 	else
 		case "$d" in
+			"") auSecours ;;
 			/*) true ;;
 			*) d="$s/$d" # Chemin relatif: par rapport à $s.
 		esac
