@@ -100,6 +100,45 @@ y/\n/'"$sep"'/
 }'
 }
 
+normaliserPar()
+{
+	# Si on est conditionnés par un test, et que le test est non concluant, on est un passe-plat.
+	if [ "x$1" = x--si ]
+	then
+		if ! $2 > /dev/null 2>&1
+		then
+			cat
+			return
+		fi
+		shift ; shift
+	fi
+	(
+		IFS="$sep"
+		while read s d
+		do
+			# Si la destination n'est pas encore définie, on essaie par la procédure qui nous est donnée en paramètre.
+			[ -z "$d" ] && d="`unset IFS ; "$@" "$s"`" || true
+			# Si un $d est trouvé (soit qu'il fût déjà déterminé, soit qu'on vient de le calculer), on transmet.
+			if [ -z "$d" ]
+			then
+				echo "$s"
+			else
+				echo "$s$sep$d"
+			fi
+		done
+	)
+}
+
+npParDate()
+{
+	local d="`"$@"`"
+	if [ -n "$d" ]
+	then
+		while [ $# -gt 1 ] ; do shift ; done
+		echo "$d.$1" | sed -E -e 's/(IMG|MOV|MVI|VID)[-._]//g'
+	fi
+}
+
 # Effectue la copie.
 # Utilisation: faire <source> <dest>
 faire()
