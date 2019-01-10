@@ -84,7 +84,7 @@ normaliser()
 		esac
 		shift
 	done
-	normaliserParNom
+	normaliserParNom | normaliserPar --si "command -v exiftool" npParDate dateParExiftool
 }
 
 normaliserParNom()
