@@ -192,16 +192,32 @@ faire()
 		done 3>> "$s/.photocopie.deja"
 	)
 	rm "$s/.photocopie.nouveaux"
+	if [ $pousser = oui ]
+	then
+		if command -v flute > /dev/null 2>&1 && [ "`find "$d" -name ".*.conf.flute" | wc -l`" -gt 0 ]
+		then
+			flute "$d"
+		fi
+	fi
 }
 
 T=/tmp/temp.photocopie.$$
 prefixe=
-if [ "x$1" = "x-p" ]
-then
+pousser=non
+while [ $# -gt 0 ]
+do
+	case "$1" in
+		-p)
 	prefixe="$2"
 	shift
+			;;
+		--pousser)
+			pousser=oui
+			;;
+		*) break ;; # Le premier paramètre "normal" nous fait sortir de là.
+	esac
 	shift
-fi
+done
 # Deux possibilités d'appel:
 # - photocopie <source> <dest>
 # - photocopie <source> # Et on s'attend à trouver un <source>/.photocopie.conf avec tous les paramètres nécessaires.
