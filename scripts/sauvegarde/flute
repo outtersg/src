@@ -26,7 +26,8 @@ dest="$2"
 while true
 do
 		( cat "$source/$prefixe.internes.flute" ; cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/$prefixe.nouveaux.flute"
-	destrsync="`echo "$dest" | sed -e 's# #\\\\ #g'`"
+		# Si c'est un rsync distant, il faut mettre des \ devant les espaces (merci rsync utilisant ssh et son interprétation shell!).
+		destrsync="`echo "$dest" | sed -e '/^[^/]*:/s# #\\\\ #g'`"
 		rsync --exclude-from=- < "$source/$prefixe.deja.flute" -av "$source/" "$destrsync/" && mv "$source/$prefixe.nouveaux.flute" "$source/$prefixe.deja.flute" || break
 	sleep 2
 		[ `find "$source" -type f -newer "$source/$prefixe.deja.flute" | wc -l` -ne 0 ] || break
