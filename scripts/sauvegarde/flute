@@ -3,26 +3,28 @@
 
 faire()
 {
+	local prefixe=
+	[ "x$1" = x-p ] && shift && prefixe="$1" && shift || true
 source="$1"
 dest="$2"
 
 # On évite de transmettre:
 # - nos fichiers de travail
 # - les fichiers temporaires d'un autre rsync qui serait en train de nous alimenter
-[ -e "$source/.internes.flute" ] || cat > "$source/.internes.flute" <<TERMINE
+	[ -e "$source/$prefixe.internes.flute" ] || cat > "$source/$prefixe.internes.flute" <<TERMINE
 - /.*.flute
 - /.*.??????
 - /**/.*.??????
 TERMINE
 
-[ -e "$source/.deja.flute" ] || touch "$source/.deja.flute"
+	[ -e "$source/$prefixe.deja.flute" ] || touch "$source/$prefixe.deja.flute"
 while true
 do
-	( cat "$source/.internes.flute" ; cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/.nouveaux.flute"
+		( cat "$source/$prefixe.internes.flute" ; cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/$prefixe.nouveaux.flute"
 	destrsync="`echo "$dest" | sed -e 's# #\\\\ #g'`"
-	rsync --exclude-from=- < "$source/.deja.flute" -av "$source/" "$destrsync/" && mv "$source/.nouveaux.flute" "$source/.deja.flute" || break
+		rsync --exclude-from=- < "$source/$prefixe.deja.flute" -av "$source/" "$destrsync/" && mv "$source/$prefixe.nouveaux.flute" "$source/$prefixe.deja.flute" || break
 	sleep 2
-	[ `find "$source" -type f -newer "$source/.deja.flute" | wc -l` -ne 0 ] || break
+		[ `find "$source" -type f -newer "$source/$prefixe.deja.flute" | wc -l` -ne 0 ] || break
 done
 }
 
