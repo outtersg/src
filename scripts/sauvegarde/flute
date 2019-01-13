@@ -34,4 +34,39 @@ do
 done
 }
 
-faire "$@"
+faireConf()
+{
+	local conf="$1" source="`dirname "$1"`"
+	local prefixe="`basename "$conf" .conf.flute`"
+	faire -p "$prefixe" "$source" "`cat "$conf"`"
+}
+
+analyserParametresEtFaire()
+{
+	if [ $# -eq 2 -a -d "$1" -a -d "$2" ] && [ "`find "$1" "$2" -name ".*.conf.flute" | wc -l`" -eq 0 ] # Le && plutôt que -a, car sh sous FreeBSD 10 évalue le find avant même d'avoir vérifié que $# -eq 2 et ce sont des dossiers.
+	then
+		# Ancienne sauce: source, destination précisées sur la ligne de commande. Comment distinguer de deux dossiers (sources) à synchroniser?
+		faire "$1" "$2"
+	else
+		for d in "$@"
+		do
+			if [ -f "$d" ]
+			then
+				faireConf "$d"
+			else
+				find "$d" -maxdepth 1 -name ".*.conf.flute" | \
+				(
+					trouve=
+					while read conf
+					do
+						trouve=1
+						faireConf "$conf"
+					done
+					[ -n "$trouve" ] || echo "Aucun fichier .conf.flute dans $d" >&2
+				)
+			fi
+		done
+	fi
+}
+
+analyserParametresEtFaire "$@"
