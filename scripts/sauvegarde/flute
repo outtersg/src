@@ -1,6 +1,15 @@
 #!/bin/sh
 # Peut être pour fiabiliser à la fois intégré à un cron et déclenché sur changement de fichiers.
 
+internes()
+{
+	cat <<TERMINE
+- /.*.flute
+- /.*.??????
+- /**/.*.??????
+TERMINE
+}
+
 faire()
 {
 	local prefixe=
@@ -11,13 +20,9 @@ dest="$2"
 # On évite de transmettre:
 # - nos fichiers de travail
 # - les fichiers temporaires d'un autre rsync qui serait en train de nous alimenter
-	[ -e "$source/$prefixe.internes.flute" ] || cat > "$source/$prefixe.internes.flute" <<TERMINE
-- /.*.flute
-- /.*.??????
-- /**/.*.??????
-TERMINE
+	[ -e "$source/$prefixe.internes.flute" ] || internes > "$source/$prefixe.internes.flute"
 
-	[ -e "$source/$prefixe.deja.flute" ] || touch "$source/$prefixe.deja.flute"
+	[ -e "$source/$prefixe.deja.flute" ] || internes > "$source/$prefixe.deja.flute"
 while true
 do
 		( cat "$source/$prefixe.internes.flute" ; cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/$prefixe.nouveaux.flute"
