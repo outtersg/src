@@ -108,8 +108,10 @@ TERMINE
 	
 	echo "=== Synchro musique ==="
 
-	$ssh "$hote" src/scripts/surveillance/eu.outters.exposerFluxDePhotosPatatoide
-	$ssh "$hote" src/scripts/musique/mp3versdroid
+	local ddest="`echo "$dest" | cut -d : -f 2-`"
+	local prefixe="`basename "$ddest" | sed -e 's#\.*$##'`"
+	ddest="`dirname "$ddest"`"
+	$ssh "$hote" "cd \"$ddest\" && [ -x \"$prefixe.post.sh\" ] && \"./$prefixe.post.sh\"" # Censé sécuriser les images, et lancer un mp3versdroid, par exemple.
 	# cf. https://askubuntu.com/a/343740
 	rsync -rvl --size-only --delete --exclude SoundRecords -e "$ssh" "$hote:/tmp/mp3/" /mnt/sdcard/Music/
 
