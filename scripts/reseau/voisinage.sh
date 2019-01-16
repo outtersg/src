@@ -69,7 +69,7 @@ rl_voisinsSsh()
 		( ssh -q -n -o ConnectTimeout=2 -o BatchMode=true -o UserKnownHostsFile="$TMP"/temp.reseaulocal.$$.kh.$ip -o StrictHostKeyChecking=no personne@$ip true < /dev/null > /dev/null 2>&1 ) &
 	done < "$TMP"/temp.reseaulocal.$$.voisins
 	wait
-	cat "$TMP"/temp.reseaulocal.$$.kh.*
+	find "$TMP" -maxdepth 1 -name "temp.reseaulocal.$$.kh.*" -print0 | xargs -0 cat
 	rm -f "$TMP"/temp.reseaulocal.$$.kh.* "$TMP"/temp.reseaulocal.$$.voisins
 }
 
