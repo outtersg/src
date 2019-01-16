@@ -91,6 +91,7 @@ _dests()
 	cat "$TMPDIR/"*.dest | head -1
 }
 
+	# Si on fait un dest="`dests`", le manque de redirection semble faire croire à SSH qu'on est interactifs, et donc bloquer sur une invite de mot de passe.
 dests > "$TMPDIR/"dest
 dest="`cat "$TMPDIR/dest"`"
 	
