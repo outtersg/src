@@ -12,6 +12,11 @@
 
 R=/mnt/sdcard/sauvegardes
 
+vert()
+{
+	echo "[32m$*[0m"
+}
+
 gris()
 {
 	echo "[90m$*[0m"
