@@ -115,6 +115,7 @@ TERMINE
 	
 	echo "=== Synchro musique ==="
 
+	local hote="`echo "$dest" | cut -d : -f 1`"
 	local ddest="`echo "$dest" | cut -d : -f 2-`"
 	local prefixe="`basename "$ddest" | sed -e 's#\.*$##'`"
 	ddest="`dirname "$ddest"`"
