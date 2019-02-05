@@ -61,7 +61,8 @@ adest()
 	then
 		local hote="`echo "$dest" | cut -d : -f 1`"
 		local dossier="`echo "$dest" | cut -d : -f 2-`"
-		( ssh "$hote" "cd \"$dossier\" && $*" )
+		local commande="`uucommande "$@"`"
+		( ssh "$hote" "cd \"$dossier\" ; echo '$commande' | uudecode ; sh .exec.flute" )
 	else
 		( cd "$dest" && "$@" )
 	fi
