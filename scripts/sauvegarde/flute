@@ -35,6 +35,26 @@ erreur() { couleur 31 "$@" ; }
 tvb() { couleur 32 "$@" ; }
 #- Couleurs -#
 
+uucommande()
+{
+	(
+		echo "set -e"
+		printf "commande='"
+		(
+			printf "%s" "$1"
+			shift
+			while [ $# -gt 0 ]
+			do
+				printf "\003%s" "$1"
+				shift
+			done
+		) | sed -e "s/'/'\\\\''/g" -e "s/$/'/" # Certains sed tenant à ajouter une dernière fin de ligne, autant que nous y mettions l'apostrophe fermante.
+		echo # Pour les sed qui gentiment n'ont pas inséré une fin de ligne sur la précédente.
+		printf 'IFS="\003"\n'
+		echo '$commande'
+	) | uuencode -m .exec.flute
+}
+
 adest()
 {
 	if echo "$dest" | grep -q '^[^/]*:'
