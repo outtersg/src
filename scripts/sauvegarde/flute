@@ -120,7 +120,7 @@ verrouiller()
 {
 	local ou="$1"
 	local libelle="$2"
-	if ! $ou sh -c 'mkdir .verrou.flute 2> /dev/null'
+	if $ou sh -c '[ -d .verrou.flute ] || ! mkdir .verrou.flute'
 	then
 		# Si le verrou existe, est-il récent (pas encore prêt à l'usage)?
 		if $ou find .verrou.flute -maxdepth 0 -mtime -20s | grep -q .
