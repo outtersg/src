@@ -129,7 +129,7 @@ verrouiller()
 			return 1
 		fi
 		# S'il peut être considéré comme définitif, il est censé contenir un script vérifiant s'il (le verrou) est encore exploité.
-		if ! $ou .verrou.flute/deverrouiller "$libelle"
+		if $ou test -x .verrou.flute/deverrouiller && ! $ou .verrou.flute/deverrouiller "$libelle"
 		then
 			return 1
 		fi
