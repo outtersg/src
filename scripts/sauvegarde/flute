@@ -215,6 +215,32 @@ faireConf()
 	faire -p "$prefixe" "$source" "`cat "$conf"`"
 }
 
+auSecours()
+{
+	local moi="`basename "$0"`"
+	cat >&2 <<TERMINE
+# $moi © 2013,2015-2019 Guillaume Outters
+# Synchronisation unidirectionnelle de dossiers, chaque fichier n'étant jamais transféré qu'une fois:
+# - s'il est modifié à la source, il ne sera pas retransféré (la destination peut donc servir de coffre-fort de l'état originel du fichier)
+# - s'il est supprimé à destination, il ne sera pas retransféré (une photo jugée mauvaise, ou déplacée pour classement dans un dossier local, ne risque pas de resurgir).
+# Source et destination sont verrouillées durant le transfert: lancer en même temps une synchro et sa réciproque n'aura donc pas d'incidence malheureuse.
+
+Utilisation:
+  $moi <.*.conf.flute>+
+  $moi <source> <dest>
+  $moi <source>
+Paramètres:
+  <.*.conf.flute>
+    Fichier de configuration, placé dans un dossier source, et ayant pour contenu une destination (chemin local ou URL SSH / scp / rsync).
+  <source>
+    Dossier source (chemin local ou URL SSH / scp / rsync).
+    Dans la troisième forme (sans <dest>), chaque fichier .conf.flute de <source> sera considéré comme porteur d'une <dest>.
+  <dest>
+    Dossier destination (chemin local ou URL SSH / scp / rsync).
+TERMINE
+	exit 1
+}
+
 analyserParametresEtFaire()
 {
 	if [ $# -eq 2 -a -d "$1" -a -d "$2" ] && [ "`find "$1" "$2" -name ".*.conf.flute" | wc -l`" -eq 0 ] # Le && plutôt que -a, car sh sous FreeBSD 10 évalue le find avant même d'avoir vérifié que $# -eq 2 et ce sont des dossiers.
