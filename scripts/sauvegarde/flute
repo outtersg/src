@@ -266,7 +266,7 @@ b-)
 auSecours()
 {
 	local moi="`basename "$0"`"
-	cat >&2 <<TERMINE
+	proff >&2 <<TERMINE
 # $moi © 2013,2015-2019 Guillaume Outters
 # Synchronisation unidirectionnelle de dossiers, chaque fichier n'étant jamais transféré qu'une fois:
 # - s'il est modifié à la source, il ne sera pas retransféré (la destination peut donc servir de coffre-fort de l'état originel du fichier)
