@@ -247,9 +247,16 @@ analyserParametresEtFaire()
 	then
 		# Ancienne sauce: source, destination précisées sur la ligne de commande. Comment distinguer de deux dossiers (sources) à synchroniser?
 		faire "$1" "$2"
+	elif [ $# = 0 ]
+	then
+		auSecours
 	else
 		for d in "$@"
 		do
+			if [ "x$1" = x-h -o "x$1" = x--help ]
+			then
+				auSecours
+			fi
 			if [ -f "$d" ]
 			then
 				faireConf "$d"
