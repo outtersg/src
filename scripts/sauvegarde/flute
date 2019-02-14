@@ -57,12 +57,19 @@ uucommande()
 
 adest()
 {
+	local nohup=non
+	[ "x$1" = "x--nohup" ] && nohup=oui || true
 	if echo "$dest" | grep -q '^[^/]*:'
 	then
 		local hote="`echo "$dest" | cut -d : -f 1`"
 		local dossier="`echo "$dest" | cut -d : -f 2-`"
 		local commande="`uucommande "$@"`"
-		( ssh "$hote" "cd \"$dossier\" ; echo '$commande' | uudecode ; sh .exec.flute" )
+		local exe="sh .exec.flute"
+		[ $nohup = non ] || exe="nohup $exe < /dev/null > /dev/null 2>&1 &"
+		( ssh "$hote" "cd \"$dossier\" ; echo '$commande' | uudecode ; $exe" )
+	elif [ $nohup = oui ]
+	then
+		( cd "$dest" && nohup "$@" < /dev/null > /dev/null 2>&1 & )
 	else
 		( cd "$dest" && "$@" )
 	fi
