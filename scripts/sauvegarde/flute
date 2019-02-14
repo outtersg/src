@@ -222,9 +222,24 @@ do
 		# On utilise rsync, qui ne remplacera le fichier distant qu'à l'issue du bon transfert.
 		cat "$source/$prefixe.nouveaux.flute" >> "$source/$prefixe.ddeja.flute"
 		rsync -a "$source/$prefixe.ddeja.flute" "$destrsync/.deja.flute"
+		apres
 	sleep 2
 		[ `find "$source" -type f -newer "$source/$prefixe.ddeja.flute" -not -name "*.flute" | wc -l` -ne 0 ] || break
 done
+}
+
+apres()
+{
+	local commande="[ ! -x .post.flute ] || ./.post.flute"
+	local optionsADest=
+	[ $apresLancerFlute = non ] || commande="$commande ; ! command -v flute > /dev/null 2> /dev/null || flute"
+	if [ $apresMasque = oui ]
+	then
+		optionsADest=--nohup
+	else
+		info "Lancement du .post.flute`[ $apresLancerFlute = non ] || printf " et de flute"` sur $dest"
+	fi
+	adest $optionsADest sh -c "$commande"
 }
 
 faireConf()
@@ -319,11 +334,15 @@ analyserParametres()
 {
 	sep="`printf "\003"`"
 	
+	apresLancerFlute=oui
+	apresMasque=oui
 	aFaire=
 	while [ $# -gt 0 ]
 	do
 		case "$1" in
 			-h|--help) auSecours ;;
+			-n) apresLancerFlute=non ;;
+			-f) apresMasque=non ;;  # --foreground
 			*)
 				if [ -z "$aFaire" ]
 				then
