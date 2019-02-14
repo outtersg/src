@@ -193,17 +193,30 @@ _faire()
 # On évite de transmettre:
 # - nos fichiers de travail
 # - les fichiers temporaires d'un autre rsync qui serait en train de nous alimenter
-	[ -e "$source/$prefixe.internes.flute" ] || internes > "$source/$prefixe.internes.flute"
-
-	[ -e "$source/$prefixe.deja.flute" ] || internes > "$source/$prefixe.deja.flute"
+	( adest cat .deja.flute 2> /dev/null || true ) > "$source/$prefixe.ddeja.flute"
 while true
 do
-		( cat "$source/$prefixe.internes.flute" ; cd "$source" && ls | sed -e 's#^#- /#' ) > "$source/$prefixe.nouveaux.flute"
+		# On prépare la liste de ce qui aura été fait après ce tour de boucle *avant* le transfert; ainsi, si de nouveaux fichiers apparaissent alors que l'on transfère, ils ne feront pas partie de la liste et, par sécurité, seront donc réémis au prochain tour de boucle.
+		# Il s'agit de la liste des déjà présents à destination + les fichiers présents à source maintenant qui ne sont pas déjà à destination.
+		sort < "$source/$prefixe.ddeja.flute" > "$source/$prefixe.ddeja.triees.flute"
+		( cd "$source" && find . -type f -not -name "*.flute" | sed -e 's#^./#- /#' ) | sort > "$source/$prefixe.ici.triees.flute"
+		diff "$source/$prefixe.ddeja.triees.flute" "$source/$prefixe.ici.triees.flute" | grep '^> ' | cut -c 3- > "$source/$prefixe.nouveaux.flute"
+		# Tant qu'à faire, si on a repéré de nouveaux fichiers chez nous, on peut les marquer comme déjà faits: ça évitera que notre cible, en retour, croie bon de nous les transférer.
+		touch "$source/.deja.flute"
+		sort < "$source/.deja.flute" > "$source/$prefixe.sdeja.triees.flute"
+		diff "$source/$prefixe.sdeja.triees.flute" "$source/$prefixe.ici.triees.flute" | grep '^> ' | cut -c 3- >> "$source/.deja.flute"
+		# Si rien de nouveau, on sort.
+		[ -s "$source/$prefixe.nouveaux.flute" ] || break
+		info "`wc -l < "$source/$prefixe.nouveaux.flute" | tr -d '\011 '` nouveaux fichiers à transférer"
 		# Si c'est un rsync distant, il faut mettre des \ devant les espaces (merci rsync utilisant ssh et son interprétation shell!).
 		destrsync="`echo "$dest" | sed -e '/^[^/]*:/s# #\\\\ #g'`"
-		rsync --link-dest .verrou.flute/$idarbofactice/ --exclude-from=- < "$source/$prefixe.deja.flute" -av "$source/" "$destrsync/" && mv "$source/$prefixe.nouveaux.flute" "$source/$prefixe.deja.flute" || break
+		( internes ; cat "$source/$prefixe.ddeja.flute" ) | rsync --link-dest .verrou.flute/$idarbofactice/ --exclude-from=- -av "$source/" "$destrsync/"
+		# Le transfert s'étant bien passé, on peut pousser la liste .deja.flute actualisée.
+		# On utilise rsync, qui ne remplacera le fichier distant qu'à l'issue du bon transfert.
+		cat "$source/$prefixe.nouveaux.flute" >> "$source/$prefixe.ddeja.flute"
+		rsync -a "$source/$prefixe.ddeja.flute" "$destrsync/.deja.flute"
 	sleep 2
-		[ `find "$source" -type f -newer "$source/$prefixe.deja.flute" | wc -l` -ne 0 ] || break
+		[ `find "$source" -type f -newer "$source/$prefixe.ddeja.flute" -not -name "*.flute" | wc -l` -ne 0 ] || break
 done
 }
 
