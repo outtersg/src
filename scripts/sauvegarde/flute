@@ -302,7 +302,35 @@ TERMINE
 	exit 1
 }
 
-analyserParametresEtFaire()
+tifs()
+{
+	unset IFS
+	"$@"
+}
+
+analyserParametres()
+{
+	sep="`printf "\003"`"
+	
+	aFaire=
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-h|--help) auSecours ;;
+			*)
+				if [ -z "$aFaire" ]
+				then
+					aFaire="$1"
+				else
+					aFaire="$aFaire$sep$1"
+				fi
+				;;
+		esac
+		shift
+	done
+}
+
+tourner()
 {
 	if [ $# -eq 2 -a -d "$1" -a -d "$2" ] && [ "`find "$1" "$2" -name ".*.conf.flute" | wc -l`" -eq 0 ] # Le && plutôt que -a, car sh sous FreeBSD 10 évalue le find avant même d'avoir vérifié que $# -eq 2 et ce sont des dossiers.
 	then
@@ -314,9 +342,6 @@ analyserParametresEtFaire()
 	else
 		for d in "$@"
 		do
-			case "$1" in
-				-h|--help) auSecours ;;
-			esac
 			if [ -f "$d" ]
 			then
 				faireConf "$d"
@@ -336,4 +361,6 @@ analyserParametresEtFaire()
 	fi
 }
 
-analyserParametresEtFaire "$@"
+analyserParametres "$@"
+IFS="$sep"
+tifs tourner $aFaire
