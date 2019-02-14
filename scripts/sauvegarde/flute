@@ -314,10 +314,9 @@ analyserParametresEtFaire()
 	else
 		for d in "$@"
 		do
-			if [ "x$1" = x-h -o "x$1" = x--help ]
-			then
-				auSecours
-			fi
+			case "$1" in
+				-h|--help) auSecours ;;
+			esac
 			if [ -f "$d" ]
 			then
 				faireConf "$d"
