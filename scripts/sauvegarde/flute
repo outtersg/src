@@ -106,6 +106,16 @@ TERMINE
 			;;
 		dest)
 			cat <<TERMINE
+# -i: l'appelant souhaite que nous lui répondions si nous avons été créés par lui.
+if [ "x\$1" = x-i ]
+then
+	appelant="\$2"
+	shift ; shift
+	if [ \$appelant = $idarbofactice ]
+	then
+		exit 0
+	fi
+fi
 if ps axo command | grep -q '^[^ ]*rsync .*--link-dest .verrou.flute/$idarbofactice/'
 then
 	[ -z "\$1" ] || info "(\$1: verrouillé par la tâche distante $idarbofactice en cours d'exécution)" >&2
@@ -191,7 +201,7 @@ dest="$2"
 	_faire
 	
 	rm -R "$source/.verrou.flute"
-	adest rm -R .verrou.flute
+	adest sh -c "[ -x .verrou.flute ] && ./.verrou.flute -i $idarbofactice && rm .verrou.flute" # Attention, petite possibilité qu'on supprime le mauvais si une autre flute est lancée pile entre notre .verrou.flute -i, et notre rm. Mais ce ne serait vraiment pas de bol.
 }
 
 _faire()
