@@ -232,7 +232,7 @@ apres()
 {
 	local commande="[ ! -x .post.flute ] || ./.post.flute"
 	local optionsADest=
-	[ $apresLancerFlute = non ] || commande="$commande ; ! command -v flute > /dev/null 2> /dev/null || flute"
+	[ $apresLancerFlute = non ] || commande="$commande ; if command -v flute > /dev/null 2> /dev/null && find . -maxdepth 1 -name '*.conf.flute' | grep -q . ; then flute . ; fi"
 	if [ $apresMasque = oui ]
 	then
 		optionsADest=--nohup
