@@ -97,7 +97,7 @@ pondreDeverrouiller()
 	case "$1" in
 		source)
 			cat <<TERMINE
-if ps axo pid,command | egrep -q '^$$[ 	][ 	]*([^ 	]*sh )?[^ 	]*flute '
+if ps axo pid,command | egrep -q '^[ 	]*$$[ 	][ 	]*([^ 	]*sh )?[^ 	]*flute '
 then
 	[ -z "\$1" ] || info "(\$1: verrouillé par la tâche locale $$ en cours d'exécution)" >&2
 	exit 1
