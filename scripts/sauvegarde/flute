@@ -153,7 +153,7 @@ verrouiller()
 		# Si le verrou existe, est-il récent (pas encore prêt à l'usage)?
 		if $ou find .verrou.flute -maxdepth 0 -mtime -${VERROU_VIF}s | grep -q .
 		then
-			[ -z "$libelle" ] || info "($libelle: verrou posé par une tâche concurrente tout juste lancée)" >&2
+			[ -z "$libelle" ] || info "($libelle: verrou posé par une tâche concurrente encore active il y a peu)" >&2
 			return 1
 		fi
 		# S'il peut être considéré comme définitif, il est censé contenir un script vérifiant s'il (le verrou) est encore exploité.
