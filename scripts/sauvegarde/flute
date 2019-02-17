@@ -184,6 +184,15 @@ biverrou()
 	pondreDeverrouiller dest | adest sh -c "cat > .verrou.flute/deverrouiller && chmod a+x .verrou.flute/deverrouiller && mkdir .verrou.flute/$idarbofactice/"
 }
 
+semanifester()
+{
+	local intervalle="`expr $VERROU_VIF \* 3 / 4`"
+	while true
+	do
+		adest sh -c "while true ; do touch .verrou.flute ; sleep $intervalle ; done"
+	done
+}
+
 faire()
 {
 	local prefixe=
@@ -211,6 +220,9 @@ dest="$2"
 	trap menage0 EXIT
 	trap menage1 INT TERM
 	
+	semanifester < /dev/null > /dev/null 2>&1 &
+	manifestant=$!
+	
 	_faire
 	
 	deverrouiller
@@ -233,6 +245,8 @@ menage1()
 
 deverrouiller()
 {
+	[ -z "$manifestant" ] || bute "$manifestant" 2> /dev/null || true
+	manifestant=
 	[ -d "$source/.verrou.flute" ] && rm -R "$source/.verrou.flute" || true
 	adest sh -c "[ -x .verrou.flute/deverrouiller ] && ./.verrou.flute/deverrouiller -i $idarbofactice && rm -R .verrou.flute || true" || true # Attention, petite possibilité qu'on supprime le mauvais si une autre flute est lancée pile entre notre .verrou.flute -i, et notre rm. Mais ce ne serait vraiment pas de bol.
 }
