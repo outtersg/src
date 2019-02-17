@@ -22,6 +22,7 @@
 # Peut être pour fiabiliser à la fois intégré à un cron et déclenché sur changement de fichiers.
 
 DELAI_MAX=20 # Combien de minutes est-on prêts à attendre qu'un verrou se relâche avant d'abandonner?
+VERROU_VIF=20 # À partir de combien de secondes d'inactivité un verrou est-il considéré caduque (non maintenu)? On estime qu'il s'agit aussi du délai maximal de mise en route (entre la création du verrou et le lancement du rsync qui l'emprunte).
 
 set -e
 
@@ -140,7 +141,7 @@ verrouiller()
 	if $ou sh -c '[ -d .verrou.flute ] || ! mkdir .verrou.flute'
 	then
 		# Si le verrou existe, est-il récent (pas encore prêt à l'usage)?
-		if $ou find .verrou.flute -maxdepth 0 -mtime -20s | grep -q .
+		if $ou find .verrou.flute -maxdepth 0 -mtime -${VERROU_VIF}s | grep -q .
 		then
 			[ -z "$libelle" ] || info "($libelle: verrou posé par une tâche concurrente tout juste lancée)" >&2
 			return 1
@@ -195,7 +196,7 @@ dest="$2"
 			alerte "# Impossible d'acquérir le verrou au bout de $DELAI_MAX mn." >&2
 			return 3
 		fi
-		sleep 20
+		sleep $VERROU_VIF
 	done
 	
 	_faire
