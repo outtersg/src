@@ -287,7 +287,8 @@ apres()
 
 faireConf()
 {
-	local conf="$1" source="`dirname "$1"`"
+	local conf="$1"
+	source="`dirname "$1"`"
 	local prefixe="`basename "$conf" .conf.flute`"
 	[ "`basename "$conf"`" != .conf.flute ] || prefixe=
 	faire -p "$prefixe" "$source" "`cat "$conf"`"
