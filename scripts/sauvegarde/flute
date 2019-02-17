@@ -187,7 +187,7 @@ dest="$2"
 	local tmax="`date +%s`"
 	tmax="`expr $tmax + \( $DELAI_MAX \* 60 \)`"
 	
-	local idarbofactice="`hostname`.$$"
+	idarbofactice="`hostname`.$$"
 	
 	while ! biverrou
 	do
@@ -198,11 +198,33 @@ dest="$2"
 		fi
 		sleep $VERROU_VIF
 	done
+	trap menage0 EXIT
+	trap menage1 INT TERM
 	
 	_faire
 	
-	rm -R "$source/.verrou.flute"
-	adest sh -c "[ -x .verrou.flute ] && ./.verrou.flute -i $idarbofactice && rm .verrou.flute" # Attention, petite possibilité qu'on supprime le mauvais si une autre flute est lancée pile entre notre .verrou.flute -i, et notre rm. Mais ce ne serait vraiment pas de bol.
+	deverrouiller
+}
+
+menage0()
+{
+	deverrouiller
+	exit 0
+}
+
+menage1()
+{
+	local err=$?
+	[ $err -ne 0 ] || err=1
+	deverrouiller
+	trap - EXIT
+	exit $err
+}
+
+deverrouiller()
+{
+	rm -R "$source/.verrou.flute" || true
+	adest sh -c "[ -x .verrou.flute ] && ./.verrou.flute -i $idarbofactice && rm .verrou.flute || true" || true # Attention, petite possibilité qu'on supprime le mauvais si une autre flute est lancée pile entre notre .verrou.flute -i, et notre rm. Mais ce ne serait vraiment pas de bol.
 }
 
 _faire()
