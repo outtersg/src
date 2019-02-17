@@ -226,6 +226,10 @@ dest="$2"
 	_faire
 	
 	deverrouiller
+	
+	# Si des choses se sont passées, on peut déclencher la réaction en chaîne.
+	# N.B. sur les relations réciproques: il se peut que notre cible nous possède comme cible. On pourrait se dire que c'est idiot qu'elle nous synchronise à elle, puisqu'on vient de la synchroniser à nous. Cependant, ça a un intérêt: si notre cible avait des fichiers que nous n'avions pas, ce sera l'occasion pour elle de rattraper le retard (même si ce n'était pas le but). Dans le pire des cas, au bout d'un aller-retour plus personne n'aura de nouveauté à partager, et les échanges s'arrêteront d'eux-mêmes.
+	[ "x$jAiBosse" = "xoui" ] && apres || true
 }
 
 menage0()
@@ -253,6 +257,7 @@ deverrouiller()
 
 _faire()
 {
+	jAiBosse=non
 
 # On évite de transmettre:
 # - nos fichiers de travail
@@ -279,7 +284,7 @@ do
 		# On utilise rsync, qui ne remplacera le fichier distant qu'à l'issue du bon transfert.
 		cat "$source/$prefixe.nouveaux.flute" >> "$source/$prefixe.ddeja.flute"
 		rsync -a "$source/$prefixe.ddeja.flute" "$destrsync/.deja.flute"
-		apres
+		jAiBosse=oui
 	sleep 2
 		[ `find "$source" -type f -newer "$source/$prefixe.ddeja.flute" -not -name "*.flute" | wc -l` -ne 0 ] || break
 done
