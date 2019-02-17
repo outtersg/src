@@ -233,8 +233,8 @@ menage1()
 
 deverrouiller()
 {
-	rm -R "$source/.verrou.flute" || true
-	adest sh -c "[ -x .verrou.flute ] && ./.verrou.flute -i $idarbofactice && rm .verrou.flute || true" || true # Attention, petite possibilité qu'on supprime le mauvais si une autre flute est lancée pile entre notre .verrou.flute -i, et notre rm. Mais ce ne serait vraiment pas de bol.
+	[ -d "$source/.verrou.flute" ] && rm -R "$source/.verrou.flute" || true
+	adest sh -c "[ -x .verrou.flute/deverrouiller ] && ./.verrou.flute/deverrouiller -i $idarbofactice && rm -R .verrou.flute || true" || true # Attention, petite possibilité qu'on supprime le mauvais si une autre flute est lancée pile entre notre .verrou.flute -i, et notre rm. Mais ce ne serait vraiment pas de bol.
 }
 
 _faire()
