@@ -36,6 +36,16 @@ erreur() { couleur 31 "$@" ; }
 tvb() { couleur 32 "$@" ; }
 #- Couleurs -#
 
+# Bute récursivement toute une sous-arbo de processus (sans avoir besoin de taper tout le groupe).
+bute()
+{
+	# Inspiration piochée sur:
+	# https://stackoverflow.com/a/26966800
+	[ -z "$*" ] && return || true
+	bute `IFS=\| ; ps axwwo ppid,pid | egrep "^ *($*) " | awk '{print$2}'`
+	kill "$@"
+}
+
 uucommande()
 {
 	(
