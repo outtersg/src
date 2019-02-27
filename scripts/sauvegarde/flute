@@ -42,6 +42,7 @@ alerte() { couleur 33 "$@" ; }
 erreur() { couleur 31 "$@" ; }
 tvb() { couleur 32 "$@" ; }
 #- Couleurs -#
+COULEURS="`sed -e '/^#= Couleurs/,/^#- Couleurs/!d' < "$MOI"`"
 
 # Bute récursivement toute une sous-arbo de processus (sans avoir besoin de taper tout le groupe).
 bute()
