@@ -460,7 +460,7 @@ tourner()
 			then
 				faireConf "$d"
 			else
-				find "$d" -maxdepth 1 -name "*.conf.flute" | \
+				find "$d" -maxdepth 1 -name "*.conf.flute" | sort | \
 				(
 					trouve=
 					while read conf
