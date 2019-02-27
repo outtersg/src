@@ -256,6 +256,7 @@ menage0()
 {
 	[ $g_trace -lt 3 ] || info "[INFO] ménage normal" >&2
 	deverrouiller
+	trap - EXIT
 	exit 0
 }
 
