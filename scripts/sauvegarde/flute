@@ -156,22 +156,28 @@ verrouiller()
 {
 	local ou="$1"
 	local libelle="$2"
-	if $ou sh -c '[ -d .verrou.flute ] || ! mkdir .verrou.flute'
-	then
-		# Si le verrou existe, est-il récent (pas encore prêt à l'usage)?
-		if $ou find .verrou.flute -maxdepth 0 -mtime -${VERROU_VIF}s | grep -q .
+	[ $g_trace -lt 3 ] || info "[INFO] $$ verrouille $*" >&2
+	$ou sh -c \
+	"
+		$COULEURS
+		
+		[ ! -d .verrou.flute ] && mkdir .verrou.flute && exit 0
+		
+		# Si le verrou existe, est-il récent (en cours de création, donc potentiellement sans deverrouiller mais pourtant à ne pas supprimer)?
+		if find .verrou.flute -maxdepth 0 -mtime -${VERROU_VIF}s | grep -q .
 		then
-			[ -z "$libelle" ] || info "($libelle: verrou posé par une tâche concurrente encore active il y a peu)" >&2
-			return 1
+			[ -z \"$libelle\" ] || info \"($libelle: verrou posé par une tâche concurrente encore active il y a peu)\" >&2
+			exit 1
 		fi
 		# S'il peut être considéré comme définitif, il est censé contenir un script vérifiant s'il (le verrou) est encore exploité.
-		if $ou test -x .verrou.flute/deverrouiller && ! $ou .verrou.flute/deverrouiller "$libelle"
+		if [ -x .verrou.flute/deverrouiller ] && ! .verrou.flute/deverrouiller \"$libelle\"
 		then
-			return 1
+			[ -z \"$libelle\" ] || info \"($libelle: verrou maintenu)\" >&2
+			exit 1
 		fi
+		exit 0
 	fi
-	
-	return 0
+	"
 }
 
 biverrou()
@@ -197,7 +203,11 @@ semanifester()
 	local intervalle="`expr $VERROU_VIF \* 3 / 4`"
 	while true
 	do
-		adest sh -c "while true ; do touch .verrou.flute ; sleep $intervalle ; done"
+		while true
+		do
+			echo
+			sleep $intervalle
+		done | adest sh -c "while read rien ; do [ ! -d .verrou/flute ] || touch .verrou.flute ; done" 2> /dev/null # Redirection: pour éviter entre autres le très disgracieux "Broken pipe" lorsque l'on tuera notre manifestant.
 	done
 }
 
