@@ -94,6 +94,33 @@ adest()
 	fi
 }
 
+url()
+{
+	local url="$1"
+	if echo "$url" | grep -q '^[^/]*:'
+	then
+		echo "$url"
+	else
+		local serveur="`id -u -n`@`hostname`" chemin="$url"
+		case "$chemin" in
+			/*) true ;;
+			*) chemin="`pwd`/$chemin" ;;
+		esac
+		case "$chemin" in
+			"$HOME") chemin=. ;;
+			"$HOME"/*) chemin="`echo "$chemin" | sed -e "s#^$HOME/##"`" ;;
+		esac
+		echo "$serveur:$chemin"
+	fi
+}
+
+commentaireDate()
+{
+	sed -e "1i\\
+# `date "+%Y-%m-%d %H:%M:%S"` $*
+"
+}
+
 asource()
 {
 	( cd "$source" && "$@" )
