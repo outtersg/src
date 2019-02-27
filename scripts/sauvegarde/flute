@@ -21,6 +21,13 @@
 
 # Peut être pour fiabiliser à la fois intégré à un cron et déclenché sur changement de fichiers.
 
+# NOTE: multi
+# on pourrait faire du multi-postage en parallèle (for i in *.conf.flute ; do faireConf $i & ; done) si:
+# - le verrou à la source était verrouillable une fois pour toutes (sinon, si chaque instance essaie de le verrouiller pour elle-même, la première l'obtient, les autres bloquent, donc on a perdu la concurrence)
+# - symétriquement, il ne serait relâché qu'une fois la dernière instance terminée
+# - dans une instance, l'échec d'obtention du verrou distant n'annulerait pas le verrou local
+# - si des fichiers sont à réécrire à la source (des .deja et autres), les instancent doivent se synchroniser pour le faire séquentiellement
+
 DELAI_MAX=20 # Combien de minutes est-on prêts à attendre qu'un verrou se relâche avant d'abandonner?
 VERROU_VIF=20 # À partir de combien de secondes d'inactivité un verrou est-il considéré caduque (non maintenu)? On estime qu'il s'agit aussi du délai maximal de mise en route (entre la création du verrou et le lancement du rsync qui l'emprunte).
 
