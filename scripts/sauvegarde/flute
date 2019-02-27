@@ -147,7 +147,7 @@ TERMINE
 	cat <<TERMINE
 [ -z "\$1" ] || info "\$1: verrou caduque (la tâche qui l'a posé ne tourne plus); on le supprime." >&2
 # Si le rsync n'existe plus, alors ce ./deverrouiller est caduque. Afin qu'il ne soit plus appelé, on marque le dossier comme "en cours de constitution" ("donc ne cherchez pas ./deverrouiller, il n'existe peut-être pas ou peut-être pas complètement").
-touch .verrou.flute
+[ ! -d .verrou.flute ] || touch .verrou.flute
 exit 0
 TERMINE
 }
