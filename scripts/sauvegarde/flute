@@ -59,7 +59,7 @@ uucommande()
 				printf "\003%s" "$1"
 				shift
 			done
-		) | sed -e "s/'/'\\\\''/g" -e "s/$/'/" # Certains sed tenant à ajouter une dernière fin de ligne, autant que nous y mettions l'apostrophe fermante.
+		) | sed -e "s/'/'\\\\''/g" -e "\$s/$/'/" # Certains sed tenant à ajouter une dernière fin de ligne, autant que nous y mettions l'apostrophe fermante.
 		echo # Pour les sed qui gentiment n'ont pas inséré une fin de ligne sur la précédente.
 		printf 'IFS="\003"\n'
 		echo '$commande'
