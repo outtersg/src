@@ -418,6 +418,7 @@ analyserParametres()
 	apresLancerFlute=oui
 	apresMasque=oui
 	aFaire=
+	g_trace=0
 	while [ $# -gt 0 ]
 	do
 		case "$1" in
