@@ -200,6 +200,7 @@ biverrou()
 
 semanifester()
 {
+	[ $g_trace -lt 3 ] || info "[INFO] $$ lance son manifestant (`sh -c 'echo $PPID'`)" >&2
 	local intervalle="`expr $VERROU_VIF \* 3 / 4`"
 	while true
 	do
@@ -213,6 +214,7 @@ semanifester()
 
 faire()
 {
+	[ $g_trace -lt 3 ] || alerte "[INFO] faire $*" >&2
 	local prefixe=
 	[ "x$1" = x-p ] && shift && prefixe="$1" && shift || true
 source="$1"
@@ -252,12 +254,14 @@ dest="$2"
 
 menage0()
 {
+	[ $g_trace -lt 3 ] || info "[INFO] ménage normal" >&2
 	deverrouiller
 	exit 0
 }
 
 menage1()
 {
+	[ $g_trace -lt 3 ] || info "[INFO] ménage sur erreur" >&2
 	local err=$?
 	[ $err -ne 0 ] || err=1
 	deverrouiller
@@ -267,6 +271,7 @@ menage1()
 
 deverrouiller()
 {
+	[ $g_trace -lt 3 ] || info "[INFO] $$ deverrouille (manifestant: $manifestant)" >&2
 	[ -z "$manifestant" ] || bute "$manifestant" 2> /dev/null || true
 	manifestant=
 	[ -d "$source/.verrou.flute" ] && rm -R "$source/.verrou.flute" || true
