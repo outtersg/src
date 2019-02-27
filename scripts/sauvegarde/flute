@@ -111,7 +111,7 @@ TERMINE
 pondreDeverrouiller()
 {
 	echo "#!/bin/sh"
-	sed -e '/^#= Couleurs/,/^#- Couleurs/!d' < "$MOI"
+	echo "$COULEURS"
 	
 	case "$1" in
 		source)
