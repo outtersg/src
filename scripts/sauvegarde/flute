@@ -324,7 +324,7 @@ do
 		# Tant qu'à faire, si on a repéré de nouveaux fichiers chez nous, on peut les marquer comme déjà faits: ça évitera que notre cible, en retour, croie bon de nous les transférer.
 		touch "$source/.deja.flute"
 		sort < "$source/.deja.flute" > "$source/$prefixe.sdeja.triees.flute"
-		diff "$source/$prefixe.sdeja.triees.flute" "$source/$prefixe.ici.triees.flute" | grep '^> ' | cut -c 3- >> "$source/.deja.flute"
+		diff "$source/$prefixe.sdeja.triees.flute" "$source/$prefixe.ici.triees.flute" | grep '^> ' | cut -c 3- | commentaireDate "Nouveaux fichiers locaux:" >> "$source/.deja.flute"
 		# Si rien de nouveau, on sort.
 		[ -s "$source/$prefixe.nouveaux.flute" ] || break
 		info "`wc -l < "$source/$prefixe.nouveaux.flute" | tr -d '\011 '` nouveaux fichiers à transférer"
@@ -333,7 +333,7 @@ do
 		( internes ; cat "$source/$prefixe.ddeja.flute" ) | rsync --link-dest .verrou.flute/$idarbofactice/ --exclude-from=- -av --partial "$source/" "$destrsync/"
 		# Le transfert s'étant bien passé, on peut pousser la liste .deja.flute actualisée.
 		# On utilise rsync, qui ne remplacera le fichier distant qu'à l'issue du bon transfert.
-		cat "$source/$prefixe.nouveaux.flute" >> "$source/$prefixe.ddeja.flute"
+		cat "$source/$prefixe.nouveaux.flute" | commentaireDate "Poussés depuis `url "$source"`" >> "$source/$prefixe.ddeja.flute"
 		rsync -a "$source/$prefixe.ddeja.flute" "$destrsync/.deja.flute"
 		jAiBosse=oui
 	sleep 2
