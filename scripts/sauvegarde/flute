@@ -422,6 +422,7 @@ analyserParametres()
 	while [ $# -gt 0 ]
 	do
 		case "$1" in
+			-v) g_trace="`expr "$g_trace" + 1`" ;;
 			-h|--help) auSecours ;;
 			-n) apresLancerFlute=non ;;
 			-f) apresMasque=non ;;  # --foreground
