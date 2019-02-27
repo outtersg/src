@@ -142,7 +142,7 @@ npParDate()
 dateParExiftool()
 {
 	# Ouf, exiftool les sort sur le bon fuseau horaire, pas de conversion à faire!
-	exiftool "$dossier/$1" | grep 'Date[^:]**Original' | sed -e 's/^[^:]*: *//' -e 's/\..*//' -e '/^[0-9][0-9][0-9][0-9]:[0-9][0-9]:[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]$/!d' -e 's/ /_/' -e 's/://g' | sort | head -1
+	exiftool "$dossier/$1" | grep 'Date[^:]*Original' | sed -e 's/^[^:]*: *//' -e 's/\..*//' -e '/^[0-9][0-9][0-9][0-9]:[0-9][0-9]:[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]$/!d' -e 's/ /_/' -e 's/://g' | sort | head -1
 }
 
 # Effectue la copie.
