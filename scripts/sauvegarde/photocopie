@@ -196,7 +196,8 @@ faire()
 	then
 		if command -v flute > /dev/null 2>&1 && [ "`find "$d" -name "*.conf.flute" | wc -l`" -gt 0 ]
 		then
-			flute "$d"
+			#flute -f "$d"
+			nohup flute "$d" < /dev/null > /dev/null 2>&1 &
 		fi
 	fi
 }
