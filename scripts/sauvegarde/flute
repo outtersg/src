@@ -302,7 +302,7 @@ do
 		info "`wc -l < "$source/$prefixe.nouveaux.flute" | tr -d '\011 '` nouveaux fichiers à transférer"
 		# Si c'est un rsync distant, il faut mettre des \ devant les espaces (merci rsync utilisant ssh et son interprétation shell!).
 		destrsync="`echo "$dest" | sed -e '/^[^/]*:/s# #\\\\ #g'`"
-		( internes ; cat "$source/$prefixe.ddeja.flute" ) | rsync --link-dest .verrou.flute/$idarbofactice/ --exclude-from=- -av "$source/" "$destrsync/"
+		( internes ; cat "$source/$prefixe.ddeja.flute" ) | rsync --link-dest .verrou.flute/$idarbofactice/ --exclude-from=- -av --partial "$source/" "$destrsync/"
 		# Le transfert s'étant bien passé, on peut pousser la liste .deja.flute actualisée.
 		# On utilise rsync, qui ne remplacera le fichier distant qu'à l'issue du bon transfert.
 		cat "$source/$prefixe.nouveaux.flute" >> "$source/$prefixe.ddeja.flute"
