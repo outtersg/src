@@ -1,0 +1,95 @@
+#!/bin/sh
+# Place son entrée standard dans le même ordre (au sens classe PHP: constantes, membres et fonctions) que son paramètre.
+
+ordreBlocs()
+{
+	awk < "$1" '
+function aff(nom) { ++n; print "parNom[\""nom"\"] = "n"; parNum["n"] = \""nom"\";"; }
+BEGIN{ n = -1; aff("<"); }
+/^[ 	]*((public|protected|private) *(function|\$)|const *)/{
+	sub(/^[     ]*((public|protected|private) *(function *|\$)|const *)/, "");
+	sub(/[(;].*$/, "");
+	aff($0);
+}
+'
+}
+
+lireEtTrierSelon()
+{
+	awk '
+function agreger(nomBloc) {
+	blocs[nomBloc] = blocs[nomBloc]$0"\n";
+}
+function commencer(nomNouveauBloc) {
+	parIci[++n] = nomNouveauBloc;
+	nomBloc = nomNouveauBloc;
+	if(blocs["-"])
+	{
+		blocs[nomBloc] = blocs["-"];
+		blocs["-"] = "";
+	}
+}
+BEGIN{
+	mode = ""; # d: débogage, sans remise en ordre; "-": juste restituer l entrée sans remise en ordre, pour vérifier que l on restitue bien; "": normal, avec remise en ordre.
+	'"`ordreBlocs "$1"`"'
+	n = -1;
+	commencer("<");
+	dansTruc = "i";
+}
+/^[ 	]*((public|protected|private) *(function|\$)|const *)/{
+	# Quel serait le nom du nouveau bloc?
+	nomNouveauBloc = $0;
+	sub(/^[     ]*((public|protected|private) *(function *|\$)|const *)/, "", nomNouveauBloc);
+	sub(/[(; =].*$/, "", nomNouveauBloc);
+	
+	# A-t-il été déclaré dans notre source de comparaison? Si non, on le considère comme un non-bloc (il sera agrégé en prologue du prochain bloc reconnu).
+	
+	if(mode != "" || parNom[nomNouveauBloc])
+	{
+		# Variables de prolongation du bloc qu on est en train d ouvrir.
+		
+		if($2 == "function")
+		{
+			# Pour le moment, on considère que se termine une fonction lorsque l on déniche une accolade fermante au même niveau d indentation.
+			dansFonction = $0;
+			dansTruc = "f";
+			sub(/[^ 	].*/, "}", dansFonction);
+		}
+		else
+			dansTruc = 0;
+		commencer(nomNouveauBloc);
+		agreger(nomNouveauBloc);
+		next;
+	}
+}
+{
+	agreger(dansTruc ? nomBloc : "-");
+	if(dansTruc == "i" && $0 == "{")
+		dansTruc = 0;
+	if(dansTruc == "f" && $0 == dansFonction)
+		dansTruc = 0;
+}
+END{
+	# Tout ce qu il reste dans - aura droit à son bloc à part.
+	if(blocs["-"])
+		parIci[++n] = "-";
+	if(mode == "")
+	{
+		for(i = -1; parNum[++i];)
+			printf "%s", blocs[parNum[i]];
+		if(blocs["-"])
+			printf "%s", blocs["-"];
+	}
+	else
+	{
+		for(i = -1; ++i <= n;)
+			if(mode == "d")
+				printf "%s", "--- "parIci[i]" -----------------------------------------------------\n"blocs[parIci[i]];
+			else
+				printf "%s", blocs[parIci[i]];
+	}
+}
+'
+}
+
+lireEtTrierSelon "$1"
