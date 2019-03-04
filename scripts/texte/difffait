@@ -1,0 +1,75 @@
+#!/bin/sh
+# Vire d'un fichier diff -u passé en paramètre les blocs qui ont pu être reportés.
+# On peut par exemple, pour appliquer 1.diff:
+#   d=/tmp/1.diff
+#   patch -l -p0 < $d | tee /tmp/2 || echo "# Échec; nouvelle passe requise." >&2
+#   # Tant que l'on a de l'échec:
+#   difffait $d < /tmp/2
+#   vi $d # Scinder à la main les gros blocs, en espérant que, plus petits, ils passeront mieux.
+#   filtrer $d diffu
+
+listerEchecs()
+{
+	awk '
+function finir(f) {
+	if(sortiePourrie)
+	{
+		print "[33m# Attention, le diff ne sera pas modifié pour "f"[0m" > "/dev/stderr";
+		sortiePourrie = 0;
+	}
+	else
+	{
+		gsub(/\//, "\\/", f);
+		cumul = substr(cumul, 2);
+		print "/^---[ \t]+"f"[ \t]/{ delete preserves; delete p; n = split(\""cumul"\", p, / /); for(i = 0; ++i <= n;) preserves[p[i]] = 1; num = 0; virer = 0; aDesRegles = 1; }";
+	}
+	cumul = "";
+}
+/ ignored /{ sortiePourrie = 1; }
+/^[pP]atching file /{
+	if(f)
+		finir(f);
+	f = $3;
+	sub(/^[pP]atching file /, "", f);
+	sub(/using Plan .*/, "", f);
+}
+END{ finir(f); }
+/^Hunk #[0-9]* (FAILED|failed)/{ aRejouer = $2; gsub(/[^0-9]/, "", aRejouer); cumul = cumul" "aRejouer; }
+'
+}
+
+filtrer()
+{
+	local f="$1" ; shift
+	"$@" < "$f" > "$f.filtre" && cat "$f.filtre" > "$f" || ( rm "$f.filtre" ; return 1 )
+	rm "$f.filtre"
+}
+
+traiter()
+{
+	filtrer "$1" awk '
+/^---/{ delete preserves; aDesRegles = 0; }
+'"`listerEchecs`"'
+/^@@/{
+	virer = preserves[""(++num)] ? 0 : 1;
+}
+!aDesRegles||!virer{ print; }
+'
+}
+
+if [ "x$1" = x-r ]
+then
+	f="$2"
+	while grep -q '^@@' < "$2"
+	do
+		patch -N -l -p0 < "$f" > /tmp/temp.difffait && cat /tmp/temp.difffait && break || echo "[33m# Échec de patch; nouvelle passe requise.[0m" >&2
+		cat /tmp/temp.difffait
+		difffait "$f" < /tmp/temp.difffait
+		printf "On continue? "
+		read rien
+		vim -X "$f" # Scinder à la main les gros blocs, en espérant que, plus petits, ils passeront mieux.
+		filtrer "$f" diffu
+	done
+else
+	traiter "$@"
+fi
