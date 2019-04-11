@@ -14,6 +14,7 @@ function décode($r)
 	{
 		case 'Q':
 			$déc = preg_replace_callback('#=(..)#', 'chrHexa', $r[3]);
+			$déc = strtr($déc, '_', ' ');
 			break;
 		case 'B':
 		case 'b':
