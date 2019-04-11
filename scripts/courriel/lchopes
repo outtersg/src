@@ -21,6 +21,6 @@ do
 		ls -l "$f" | awk '{printf("%s\t%s\t%s\t%s\t%s\t",$5,$6,$7,$8,$9)}'
 		grep ^Subject: < "$f" | head -1 | LANG=C LC_ALL=C cut -d ' ' -f 2-
 	done
-done < $t.fichiers | /tmp/tmp/derfc822
+done < $t.fichiers | /tmp/tmp/src/scripts/texte/derfc822
 
 rm -f $t.*
