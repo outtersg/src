@@ -17,6 +17,15 @@ auSecours()
 	cat >&2 <<TERMINE
 versionnefichierparfichier
 Aide à constituer un silo versionné à partir de différentes versions d'un dossier, mises à plat.
+Utilisation: [-r /tmp/temp.vfpf.<xxx>.trad] <dest> <instantané>*
+  -r /tmp/temp.vfpf.<xxx>.trad
+    Reprendre une session interrompue prématurément.
+    Vous aurez au préalable retiré de /tmp/temp.vfpf.<xxx>.trad toutes les lignes déjà faites.
+  <dest>
+    Où constituer le nouveau silo.
+  <instantané>
+    Dossier représentant un instantané du dossier cible à un moment donné.
+    Les fichiers doivent y avoir leur date de modification d'origine.
 Ex.:
   darcsisefichierparfichier Chants Chants.20??-??-??
     va constituer Chants comme silo en rapatriant les fichiers des différents Chants.*, un par un, suivant leur date de modification. Pour chaque fichier, un shell sera ouvert, permettant de faire des add et commit.
@@ -45,9 +54,13 @@ faire()
 	shift
 	local sep="`printf '\003'`"
 
+	if [ -z "$F_REPRISE" ]
+	then
+		F_REPRISE="/tmp/temp.vfpf.$$.trad"
 	mkdir "$dest"
 	find "$@" -type f -print0 | tr -d '\012' | xargs -0 stat -f "%Sm$sep%N" -t "%Y-%m-%dT%H:%M:%S" | sort > /tmp/temp.vfpf.$$ # Le tr pour que si un nom de fichier comporte un retour, il soit supprimé (et plante) plutôt que d'introduire un décalage entre le xargs -0 bossant sur les \0, et le sed qui se cale sur les \n.
-	cut -d "$sep" -f 2- < /tmp/temp.vfpf.$$ | cut -d / -f 2- | trad | paste -d "$sep" /tmp/temp.vfpf.$$ - > /tmp/temp.vfpf.$$.trad
+		cut -d "$sep" -f 2- < /tmp/temp.vfpf.$$ | cut -d / -f 2- | trad | paste -d "$sep" /tmp/temp.vfpf.$$ - > "$F_REPRISE"
+	fi
 	IFS="$sep"
 	while read date cHisto fLocal
 	do
@@ -57,15 +70,17 @@ faire()
 		cp -p "$cHisto" "$dest/$fLocal"
 		( cd "$dest" && bash -l < /dev/tty )
 		IFS="$sep"
-	done < /tmp/temp.vfpf.$$.trad
+	done < "$F_REPRISE"
 	unset IFS
 }
 
 tourner()
 {
+	local F_REPRISE=
+	[ "x$1" = x-r ] && F_REPRISE="$2" && shift && shift || true
 	local dest="$1"
 	shift
-	[ -z "$dest" -o -e "$dest" ] && auSecours
+	[ -z "$dest" -o \( -e "$dest" -a -z "$F_REPRISE" \) ] && auSecours
 	
 	neGarderQuUnFichierPourChaqueSomme "$@"
 	faire "$dest" "$@"
