@@ -35,6 +35,8 @@ TERMINE
 
 neGarderQuUnFichierPourChaqueSomme()
 {
+	# À FAIRE: ne le faire que quand même somme *que le précédent au même emplacement (après trad)*.
+	# En effet si le fichier avait la tête A, puis B, puis finalement on est revenus à A, en dédoublonnant on n'appliquera que A puis B, et le fichier finira dans l'état B alors qu'en réalité il doit finir en A.
 	# Somme de chaque fichier.
 	find "$@" -type f | while read f
 	do
