@@ -25,16 +25,23 @@ function finir(f) {
 	}
 	cumul = "";
 }
-/ ignored /{ sortiePourrie = 1; }
 /^[pP]atching file /{
 	if(f)
 		finir(f);
 	f = $3;
 	sub(/^[pP]atching file /, "", f);
 	sub(/using Plan .*/, "", f);
+	next;
 }
 END{ finir(f); }
-/^Hunk #[0-9]* (FAILED|failed)/{ aRejouer = $2; gsub(/[^0-9]/, "", aRejouer); cumul = cumul" "aRejouer; }
+/^Hunk #[0-9]* (FAILED|failed)/{ aRejouer = $2; gsub(/[^0-9]/, "", aRejouer); cumul = cumul" "aRejouer; next; }
+# Les diagnostics maîtrisés.
+/Looks like a unified diff to me|The text leading up to this was:|^-----------|^\|(Index|======|---|\+\+\+)/{ next; }
+/No such line.*ignoring/{ next; }
+/Hunk #[0-9]* succeeded at/{ next; }
+/[0-9]* out of [0-9]* hunks failed|^done/{ next; }
+# Tout autre diagnostic, sorti par patch, que nous ne maîtrisons pas (via un attrapage ci-dessus), est une erreur (ignored, garbled, malformed, etc.).
+{ sortiePourrie = 1; print "[31m"$0"[0m" > "/dev/stderr"; }
 '
 }
 
