@@ -36,7 +36,7 @@ function finir(f) {
 END{ finir(f); }
 /^Hunk #[0-9]* (FAILED|failed)/{ aRejouer = $2; gsub(/[^0-9]/, "", aRejouer); cumul = cumul" "aRejouer; next; }
 # Les diagnostics maîtrisés.
-/Looks like a unified diff to me|The text leading up to this was:|^-----------|^\|(Index|======|---|\+\+\+)/{ next; }
+/[lL]ooks like a unified diff to me|The text leading up to this was:|^-----------|^\|(Index|======|---|\+\+\+)/{ next; }
 /No such line.*ignoring/{ next; }
 /Hunk #[0-9]* succeeded at/{ next; }
 /[0-9]* out of [0-9]* hunks failed|^done/{ next; }
