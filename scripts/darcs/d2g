@@ -1,0 +1,50 @@
+#!/bin/sh
+
+moiGitHub=outtersg
+racineComposer=gui
+moiComposer="Guillaume Outters"
+
+set -e
+
+err()
+{
+	echo "$*" >&2
+	exit 1
+}
+
+[ -d _darcs ] || err "Vous devez vous trouver dans un dossier racine darcsisé (_darcs doit exister)."
+
+[ -e .git/index ] && err ".git contient déjà un dossier git. Je ne peux travailler dessus."
+
+d2g="`command -v darcs-to-git`"
+[ 2 -eq "`grep Ignore-this: < "$d2g" | wc -l`" ] || err "Veuillez utiliser une version de darcs-to-git qui vire les Ignore-this:"
+
+nom="`basename "$PWD"`"
+PACKAGIST_API_TOKEN=xxxxxxxxxxxxxxxxxxxx
+
+if [ ! -d .git ]
+then
+	mkdir .git
+	touch .git/prefs
+	mkdir .git/travail
+fi
+
+cd .git
+
+. prefs
+
+[ ! -z "$nomComp" ] || nomComp="$nom"
+[ ! -z "$PACKAGIST_URI" ] || PACKAGIST_URI=$racineComposer/$nomComp
+
+cd travail
+if [ ! -f ../auteurs ]
+then
+	darcs-to-git ../.. --list-authors | sed -e '1,/^---$/s/^\([^#]\)/#- \1/' > ../auteurs && vi ../auteurs
+fi
+darcs-to-git ../.. --author-map ../auteurs || true
+if ! grep -q remote.\*origin .git/config
+then
+	git remote add origin git@github.com:$moiGitHub/$nom.git
+fi
+git push -u origin master
+curl -X POST -H 'Content-Type: application/json' "https://packagist.org/api/update-package?username=$moiComposer&apiToken=$PACKAGIST_API_TOKEN" -d '{"repository":{"url":"https://packagist.org/packages/'"$PACKAGIST_URI"'"}}'
