@@ -12,6 +12,40 @@ err()
 	exit 1
 }
 
+daterVersionComposer()
+{
+	if [ -f composer.json ] && egrep -q '"version": "[0-9]*\.[0-9]*([0-9.]*|\.x-dev)"' < composer.json
+	then
+		dateDernier="`darcs changes --last 1 --xml | sed -e '/ date=/!d' -e 's/.* date=//' -e 's/ .*//' | head -1 | tr -d \''"'`"
+		case "$dateDernier" in
+			20????????????)
+				jourDernier="`echo "$dateDernier" | cut -c 1-8`"
+				heureDernier="`echo "$dateDernier" | cut -c 9-`"
+				jourDernierMoins2000="`expr "$jourDernier" - 20000000`"
+				;;
+		esac
+		sed -E -e 's#("version": *"[0-9]+\.[0-9]+).*"#\1.'"$jourDernierMoins2000"'"#g' < composer.json > composer2.json && mv composer2.json composer.json
+		if false
+		then
+			local auteur="`[ -f _darcs/prefs/author ] && cat _darcs/prefs/author || darcs changes --last=1 | grep ^Author: | cut -d ' ' -f 2-`"
+			( echo $dateDernier ; echo "$auteur" ; echo "composer.json: date du jour" ; echo "= Comme les œufs." ) | LANG=fr_FR.UTF-8 LC_ALL=fr_FR.UTF-8 darcs record --pipe -a composer.json
+		else
+			v="`sed < composer.json -e '/.*"version" *: *"\([0-9.]*\)".*/!d' -e 's//\1/'`"
+			if git tag | grep -q "$v"
+			then
+				true
+			else
+				git branch "$v"
+				git checkout "$v"
+				git commit -m "composer.json: date du jour" composer.json
+				git tag "$v"
+				git checkout master
+				git branch -D "$v"
+			fi
+		fi
+	fi
+}
+
 [ -d _darcs ] || err "Vous devez vous trouver dans un dossier racine darcsisé (_darcs doit exister)."
 
 [ -e .git/index ] && err ".git contient déjà un dossier git. Je ne peux travailler dessus."
@@ -41,10 +75,13 @@ if [ ! -f ../auteurs ]
 then
 	darcs-to-git ../.. --list-authors | sed -e '1,/^---$/s/^\([^#]\)/#- \1/' > ../auteurs && vi ../auteurs
 fi
+git checkout master || true
 darcs-to-git ../.. --author-map ../auteurs || true
 if ! grep -q remote.\*origin .git/config
 then
 	git remote add origin git@github.com:$moiGitHub/$nom.git
 fi
-git push -u origin master
+# Y a-t-il de quoi générer une version?
+daterVersionComposer
+git push --tags -u origin master
 curl -X POST -H 'Content-Type: application/json' "https://packagist.org/api/update-package?username=$moiComposer&apiToken=$PACKAGIST_API_TOKEN" -d '{"repository":{"url":"https://packagist.org/packages/'"$PACKAGIST_URI"'"}}'
