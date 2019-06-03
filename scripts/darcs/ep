@@ -47,5 +47,7 @@ ep()
 	ep_maintenant="`date +%s`"
 	ep_maintenant="`expr $ep_maintenant - $ep_decalage`"
 	ep_maintenant="`TZ=GMT date -r $ep_maintenant +%Y%m%d%H%M%S`"
-	omp - -e 'What is the date? ' $ep_maintenant -e 'Who is the author? ' "$ep_auteur" -e 'What is the patch name? ' "$ep_nom" -e 'What is the log?' "`echo "$ep_descr" | tr \| '\012' | $ep_filtrage`" darcs record --pipe "$@"
+	local s3="`printf '\003'`"
+	local comm="`echo "$ep_descr" | sed -e 's/\([^\]\)|/\1'"$s3"'/g' -e 's/[\]|/|/g' | tr "$s3" '\012' | $ep_filtrage`"
+	omp - -e 'What is the date? ' $ep_maintenant -e 'Who is the author? ' "$ep_auteur" -e 'What is the patch name? ' "$ep_nom" -e 'What is the log?' "$comm" darcs record --pipe "$@"
 }
