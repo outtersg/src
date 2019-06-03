@@ -30,7 +30,8 @@ ep_init()
 	do
 		ep_chemin="`dirname "$ep_chemin"`"
 	done
-	ep_auteur="`cat "$ep_chemin/_darcs/prefs/author" 2> /dev/null`"
+	ep_auteur="`darcs changes --last=1 | grep ^Author: | cut -d ' ' -f 2-`"
+	[ ! -z "$ep_auteur" ] || ep_auteur="`sed -e 's/ *#.*//' < "$ep_chemin/_darcs/prefs/author" | grep -v ^$ | head -1`"
 	if [ -z "$ep_auteur" ]
 	then
 		printf "Auteur? "
