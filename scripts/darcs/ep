@@ -3,8 +3,9 @@
 # Destiné à être inclus dans un shell (pour mémorisation du "début de session").
 
 # Darcs 2.10 et suivants gèrent différemment le commentaire de rustine de son titre. Le titre est pris dans l'encodage 'locale', le commentaire interprété comme du CP1252. On convertit donc pour lui plaire.
+# Darcs 2.14 corrige la chose.
 case `darcs --version` in
-	2.1[0-2].*) ep_filtrage="iconv -f utf-8 -t cp1252" ;;
+	2.1[0-2].*) ep_filtrage="iconv -f utf-8 -t cp1252" ;; # Attention, ce n'est pas impeccable: grosso modo, seuls les caractères ISO8859-1 sont pris en compte; ainsi le é uC3A9, devenu cE9 via l'iconv, est bien retransformé en uC3A9 dans la rustine; par contre l'œ uC593, devenu c9C, reste u9C (invalide) dans la rustine; mais si l'on décide de laisser l'œ sous forme de cC593, darcs pour le coup le reconvertit en uC385C293 (iconv ISO8859-1 -> UTF-8 transforme C5 en C385 et 93 en C293)
 	*) ep_filtrage=cat ;;
 esac
 
