@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Ne garde dans un hashed_inventory que les rustines présentes dans le dossier courant.
+awk < ../hashed_inventory > ../hashed_inventory.bis '
+/^pristine:/{ print; next; }
+{
+	if(cumul) cumul = cumul"\n";
+	cumul = cumul$0;
+}
+/^hash:/{
+	if(0 == system("test -e "$2))
+		print cumul;
+	cumul = "";
+}
+' && mv ../hashed_inventory ../hashed_inventory.sauve && mv ../hashed_inventory.bis ../hashed_inventory
