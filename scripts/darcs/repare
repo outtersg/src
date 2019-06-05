@@ -1,0 +1,52 @@
+#!/bin/sh
+# Répare un silo darcs dans lequel il ne reste plus que l'essentiel, décompressé (format, hashed_inventory, et patches, ceux-ci ayant été gunzipés un à un: for i in 0* ; do gunzip < $i > $i.0 && mv $i.0 $i ; done ; rm 0*.0).
+# Après cette opération, un coup de darcs repair et darcs revert -a permet de retrouver un silo utilisable.
+# Ensuite, créer un nouveau silo et faire un darcs pull depuis le réparé (finit la réparation, car le hashed_inventory contient les sommes de contrôle qui permettent à darcs de retrouver ses rustines, mais le nom de la rustine est l'ancien, donc nous qui nous fondons sur le nom plutôt que la somme pour retrouver le fichier serons incapable de tourner à nouveau sur le dossier réparé).
+# Peut être utile par exemple lorsque l'on désire trifouiller les rustines à la main.
+
+[ ! -d _darcs ] && echo "# Veuillez vous placer à la racine de votre projet _darcsisé." >&2 && exit 1
+source="`pwd`"
+source="`basename "$source"`"
+destemp="../$source.temp"
+dest="../$source.bis"
+[ -e "$destemp" ] && echo "# $destemp existe déjà. Je refuse de bosser." >&2 && exit 1
+[ -e "$dest" ] && echo "# $dest existe déjà. Je refuse de bosser." >&2 && exit 1
+
+set -e
+
+mkdir "$destemp"
+tar cf - _darcs/format _darcs/hashed_inventory _darcs/patches | ( cd "$destemp" && tar xf - )
+cd "$destemp/_darcs/patches/"
+
+for a in 0*
+do
+	gunzip < "$a" 2> /dev/null > "$a.tmp" && mv "$a.tmp" "$a" || true
+done
+rm -f *.tmp
+
+echo "Faites maintenant vos manipulations sur les fichiers, puis, une fois terminé, sortez de là (^D ou exit)."
+bash
+
+for a in 0*
+do
+	t=`stat -f %Z $a`
+	n=`printf %010d $t`-`openssl sha256 < $a | sed -e 's/.* //'`
+	[ $n = $a ] && continue
+	echo "s/$a/$n/"
+	mv $a $n
+done > /tmp/temp.$$.redarcsise
+sed -f /tmp/temp.$$.redarcsise < ../hashed_inventory > /tmp/temp.$$.hashed && cat /tmp/temp.$$.hashed > ../hashed_inventory
+
+cd ../..
+darcs repair
+darcs revert -a
+optionsInit=
+grep -q darcs-2 _darcs/format || optionsInit="$optionsInit --darcs-1"
+
+mkdir "$dest"
+cd "$dest"
+darcs init $optionsInit
+darcs pull -a "$destemp"
+rm -Rf "$destemp"
+
+echo "Vous trouverez le résultat dans $dest. Bonne route!"
