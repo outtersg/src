@@ -1,0 +1,24 @@
+#!/bin/sh
+
+filtrer()
+{
+	local f="$1" ; shift
+	"$@" < "$f" > "$f.filtrer" && cat "$f.filtrer" > "$f" && rm "$f.filtrer"
+}
+
+for f in "$@"
+do
+    filtrer "$f" sed -e '/What.s new in/{
+s/^.[^"]*"//
+s/".*//
+h
+s/^/--- /
+p
+g
+s/^/+++ /
+}' -e '/.*hunk.* .* /{
+s///
+s/.*/@@ -&,99 +&,99 @@/
+}'
+    filtrer "$f" diffu
+done
