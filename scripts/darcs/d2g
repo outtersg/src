@@ -76,6 +76,11 @@ then
 	darcs-to-git ../.. --list-authors | sed -e '1,/^---$/s/^\([^#]\)/#- \1/' > ../auteurs && vi ../auteurs
 fi
 git checkout master || true
+# Fichier sus différents entre darcs et git:
+for f in composer.json
+do
+	[ -f "$f" ] && darcs revert -a "$f" || true
+done
 darcs-to-git ../.. --author-map ../auteurs || true
 if ! grep -q remote.\*origin .git/config
 then
