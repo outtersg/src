@@ -12,10 +12,43 @@ err()
 	exit 1
 }
 
+nouvelleEtiquettePour()
+{
+	local prefixe="$1"
+	local r="$2"
+	
+	if git tag -l --contains "$r" "$prefixe" "$prefixe.*" | grep -q .
+	then
+		return 1
+	fi
+	
+	local nmax="`git tag -l "$prefixe" "$prefixe.*" | sed -e "s/^$prefixe//" -e 's/^$/.0/' | cut -d . -f 2 | sort -n | tail`"
+	suffixe=
+	[ -z "$nmax" ] || suffixe=".`expr "$nmax" + 1`"
+	nouvelleEtiquette="$prefixe$suffixe" # Variable globale.
+}
+
+choperPrefixeVersion()
+{
+	local r
+	if [ -f composer.json ]
+	then
+		r="`sed -E -e '/.*"version": *"([0-9]+(\.[0-9]+)*)\.x-dev".*/!d' -e 's//\1/' < composer.json | head -1`"
+		if [ -n "$r" ]
+		then
+			echo "$r"
+			return
+		fi
+	fi
+}
+
 daterVersionComposer()
 {
-	if [ -f composer.json ] && egrep -q '"version": "[0-9]*\.[0-9]*([0-9.]*|\.x-dev)"' < composer.json
-	then
+	local prefixe="`choperPrefixeVersion`"
+	[ -n "$prefixe" ] || return 0
+	
+	# Calcul de la date à coller commer version de rustine.
+	
 		dateDernier="`darcs changes --last 1 --xml | sed -e '/ date=/!d' -e 's/.* date=//' -e 's/ .*//' | head -1 | tr -d \''"'`"
 		case "$dateDernier" in
 			20????????????)
@@ -24,25 +57,21 @@ daterVersionComposer()
 				jourDernierMoins2000="`expr "$jourDernier" - 20000000`"
 				;;
 		esac
-		sed -E -e 's#("version": *"[0-9]+\.[0-9]+).*"#\1.'"$jourDernierMoins2000"'"#g' < composer.json > composer2.json && mv composer2.json composer.json
-		if false
-		then
-			local auteur="`[ -f _darcs/prefs/author ] && cat _darcs/prefs/author || darcs changes --last=1 | grep ^Author: | cut -d ' ' -f 2-`"
-			( echo $dateDernier ; echo "$auteur" ; echo "composer.json: date du jour" ; echo "= Comme les œufs." ) | LANG=fr_FR.UTF-8 LC_ALL=fr_FR.UTF-8 darcs record --pipe -a composer.json
-		else
-			v="`sed < composer.json -e '/.*"version" *: *"\([0-9.]*\)".*/!d' -e 's//\1/'`"
-			if git tag | grep -q "$v"
-			then
-				true
-			else
+	
+	# Parcours des étiquetages déjà effectués avec cette valeur.
+	
+	etiquette="$prefixe.$jourDernierMoins2000"
+	
+	if nouvelleEtiquettePour "$etiquette" "`git rev-list -n 1 master`"
+	then
+		local v="$nouvelleEtiquette"
 				git branch "$v"
 				git checkout "$v"
+		sed -E -e 's#("version": *")[^"]*"#\1'"$nouvelleEtiquette"'"#g' < composer.json > composer2.json && mv composer2.json composer.json
 				git commit -m "composer.json: date du jour" composer.json
 				git tag "$v"
 				git checkout master
 				git branch -D "$v"
-			fi
-		fi
 	fi
 }
 
