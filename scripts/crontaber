@@ -49,6 +49,8 @@ analyserParametres()
 	done
 }
 
+faire()
+{
 analyserParametres "$@"
 [ -z "$chose" -a -z "$retirer" ] && auSecours
 
@@ -77,3 +79,6 @@ TERMINE
 export EDITOR="$S"
 crontab $paramsQui -e
 rm -f "$S" "$C"
+}
+
+faire "$@"
