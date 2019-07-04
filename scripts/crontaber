@@ -8,9 +8,9 @@ auSecours()
 	cat >&2 << TERMINE
 # $nom
 # Ajout propre au crontab
-# © 2007 Guillaume Outters
+# © 2007,2019 Guillaume Outters
 
-Utilisation: $nom [-u <utilisateur>] [- <expr>] [<heure> <chose>]
+Utilisation: $nom [-u <utilisateur>] [- <expr>] [<heure> <chose>|<var>=<val>]
   -u <utilisateur>              en tant que quelqu'un d'autre.
   <expr>                        expression à sortir du crontab (ex.: ligne que
                                 remplace celle qu'on ajoute), passable sous
