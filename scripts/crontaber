@@ -18,6 +18,7 @@ Utilisation: $nom [-u <utilisateur>] [- <expr>] [<heure> <chose>|<var>=<val>]
   <heure>                       heure façon crontab, avec des tirets à la place
                                 des espaces ou tabulations.
   <chose>                       ligne à ajouter.
+  <var>=<val>                   Définition de variable d'environnement.
 TERMINE
 	exit 1
 }
@@ -28,6 +29,7 @@ analyserParametres()
 	retirer=
 	heure=
 	chose=
+	env=
 	paramsQui=
 	while [ $# -gt 0 ]
 	do
@@ -52,6 +54,17 @@ analyserParametres()
 faire()
 {
 analyserParametres "$@"
+	# Définition de l'environnement
+	if [ -z "$chose" ]
+	then
+		case "$heure" in
+			*=*)
+				env="$heure"
+				retirer="^`echo "$heure" | cut -d = -f 1`="
+				heure=
+				;;
+		esac
+	fi
 [ -z "$chose" -a -z "$retirer" ] && auSecours
 
 S=/tmp/temp.$$.crontaber
@@ -60,19 +73,20 @@ touch "$S" "$C"
 chmod 700 "$S"
 chmod 600 "$C"
 	heure="`echo "$heure" | sed -E -e 's/[^0-9*]+/	/g' -e 's/$/	*	*	*	*	*/' -e 's/^([^	]+	[^	]+	[^	]+	[^	]+	[^	]+).*$/\1/'`"
-export retirer heure chose
+	export retirer heure chose env
 (
 	cat << TERMINE
 #!/bin/sh
 sleep 2 # Si on va trop vite à modifier le fichier, le mtime est égal au ctime, et crontab croit qu'on n'a pas touché au fichier.
 (
+	[ -z "\$env" ] || echo "\$env"
 	if [ -z "\$retirer" ]
 	then
 		cat
 	else
 		grep -v "\$retirer"
 	fi < "\$1"
-	[ -z "$chose" ] || echo "\$heure	\$chose"
+	[ -z "\$chose" -o -z "\$heure" ] || echo "\$heure	\$chose"
 ) > "$C" && cat "$C" > "\$1"
 TERMINE
 ) > "$S"
