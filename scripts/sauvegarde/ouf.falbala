@@ -91,6 +91,7 @@ cat <<TERMINE
 - /Library/Application Support/Skype/Upgrade/
 - /Library/Application Support/Skype/*/media_messaging/emo_cache*/
 - /Library/Containers/com.apple.mail/Data/Library/Caches/WebKit/NetworkCache
+- /Library/Containers/com.apple.mail/Data/Library/Mail Downloads/
 - /Library/Caches/
 - /Library/Logs/CrashReporter/
 - /Library/Mail/Envelope Index

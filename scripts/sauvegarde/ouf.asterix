@@ -85,6 +85,7 @@ cat <<TERMINE
 - /Library/Application Support/mlMac/temp/
 - /Library/Application Support/Freeware Update
 - /Library/Caches/
+- /Library/Containers/com.apple.mail/Data/Library/Mail Downloads/
 - /Library/Logs/
 - /Library/Mail/Envelope Index
 - /Library/Mail/EWS-guillout@mail.bt0d0000.w2k.bouyguestelecom.fr/
