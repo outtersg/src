@@ -1,0 +1,41 @@
+#!/bin/sh
+# Des fichiers numérisés en lot selon ma nomenclature ("AAAA-MM-JJ numérisation<suffixe>", avec le suffixe étant un mélange de .1, .2, etc., et de 0001, 0002, etc., selon que mon renommage sera arrivé avant ou après que la numérisation commence à pondre le suivant.
+# Les pages sont supposées avoir été numérisées dans l'ordre 1, 3, 5, 7, 8, 6, 4, 2 (d'abord tous les rectos, puis on retourne la pile et on fait tous les versos).
+
+set -e
+
+DOSSIER="$HOME/Documents/partage/Administratif"
+
+prefixePage="$DOSSIER/`date +%Y-%m-%d` num"
+
+ls -tr "$prefixePage"* > /tmp/temp.$$.liste
+
+
+nPages="`wc -l < /tmp/temp.$$.liste | tr -d ' \011'`"
+
+numeroterRectoVerso()
+{
+	numNum=0
+	numPage=1
+	sens="+"
+	while read l
+	do
+		echo "$numPage $l"
+		numNum=`expr $numNum + 1`
+		if [ $numNum = `expr \( $nPages + 1 \) / 2` ]
+		then
+			numPage="`expr $nPages / 2 \* 2`"
+			sens="-"
+		else
+			numPage=`expr $numPage $sens 2`
+		fi
+	done
+}
+
+rm -f /tmp/temp.$$.[0-9][0-9][0-9].multinum.pdf
+numeroterRectoVerso < /tmp/temp.$$.liste | sort -n | while read numPage l
+do
+	s="`printf "/tmp/temp.$$.%03.3d.multinum.pdf" $numPage`"
+	"$HOME/src/projets/adochants/tiffenpdf" "$l" -o "$s"
+done
+pdfunite /tmp/temp.$$.[0-9][0-9][0-9].multinum.pdf "$1" && tr '\012' '\000' < /tmp/temp.$$.liste | xargs -0 rm
