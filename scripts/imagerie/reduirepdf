@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set -e
+
+TMP=/tmp/temp.$$.reduirepdf
+
+rm -Rf "$TMP"
+mkdir "$TMP"
+
+export PATH="$HOME/src/projets/adochants:$PATH"
+for p in "$@"
+do
+	dest="`echo "$p" | sed -e 's#\(\.[^.]*\)$#.p.pdf#'`"
+	printf "%s… " "$dest"
+	case "$p" in
+		*.pdf|*.PDF)
+			rm -Rf "$TMP/reduite."*
+			pdfimages -j "$p" "$TMP/reduite."
+			;;
+		*)
+			cp "$p" "$TMP/reduite.jpg"
+			;;
+	esac
+	n=0
+	for i in "$TMP/reduite."*
+	do
+		n=`expr $n + 1`
+		printf "%d " $n
+		convert "$i" -resize 25%x -density 150 -quality 100 "$i.reduite.jpg"
+		tiffenpdf "$i.reduite.jpg" -o "$i.pdf"
+	done
+	if [ "$n" -gt 1 ]
+	then
+		pdfunite "$TMP/reduite."*.pdf "$dest"
+	else
+		cp "$TMP/reduite."*.pdf "$dest"
+	fi
+	echo "bon"
+done
+
+rm -R "$TMP"
