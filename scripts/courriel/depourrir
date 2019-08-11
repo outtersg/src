@@ -13,7 +13,7 @@ fi
 
 pourris()
 {
-	find ../*/*/cur/ -type f $optionsFind -print0 | xargs -0 egrep -a '^(D....|.KIM-)Signature:|^DKIM-' | grep -av DKIM-Signature: | grep -av Dkim-Signature: | cut -d : -f 1-2
+	find ../*/*/cur/ -type f $optionsFind -print0 | xargs -0 egrep -a '^(D....|.KIM-)Signature:|^DKIM-' | grep -av DKIM-Signature: | grep -av Dkim-Signature: | grep -av DKIM-Filter: | cut -d : -f 1-2
 }
 
 for f in `pourris`
