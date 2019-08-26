@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Fait pour bannir les gusses qui réservent des plages d'IP, en général en .top, pour pourrieller.
+
+auSecours()
+{
+	cat >&2 <<TERMINE
+# Utilisation:
+#   bannis <ip autour de laquelle lister la classe C>
+#   bannis <ip de départ de la plage à bannir> <n ip à bannir>
+TERMINE
+	exit 1
+}
+
+lister()
+{
+	local p
+	for p in "$@"
+	do
+		p="`echo "$p" | cut -d . -f 1-3`"
+		jot 256 0 | while read j
+		do
+			drill -x $p.$j
+		done
+	done | grep 'IN	PTR	' | less
+}
+
+bannir()
+{
+	local plage
+	local bits
+	case "$2" in
+		16) bits=28 ;;
+		8) bits=29 ;;
+		4) bits=30 ;;
+		*) echo "# Il me faut un nombre d'IP puissance de 2." >&2 ; exit 1 ;;
+	esac
+	plage="$1/$bits"
+	pfctl -t pourriture -T add "$plage"
+}
+
+case $# in
+	2) bannir "$@" ;;
+	1)
+		[ "x$1" = "x-h" -o "x$1" = "x--help" ] && auSecours
+		lister "$@"
+		;;
+	*) auSecours ;;
+esac
