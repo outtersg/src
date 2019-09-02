@@ -310,6 +310,15 @@ _faire()
 {
 	jAiBosse=non
 
+	# Suppression des fichiers de travail éventuellement restés.
+	# En effet, pour peu qu'au terme de la précédente copie le fichier temporaire "dest" ait fini avec le même contenu que celui "source", et qu'un optimiseur d'espace disque (de type lnertotal) ait décidé de les regrouper sur le même inode, il serait malencontreux qu'en commençant cette itération en vidant puis reconstituant le temporaire "nouveaux à transférer" on tape aussi (par hard link) le "déjà présents à destination": en ce cas la suite estimerait n'avoir plus rien à transférer.
+	rm -f \
+		"$source/$prefixe.ici.triees.flute" \
+		"$source/$prefixe.sdeja.triees.flute" \
+		"$source/$prefixe.ddeja.flute" \
+		"$source/$prefixe.ddeja.triees.flute" \
+		"$source/$prefixe.nouveaux.flute"
+	
 # On évite de transmettre:
 # - nos fichiers de travail
 # - les fichiers temporaires d'un autre rsync qui serait en train de nous alimenter
