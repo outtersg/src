@@ -37,7 +37,7 @@ yamal()
 	awk \
 '
 function err(m) { print "# '"$f"':"NR": "m > "/dev/stderr"; }
-function entrer(indent, cle, val) {
+function entrerAine(indent, cle, val) {
 	if(p_type[p_n] == "?")
 		if(substr(cle != "" ? cle : val, 1, 1) == "-")
 		{
@@ -48,14 +48,24 @@ function entrer(indent, cle, val) {
 			p_type[p_n] = "d";
 		else
 			err(val" devrait être soit un tableau, soit un dictionnaire");
+	p_indent[p_n + 1] = indent;
+	entrer(indent, cle, val);
+}
+function entrer(indent, cle, val) {
 	++p_n;
-	p_indent[p_n] = indent;
+	p_fils[p_n] = cle != "" ? cle : p_fils[p_n] + 1;
+	if(p_type[p_n - 1] == "?")
+		p_type[p_n - 1] = cle != "" ? "d" : "t";
+	if(p_type[p_n - 1] == "d" && cle != "")
+		p_type[p_n] = val != "" ? "-" : "?";
 }
 function remplacer(indent, cle, val) {
 	if(cle == "" && p_type[p_n] == "d")
 		err("entrée de dictiionnaire attendue (x: y)");
 	else if(cle != "" && p_type[p_n - 1] == "t")
 		err("entrée de tableau attendue (- x)");
+	sortir();
+	entrer(indent, cle, val);
 }
 function sortir() {
 	--p_n;
@@ -100,11 +110,14 @@ BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
 			if(indent == p_indent[p_n])
 			{
 				if(p_type[p_n] == "?" && substr(cle != "" ? cle : val, 1, 1) == "-") # Cas particulier du tableau au même niveau que son père
-					entrer(indent, cle, val);
+					entrerAine(indent, cle, val);
 				else if(p_type[p_n - 1] == "t" && substr(cle != "" ? cle : val, 1, 1) != "-") # Cas inverse.
+				{
 					sortir();
+					remplacer(indent, cle, val);
+				}
 				else if(indent == "" && p_n == 0)
-					entrer(indent, cle, val);
+					entrerAine(indent, cle, val);
 				else
 					remplacer(indent, cle, val);
 			}
@@ -115,7 +128,7 @@ BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
 		{
 			if(substr(indent, 1, tIndentPrec) == p_indent[p_n])
 				if(p_type[p_n] == "?")
-					entrer(indent, cle, val);
+					entrerAine(indent, cle, val);
 				else
 					err("l'\''élément du dessus n'\''accepte pas de fils")
 			else
@@ -129,11 +142,6 @@ BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
 				err("indentation farfelue");
 			remplacer(indent, cle, val);
 		}
-		p_fils[p_n] = cle != "" ? cle : p_fils[p_n] + 1;
-		if(p_type[p_n - 1] == "?")
-			p_type[p_n - 1] = cle != "" ? "d" : "t";
-		if(p_type[p_n - 1] == "d" && cle != "")
-			p_type[p_n] = val != "" ? "-" : "?";
 	}
 	
 	### Affichage ###;
