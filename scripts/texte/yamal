@@ -149,7 +149,7 @@ BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
 	'"$YAMAL_PREAFF"'
 	print ligne;
 }
-END{}
+END{ while(p_n > 0) sortir(); }
 '
 }
 
