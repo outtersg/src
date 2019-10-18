@@ -168,6 +168,14 @@ formater()
 	yamal
 }
 
+vidanger()
+{
+	local YAMAL_PREAFF='if(val) { gsub(/\003[0-9]*\003/, "", cumul); printf "%s", cumul; cumul = ""; } else { cumul = cumul""(cle != "" ? "\003"p_ligne[p_n]"\003" : "")ligne"\n"; ligne = ""; } if(val)'
+	# Toute la magie de la purge est là: si l'on sort d'un élément qui n'a jamais été affiché (uniquement des clés sans jamais de valeur), on le commente.
+	local YAMAL_PRESORTIR='gsub("\003"p_ligne[p_n]"\003", "#", cumul);'
+	yamal
+}
+
 faire()
 {
 	local commande="$1" ; shift
@@ -188,6 +196,7 @@ tourner()
 	case "$1" in
 		-) shift ; faire rien "$@" ;;
 		-f) shift ; faire formater "$@" ;;
+		-v|vidanger|vacuum) shift ; faire vidanger "$@" ;;
 		*) auSecours ;;
 	esac
 }
