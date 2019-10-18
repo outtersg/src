@@ -53,6 +53,7 @@ function entrerAine(indent, cle, val) {
 }
 function entrer(indent, cle, val) {
 	++p_n;
+	p_ligne[p_n] = NR;
 	p_fils[p_n] = cle != "" ? cle : p_fils[p_n] + 1;
 	if(p_type[p_n - 1] == "?")
 		p_type[p_n - 1] = cle != "" ? "d" : "t";
