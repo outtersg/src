@@ -1,0 +1,176 @@
+#!/bin/sh
+# Copyright (c) 2019 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+auSecours()
+{
+	cat >&2 <<TERMINE
+# `basename "$0"`
+# © 2019 Guillaume Outters
+# Bidouilleur de YAML
+# Attention, ne gère que les YAML "faciles" (une gestion fine des chaînes de caractères, des valeurs multi-lignes, des # et : dans des chaînes de caractères, etc., demanderait un programme C ou lex, par exemple).
+TERMINE
+	exit 1
+}
+
+yamal()
+{
+	# p_type: t: tableau (- x); d: dico (c: x); ?: l'un ou l'autre (mais en tout cas un fils).
+	awk \
+'
+function err(m) { print "# '"$f"':"NR": "m > "/dev/stderr"; }
+function entrer(indent, cle, val) {
+	if(p_type[p_n] == "?")
+		if(substr(cle != "" ? cle : val, 1, 1) == "-")
+		{
+			p_type[p_n] = "t";
+			p_fils[p_n + 1] = -1;
+		}
+		else if(cle != "")
+			p_type[p_n] = "d";
+		else
+			err(val" devrait être soit un tableau, soit un dictionnaire");
+	++p_n;
+	p_indent[p_n] = indent;
+}
+function remplacer(indent, cle, val) {
+	if(cle == "" && p_type[p_n] == "d")
+		err("entrée de dictiionnaire attendue (x: y)");
+	else if(cle != "" && p_type[p_n - 1] == "t")
+		err("entrée de tableau attendue (- x)");
+}
+function sortir() {
+	--p_n;
+}
+BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
+{
+	### Découpage de la ligne ###
+	
+	ligne = $0;
+	tLigne = length(ligne);
+	cle = "";
+	val = "";
+	comm = "";
+	match(ligne, /^[\t ]*/);
+	tIndent = RLENGTH;
+	indent = substr(ligne, RSTART, RLENGTH);
+	if(tLigne > RLENGTH)
+	{
+		val = substr(ligne, 1 + tIndent, tLigne - tIndent);
+		if(match(val, /[\t ]*#/))
+		{
+			comm = substr(val, RSTART + RLENGTH - 1, tLigne - tIndent - RSTART - RLENGTH + 1);
+			val = substr(val, 1, RSTART - 1);
+		}
+		if(length(val))
+		{
+			if(match(val, /[\t ]*:[\t ]*/))
+			{
+				cle = substr(val, 1, RSTART - 1);
+				val = substr(val, RSTART + RLENGTH, length(val) - (RSTART + RLENGTH - 1));
+			}
+		}
+	}
+	
+	### Calcul du niveau d indentation ###
+	
+	if(cle != "" || val != "")
+	{
+		tIndentPrec = length(p_indent[p_n]);
+		if(tIndent == tIndentPrec)
+		{
+			if(indent == p_indent[p_n])
+			{
+				if(p_type[p_n] == "?" && substr(cle != "" ? cle : val, 1, 1) == "-") # Cas particulier du tableau au même niveau que son père
+					entrer(indent, cle, val);
+				else if(p_type[p_n - 1] == "t" && substr(cle != "" ? cle : val, 1, 1) != "-") # Cas inverse.
+					sortir();
+				else if(indent == "" && p_n == 0)
+					entrer(indent, cle, val);
+				else
+					remplacer(indent, cle, val);
+			}
+			else
+				err("indentation farfelue");
+		}
+		else if(tIndent > tIndentPrec)
+		{
+			if(substr(indent, 1, tIndentPrec) == p_indent[p_n])
+				if(p_type[p_n] == "?")
+					entrer(indent, cle, val);
+				else
+					err("l'\''élément du dessus n'\''accepte pas de fils")
+			else
+				err("indentation farfelue");
+		}
+		else
+		{
+			while(length(p_indent[p_n]) > tIndent)
+				sortir();
+			if(tIndent > length(p_indent[p_n]) || indent != p_indent[p_n])
+				err("indentation farfelue");
+			remplacer(indent, cle, val);
+		}
+		p_fils[p_n] = cle != "" ? cle : p_fils[p_n] + 1;
+		if(p_type[p_n - 1] == "?")
+			p_type[p_n - 1] = cle != "" ? "d" : "t";
+		if(p_type[p_n - 1] == "d" && cle != "")
+			p_type[p_n] = val != "" ? "-" : "?";
+	}
+	
+	### Affichage ###;
+	
+	'"$YAMAL_PREAFF"'
+	print ligne;
+}
+END{}
+'
+}
+
+rien()
+{
+	yamal
+}
+
+faire()
+{
+	local commande="$1" ; shift
+	local f
+	if [ $# -gt 0 ]
+	then
+		for f in "$@"
+		do
+			"$commande" "$f" < "$f"
+		done
+	else
+		"$commande" -
+	fi
+}
+
+tourner()
+{
+	case "$1" in
+		-) shift ; faire rien "$@" ;;
+		*) auSecours ;;
+	esac
+}
+
+tourner "$@"
