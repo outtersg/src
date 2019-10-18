@@ -58,6 +58,7 @@ function entrer(indent, cle, val) {
 		p_type[p_n - 1] = cle != "" ? "d" : "t";
 	if(p_type[p_n - 1] == "d" && cle != "")
 		p_type[p_n] = val != "" ? "-" : "?";
+	'"$YAMAL_POSTENTRER"'
 }
 function remplacer(indent, cle, val) {
 	if(cle == "" && p_type[p_n] == "d")
@@ -68,6 +69,7 @@ function remplacer(indent, cle, val) {
 	entrer(indent, cle, val);
 }
 function sortir() {
+	'"$YAMAL_PRESORTIR"'
 	--p_n;
 }
 BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
@@ -149,7 +151,7 @@ BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
 	'"$YAMAL_PREAFF"'
 	print ligne;
 }
-END{ while(p_n > 0) sortir(); }
+END{ while(p_n > 0) sortir(); '"$YAMAL_FINIR"' }
 '
 }
 
