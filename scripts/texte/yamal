@@ -150,6 +150,13 @@ rien()
 	yamal
 }
 
+formater()
+{
+	local indent="	"
+	YAMAL_PREAFF='if(cle""val != "") { ipropre = ""; for(i = 1; ++i <= p_n;) ipropre = ipropre"'"$indent"'"; ipropredernier = ipropre; } else if(length(indent) >= length(p_indent[p_n])) { ipropre = ipropredernier ? ipropredernier : ""; if(p_type[p_n] == "?" && p_indent[p_n] != "") ipropre = ipropre"'"$indent"'"; } sub(/^[\t ]*/, ipropre, ligne);'
+	yamal
+}
+
 faire()
 {
 	local commande="$1" ; shift
@@ -169,6 +176,7 @@ tourner()
 {
 	case "$1" in
 		-) shift ; faire rien "$@" ;;
+		-f) shift ; faire formater "$@" ;;
 		*) auSecours ;;
 	esac
 }
