@@ -65,7 +65,7 @@ function remplacer(indent, cle, val) {
 	if(cle == "" && p_type[p_n] == "d")
 		err("entrée de dictiionnaire attendue (x: y)");
 	else if(cle != "" && p_type[p_n - 1] == "t")
-		err("entrée de tableau attendue (- x)");
+		err("entrée de tableau attendue (- x), clé trouvée (\""cle"\")");
 	sortir();
 	entrer(indent, cle, val);
 }
