@@ -98,7 +98,11 @@ BEGIN{ p_n = 0; p_indent[p_n] = ""; p_type[p_n] = "?"; }
 			if(match(val, /[\t ]*:[\t ]*/))
 			{
 				cle = substr(val, 1, RSTART - 1);
-				val = substr(val, RSTART + RLENGTH, length(val) - (RSTART + RLENGTH - 1));
+				debutVraieVal = RSTART + RLENGTH;
+				if(match(cle, /^[^-][^{]*$/))
+					val = substr(val, debutVraieVal, length(val) - (debutVraieVal - 1));
+				else
+					cle = "";
 			}
 		}
 	}
