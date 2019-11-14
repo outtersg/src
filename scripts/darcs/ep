@@ -72,6 +72,8 @@ _epomp()
 
 ep()
 {
+	local tiquette=
+	[ "x$1" = x-t ] && tiquette=1 && shift || true
 	ep_nom="$1" ; shift
 	ep_descr="$1" ; shift
 	[ ! -z "$ep_decalage" ] || ep_init
@@ -80,5 +82,10 @@ ep()
 	ep_maintenant="`TZ=GMT date -r $ep_maintenant +%Y%m%d%H%M%S`"
 	local s3="`printf '\003'`"
 	local comm="`echo "$ep_descr" | sed -e 's/\([^\]\)|/\1'"$s3"'/g' -e 's/[\]|/|/g' | tr "$s3" '\012' | $ep_filtrage`"
+	if [ -z "$tiquette" ]
+	then
 		_epomp -d -a -t -e darcs record --pipe "$@"
+	else
+		_epomp -d -a -e darcs tag --pipe "$ep_nom" "$@"
+	fi
 }
