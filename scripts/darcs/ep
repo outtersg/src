@@ -61,7 +61,7 @@ _epomp()
 			-d) paramsOmp -e 'What is the date? ' $ep_maintenant ;; # Date
 			-a) paramsOmp -e 'Who is the author? ' "$ep_auteur" ;; # Auteur
 			-t) paramsOmp -e 'What is the patch name? ' "$ep_nom" ;; # Titre
-			-e) paramsOmp -e 'What is the log?' "$comm" ;; # Explication
+			-e) [ -n "$comm" ] || comm="`printf '\004'`" ; paramsOmp -e 'What is the log?' "$comm" ;; # Explication
 			*) break ;;
 		esac
 		shift
