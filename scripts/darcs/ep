@@ -39,6 +39,33 @@ ep_init()
 	fi
 }
 
+paramsOmp()
+{
+	while [ $# -gt 0 ]
+	do
+		paramsOmp="$paramsOmp$1$sep"
+		shift
+	done
+}
+
+_epomp()
+{
+	local paramsOmp= sep="`printf '\003'`"
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-d) paramsOmp -e 'What is the date? ' $ep_maintenant ;; # Date
+			-a) paramsOmp -e 'Who is the author? ' "$ep_auteur" ;; # Auteur
+			-t) paramsOmp -e 'What is the patch name? ' "$ep_nom" ;; # Titre
+			-e) paramsOmp -e 'What is the log?' "$comm" ;; # Explication
+			*) break ;;
+		esac
+		shift
+	done
+	IFS="$sep"
+	omp - $paramsOmp "$@"
+}
+
 ep()
 {
 	ep_nom="$1" ; shift
@@ -49,5 +76,5 @@ ep()
 	ep_maintenant="`TZ=GMT date -r $ep_maintenant +%Y%m%d%H%M%S`"
 	local s3="`printf '\003'`"
 	local comm="`echo "$ep_descr" | sed -e 's/\([^\]\)|/\1'"$s3"'/g' -e 's/[\]|/|/g' | tr "$s3" '\012' | $ep_filtrage`"
-	omp - -e 'What is the date? ' $ep_maintenant -e 'Who is the author? ' "$ep_auteur" -e 'What is the patch name? ' "$ep_nom" -e 'What is the log?' "$comm" darcs record --pipe "$@"
+		_epomp -d -a -t -e darcs record --pipe "$@"
 }
