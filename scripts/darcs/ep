@@ -19,7 +19,11 @@ ep_init()
 	echo "Date de référence (dernière modif): $ep_dateRef"
 	printf "À quelle date commençons-nous notre session ([[[aaaa]mm]jj]hhmm)? "
 	read ep_date
-	ep_expr_date="`echo "$ep_date" | tr '[0-9]' .`\(..\)$"
+	case "$ep_date" in
+		*.??) ep_date="`echo "$ep_date" | tr -d .`" ; ep_expr_date="$ep_date\(\)" ;;
+		*) ep_expr_date="$ep_date\(..\)" ;;
+	esac
+	ep_expr_date="`echo "$ep_expr_date" | tr '[0-9]' .`$"
 	ep_date="`echo "$ep_dateRef" | sed -e "s/$ep_expr_date/$ep_date\1/"`"
 	ep_a_ce_moment="`date -j -f %Y%m%d%H%M%S "$ep_date" +%s`"
 	ep_maintenant="`date +%s`"
