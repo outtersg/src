@@ -1,0 +1,167 @@
+#!/bin/sh
+
+set -e
+
+DEST="$HOME/mp3"
+
+auSecours()
+{
+	cat >&2 <<TERMINE
+# Placement de morceaux de musique.
+# Utilisation:
+  place [-y] [-d <dest>] <champ de classement>+ <fichier>+
+    -y
+      Y'a qu'à. Pousse les fichiers sans demander confirmation (sans cela, permet d'éditer la liste avant envoi).
+    -d <dest>
+      Racine de placement (à défaut: $DEST)
+	<champ de classement>
+      Artist ou Composer
+TERMINE
+	exit 1
+}
+
+analyserParametresEtFaire()
+{
+	local champsc= toutdesuite=
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-y) toutdesuite=oui ;;
+			-d)
+				DEST="$2"
+				shift
+				;;
+			Composer|Artist)
+				champsc="$champsc $1"
+				;;
+			*) break ;;
+		esac
+		shift
+	done
+	
+	[ -n "$champsc" ] || auSecours
+	
+	if [ -n "$toutdesuite" ]
+	then
+		faire "$@" 6>&1
+	else
+		local ed=/tmp/2
+		touch $ed
+		chmod 700 $ed
+		cat > $ed <<TERMINE
+#!/bin/sh
+
+l()
+{
+	local d="\$1" ; shift
+	local s="\$*"
+	unset IFS
+	mkdir -p "\`dirname "\$d"\`"
+	ln "\$s" "\$d"
+}
+
+sep="\`printf '\\011'\`"
+(
+	cat <<FINI
+TERMINE
+		faire "$@" 6>> $ed
+		cat >> $ed <<TERMINE
+FINI
+) | while read l
+do
+	IFS="\$sep"
+	l \$l
+done
+TERMINE
+		[ -n "$EDITOR" ] || EDITOR=vi
+		$EDITOR $ed
+		$ed
+	fi
+}
+
+faire()
+{
+	local f
+	for f in "$@"
+	do
+		faireUn "$f" || true
+	done
+}
+
+faireUn()
+{
+	local f="$1" t=/tmp/1 champc dossier titre champt="Title"
+	exiftool "$f" > $t
+	titre="`champ $champt < $t`"
+	champplein "$champt" "$titre" || return 1
+	for champc in $champsc
+	do
+		dossier="`champ $champc < $t`"
+		[ -n "$dossier" ] || continue
+		# À FAIRE: un levenshtein lorsque le dossier n'existe pas mais qu'il en existe avec un nom approchant.
+		envoyer "$f" "$DEST/`nettoyer "$dossier"`/`nettoyer "$titre"``suffixe "$f"`" && return 0
+	done
+	
+	echo "# $f: $champsc vide(s)." >&2
+	return 1
+}
+
+suffixe()
+{
+	_s1()
+	{
+		unset IFS
+		local bout
+		for bout in "$@" ; do true ; done
+		IFS=.
+		_s2 $bout
+	}
+	
+	_s2()
+	{
+		unset IFS
+		[ $# -gt 1 ] || return 0
+		local bout
+		for bout in "$@" ; do true ; done
+		echo ".$bout"
+	}
+	
+	IFS=/
+	_s1 $1
+}
+
+nettoyer()
+{
+	echo "$1" | sed -e 's# */ *#, #g' -e 's#	# #g'
+}
+
+envoyer()
+{
+	if [ -n "$toutdesuite" ]
+	then
+		mkdir -p "`dirname "$2"`"
+		ln "$1" "$2"
+	else
+		printf '%s\t%s\n' "$2" "$1" >&6
+	fi
+}
+
+champ()
+{
+	sed -e "/^$1 *: /!d" -e '{
+s///
+q
+}'
+}
+
+champplein()
+{
+	if [ -z "$2" ]
+	then
+		echo "# $f: $1 vide(s)." >&2
+		return 1
+	fi
+	return 0
+}
+
+analyserParametresEtFaire "$@"
