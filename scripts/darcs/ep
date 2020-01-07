@@ -66,6 +66,7 @@ _epomp()
 		esac
 		shift
 	done
+	set -o noglob # Sur un bash 4.2.45, sans cette option, les ? et * de $paramsOmp sont interprétés. Bien dommage quand le propre de notre omp est de répondre à des questions.
 	IFS="$sep"
 	omp - $paramsOmp "$@"
 }
