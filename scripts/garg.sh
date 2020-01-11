@@ -131,6 +131,7 @@ _garg_bouclage_necessaire()
 # - dans une boucle for, le premier tour de boucle avec appel de sous-fonction est susceptible de changer les variables locales.
 # - on ne peut donc utiliser de variable locale que jusqu'au premier for (et non pas jusqu'au premier appel de sous-fonction dans le corps de ce for).
 # Donc, si l'on veut utiliser des variables locales dans une boucle for, le mieux est de les passer à une sous-fonction "juste pour ça" dans laquelle elles seront accessibles, et garanties stables, sous forme d'argument.
+# N.B.: l'utilisation de local devrait permettre de répondre à cette problématique. Cf. https://unix.stackexchange.com/a/493743 pour la compatibilité.
 
 _garg_boucler()
 {
