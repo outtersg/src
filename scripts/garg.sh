@@ -59,7 +59,8 @@ garg()
 			garg_sep0="$garg_sep"
 			garg_sep="`IFS="$garg_sep" ; sep $garg_contenu "$@"`"
 			# Il est attendu qu'avec IFS=, une , en fin délimite une fin de paramètre. Ainsi ",," comprend deux paramètres vides, "," un seul paramètre vide, "" aucun paramètre. Ceci est explicitement dit dans la man page de sh sous FreeBSD 11, et pas clair dans la man page de bash, mais en tout cas son implémentation suit.
-			export $garg_var="`IFS="$garg_sep0" ; for param in $garg_contenu "$@" ; do printf "%s%s" "$param" "$garg_sep" ; done`"
+			garg_val="`IFS="$garg_sep0" ; for param in $garg_contenu "$@" ; do printf "%s%s" "$param" "$garg_sep" ; done`"
+			eval "$garg_var"='"$garg_val"'
 		else
 			IFS="$garg_sep"
 			garg -l "$@" $garg_contenu
