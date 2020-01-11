@@ -202,8 +202,10 @@ garg_test()
 		garg garg_testParams garg_test "au début" > /tmp/temp.$$.garg_test.1
 		# Test par sh -c, en espérant que le shell courant a transmis les variables au sh lancé.
 		garg_sep_dernier "$garg_testParams"
-		export garg_sep
+		(
+			export garg_sep garg_testParams
 		sh -c 'f() { echo $# ; for i in "$@" ; do echo "== $i" ; done ; } ; IFS="$garg_sep" ; f "au début" $garg_testParams' > /tmp/temp.$$.garg_test.2
+		)
 		# Test par _garg.
 		_garg -2 garg_test "au début" garg_testParams > /tmp/temp.$$.garg_test.3
 		# Test par _garg avec boucle.
