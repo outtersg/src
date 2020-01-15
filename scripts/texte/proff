@@ -23,6 +23,8 @@
 # Principalement destiné à afficher l'aide "auSecours".
 proff()
 {
+	local COLUMNS="$COLUMNS"
+	[ -n "$COLUMNS" ] || ! command -v tput > /dev/null 2>&1 || COLUMNS="`tput cols`"
 	if [ -z "$COLUMNS" -o "0$COLUMNS" -lt 32 ]
 	then
 		cat
