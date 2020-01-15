@@ -35,6 +35,9 @@ set -e
 
 SCRIPTS="`command -v "$0"`" ; [ -x "$SCRIPTS" -o ! -x "$0" ] || SCRIPTS="$0" ; case "`basename "$SCRIPTS"`" in *.*) true ;; *sh) SCRIPTS="$1" ;; esac ; case "$SCRIPTS" in /*) ;; *) SCRIPTS="`pwd`/$SCRIPTS" ;; esac ; delie() { while [ -h "$SCRIPTS" ] ; do SCRIPTS2="`readlink "$SCRIPTS"`" ; case "$SCRIPTS2" in /*) SCRIPTS="$SCRIPTS2" ;; *) SCRIPTS="`dirname "$SCRIPTS"`/$SCRIPTS2" ;; esac ; done ; } ; delie ; MOI="$SCRIPTS" ; SCRIPTS="`dirname "$SCRIPTS"`" ; delie
 
+proff() { cat ; }
+[ ! -f "$SCRIPTS/../texte/proff" ] || . "$SCRIPTS/../texte/proff"
+
 #= Couleurs =#
 couleur() { local couleur="$1" ; shift ; echo "[${couleur}m$*[0m" ; }
 info() { couleur 90 "$@" ; }
@@ -371,54 +374,6 @@ faireConf()
 	local prefixe="`basename "$conf" .conf.flute`"
 	[ "`basename "$conf"`" != .conf.flute ] || prefixe=
 	faire -p "$prefixe" "$source" "`cat "$conf"`"
-}
-
-# Petit roff.
-# Principalement destiné à afficher l'aide "auSecours".
-proff()
-{
-	if [ -z "$COLUMNS" -o "0$COLUMNS" -lt 32 ]
-	then
-		cat
-	else
-		local cars="`printf "%0$COLUMNS.${COLUMNS}s" "" | tr ' 0' ..`"
-		local sepi="`printf '\003'`" # Séparateur indentation (entre l'indentation et le corps de texte).
-		local sepm="`printf '\004'`" # Séparateur massicot (après $COLUMNS caractères).
-		local esp="`printf ' \t'`"
-		# Pour chaque ligne un peu longue, on va:
-		# 1. placer sepi.
-		# 2. tenter de placer notre sepm.
-		# 3. en cas d'échec (ligne suffisamment courte), on sort.
-		# 4. essayer de recaler sepm à l'espace qui le précède (techniquement: prendre tout ce qui est entre l'espace et sepm, et le déplacer après sepm).
-		# 5. copier le découpage dans le "hold space".
-		# 6. afficher la première partie.
-		# 7. récupérer le "hold space" pour travailler dessus.
-		# 8. retravailler l'indentation: les listes à puces deviennent des espaces.
-		# 9. et repartir pour un tour en 2. (on conserve le sepi d'une passe à l'autre).
-		# À FAIRE: gérer l'UTF-8. 80 caractères et 80 octets, ça n'est pas la même chose.
-		sed -E -e "/$cars./{
-s|^[$esp]*(#[$esp]*)?((-\\|[0-9][0-9]*\.)[$esp]*)?|&$sepi|
-t-)
-:-)
-s|^($cars.)|\\1$sepm|
-t-/
-s|$sepi||
-b
-:-/
-s|$sepm[$esp][$esp]*| $sepm|
-s| ([^ $sepi]*)$sepm|$sepm\\1|
-h
-s|$sepi||
-s|$sepm.*||
-p
-g
-s|$sepi[^$sepm]*$sepm|$sepi|
-:-o
-s|^([^$sepi]*)[^$sepi$esp#]|\\1 |
-t-o
-b-)
-}"
-	fi
 }
 
 auSecours()
