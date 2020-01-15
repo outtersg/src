@@ -1,0 +1,71 @@
+#!/bin/sh
+# Copyright (c) 2019-2020 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Petit roff.
+# Principalement destiné à afficher l'aide "auSecours".
+proff()
+{
+	if [ -z "$COLUMNS" -o "0$COLUMNS" -lt 32 ]
+	then
+		cat
+	else
+		local cars="`printf "%0$COLUMNS.${COLUMNS}s" "" | tr ' 0' ..`"
+		local sepi="`printf '\003'`" # Séparateur indentation (entre l'indentation et le corps de texte).
+		local sepm="`printf '\004'`" # Séparateur massicot (après $COLUMNS caractères).
+		local esp="`printf ' \t'`"
+		# Pour chaque ligne un peu longue, on va:
+		# 1. placer sepi.
+		# 2. tenter de placer notre sepm.
+		# 3. en cas d'échec (ligne suffisamment courte), on sort.
+		# 4. essayer de recaler sepm à l'espace qui le précède (techniquement: prendre tout ce qui est entre l'espace et sepm, et le déplacer après sepm).
+		# 5. copier le découpage dans le "hold space".
+		# 6. afficher la première partie.
+		# 7. récupérer le "hold space" pour travailler dessus.
+		# 8. retravailler l'indentation: les listes à puces deviennent des espaces.
+		# 9. et repartir pour un tour en 2. (on conserve le sepi d'une passe à l'autre).
+		# À FAIRE: gérer l'UTF-8. 80 caractères et 80 octets, ça n'est pas la même chose.
+		sed -E -e "/$cars./{
+s|^[$esp]*(#[$esp]*)?((-\\|[0-9][0-9]*\.)[$esp]*)?|&$sepi|
+t-)
+:-)
+s|^($cars.)|\\1$sepm|
+t-/
+s|$sepi||
+b
+:-/
+s|$sepm[$esp][$esp]*| $sepm|
+s| ([^ $sepi]*)$sepm|$sepm\\1|
+h
+s|$sepi||
+s|$sepm.*||
+p
+g
+s|$sepi[^$sepm]*$sepm|$sepi|
+:-o
+s|^([^$sepi]*)[^$sepi$esp#]|\\1 |
+t-o
+b-)
+}"
+	fi
+}
+
+# Lancement si nous sommes invoqués plutôt qu'inclus.
+[ "x`basename "$0"`" != xproff ] || proff "$@"
