@@ -18,3 +18,42 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+# Arbre des Processus
+# Similaire au ps -faux Linux.
+ap()
+{
+	LC_ALL=C ps axwwo user,pid,ppid,%cpu,%mem,vsz,rss,tt,stat,start,time,command | awk \
+'
+function faire(i, ind, numf) {
+	if(ls[i])
+	{
+		aff = ls[i];
+		if(match(aff, /^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +/))
+			aff = substr(aff, 1, RLENGTH)""ind""substr(aff, 1 + RLENGTH);
+		print aff;
+	}
+	if(nfs[i])
+	{
+		gsub(/├ /, "│ ", ind);
+		gsub(/└ /, "  ", ind);
+		for(numf = 0; ++numf <= nfs[i];)
+			faire(fs[i,numf], ind""(numf == nfs[i] ? "└ " : "├ "));
+	}
+}
+NR==1{ print; next; }
+{
+	ls[$2] = $0;
+	ps[$2] = $3;
+	if($2 != $3)
+		fs[$3,++nfs[$3]] = $2;
+	else
+		fs[$3,0] = $2;
+}
+END{
+	for(p in nfs)
+		if(!ps[p] || ps[p] == p)
+			faire(p, "");
+}
+'
+}
