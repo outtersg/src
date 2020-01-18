@@ -21,6 +21,9 @@
 
 # Arbre des Processus
 # Similaire au ps -faux Linux.
+# Utilisation: ap [<filtre>]
+#   <filtre>
+#     Regex awk: seules les arborescences comportant un processus répondant à ces critères seront affichées.
 ap()
 {
 	LC_ALL=C ps axwwo user,pid,ppid,%cpu,%mem,vsz,rss,tt,stat,start,time,command | awk \
@@ -41,6 +44,7 @@ function faire(i, ind, numf) {
 			faire(fs[i,numf], ind""(numf == nfs[i] ? "└ " : "├ "));
 	}
 }
+'"`_ap_filtres "$@"`"'
 NR==1{ print; next; }
 {
 	ls[$2] = $0;
@@ -51,9 +55,25 @@ NR==1{ print; next; }
 		fs[$3,0] = $2;
 }
 END{
+	if(nTrouves)
+		for(numTrouve = 0; ++numTrouve <= nTrouves;)
+		{
+			for(p = trouves[numTrouve]; ps[p] && ps[p] != p; p = ps[p]) {}
+			chapeaux[p] = 1;
+		}
 	for(p in nfs)
 		if(!ps[p] || ps[p] == p)
+			if(!nTrouves || chapeaux[p])
 			faire(p, "");
 }
 '
+}
+
+_ap_filtres()
+{
+	local p
+	for p in "$@"
+	do
+		echo "/`echo "$p" | sed -e 's#/#\\/#g'`/{ trouves[++nTrouves] = \$2; }"
+	done
 }
