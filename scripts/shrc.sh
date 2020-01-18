@@ -32,7 +32,7 @@ function faire(i, ind, numf) {
 	if(ls[i])
 	{
 		aff = ls[i];
-		if(match(aff, /^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +/))
+		if(((RLENGTH = posCommande) >= 0) || match(aff, /^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +/))
 			aff = substr(aff, 1, RLENGTH)""ind""substr(aff, 1 + RLENGTH);
 		print aff;
 	}
@@ -45,7 +45,7 @@ function faire(i, ind, numf) {
 	}
 }
 '"`_ap_filtres "$@"`"'
-NR==1{ print; next; }
+NR==1{ posCommande = match($0, /COMMAND/) - 1; print; next; }
 {
 	ls[$2] = $0;
 	ps[$2] = $3;
