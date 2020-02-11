@@ -15,7 +15,11 @@ filtrer()
 
 lire()
 {
-	sed -E -e 's/["; ]["; ]*/ /g' -e 's/^/- /' -e 's/^- (.*) a (baissé|augmenté), passant de EUR ([0-9,]*) à EUR ([0-9,]*)/+ \1;\3;\4/' | while read signe ligne
+	sed -E \
+		-e 's/["; ]["; ]*/ /g' -e 's/^/- /' \
+		-e 's/^- (.*) a (baissé|augmenté), passant de EUR ([0-9,]*) à EUR ([0-9,]*)/+ \1;\3;\4/' \
+		-e 's/^- (.*) a (baissé|augmenté), passant de ([0-9,]*) €[ 	]+à ([0-9,]*) €/+ \1;\3;\4/' \
+	| while read signe ligne
 	do
 		case "$signe" in
 			+) echo "$ligne" ;;
