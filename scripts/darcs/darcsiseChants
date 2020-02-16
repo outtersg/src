@@ -1,0 +1,77 @@
+#!/bin/sh
+
+set -e
+
+S=/tmp/tmp/chants.unison
+D=/tmp/chants
+
+r()
+{
+	local f="$1" ; shift
+	(
+		TZ=GMT datef "$D/$f" | cut -c 1-14
+		echo "Guillaume Outters <guillaume-adochants@outters.eu>"
+		for bout in "$@"
+		do
+			echo "$bout"
+		done
+	) \
+	| tee /dev/tty | ( cd "$D" && darcs record -a --pipe "$f" )
+}
+
+# DIff MINUScules.
+diMinus()
+{
+	diff -qi "$1" "$2" && return 0 || true
+	uconv -f utf-8 -x Lower -t utf-8 < "$1" > /tmp/temp.$$.darcsiseChants.0
+	uconv -f utf-8 -x Lower -t utf-8 < "$2" > /tmp/temp.$$.darcsiseChants.1
+	diff -q /tmp/temp.$$.darcsiseChants.[01]
+}
+
+mkdir "$D"
+mkdir "$D/variantes"
+touch -t 201311261800 "$D/variantes"
+( cd "$D" && darcs init && darcs add variantes )
+r variantes "+ variantes/"
+cd "$S"
+# datef | sort et non ls -tr, car en cas de .bak ayant la même date que le fichier l'ayant remplacé, le remplaçant peut apparaître avant le remplacé.
+# Le petit awk derrière permet de recaler un .bak avant le fichier qui l'a remplacé: Unison constitue le nouveau quelques millisecondes avant de créer le .bak, et parfois ce dernier est daté de la seconde suivante (si nous sommes à cheval sur une seconde), ce qui inverse notre ordre. On retire donc deux secondes virtuelles par numéro de .bak.
+find . -name "*.txt" -print0 | xargs -0 datef \
+	| awk '/[\/]\.bak[^\/]*$/{f=$0;sub(/.*\.bak\./,"",f);sub(/\..*/,"",f);d=$1;d0=substr(d,1,14);d1=substr(d,15);d=(d0-2*(f + 1))""d1;sub($1,d)}{print}' | sort \
+	| while read d f
+do
+	dest="`echo "$f" | sed -e 's/\.bak\.[0-9]*\.//' -e 's/ //g'`"
+	if [ -e "$D/$dest" ]
+	then
+		if diff -q "$D/$dest" "$f" ; then continue ; fi
+		if diMinus "$D/$dest" "$f"
+		then
+			comm="d"
+		else
+			printf "[33m%s[0m:\n" "$dest" > /dev/tty
+			diff -iuw "$D/$dest" "$f" | sed -e 's/ /[36m<inséc>[0m/g' > /dev/tty
+			diff -qwi "$D/$dest" "$f" && diff -u "$D/$dest" "$f" > /dev/tty || true
+			printf "Commentaire? " > /dev/tty
+			read comm < /dev/tty
+		fi
+		case "$comm" in
+			-) continue ;;
+			e) comm="espaces" ;;
+			ei) comm="espaces insécables après les guillemets à la française" ;;
+			d) comm="décapitalisation" ;;
+			p) comm="ponctuation" ;;
+		esac
+		[ "x$comm" != x- ] || continue
+		comm="`head -1 < "$f"`: $comm"
+		cat "$f" > "$D/$dest"
+		# darcs semble cacher les infos d'après la date du fichier; si deux versions d'un fichier datent de la même seconde, pour darcs la seconde version est "No changes!"… sauf après un whatsnew qui le force à revoir son cache.
+		( cd "$D" && darcs w -sl $dest || true ) > /dev/null
+		touch -r "$f" "$D/$dest"
+	else
+		comm="`head -1 < "$f"`"
+		cp -p "$f" "$D/$dest"
+		( cd "$D" && darcs add "$dest" )
+	fi
+	r "$dest" "$comm"
+done
+diff -ru . "$D" | grep -v 'Only in.*: \.bak' > /tmp/temp.$$.darcsiseChants.diff || true
