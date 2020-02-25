@@ -1,0 +1,32 @@
+#!/bin/sh
+
+histo()
+{
+	local d n=31
+	for d in "$@"
+	do
+		case "$n" in
+			96) n=32 ;;
+			36) n=90 ;;
+			*) n=`expr $n + 1` ;;
+		esac
+		chemin="`echo "$d" | sed -e 's/.*\(..............\)$/@\1/' -e 's/$/                /' -e 's/^\(...............\).*/\1/' -e 's/^@/…/'`"
+		if [ ! -d "$d/_darcs" ]
+		then
+			echo "[31m# $d n'est pas un dossier darcs.[0m" >&2
+			continue
+		fi
+		( cd "$d" && darcs log --xml-output --match 'date "last 3 months"' ) | awk \
+'
+/<patch/{ sub(/.* date=["'\'']/, ""); sub(/["'\''].* local_date=["'\'']/, " "); sub(/["'\''].*/, ""); dates = $0; }
+/<name>/{ sub(/.*<name>/, ""); sub(/<\/name>.*/, ""); print dates"	'"[${n}m$chemin[0m"'	"$0; }
+'
+	done | sort | cut -d ' ' -f 2-
+}
+
+if [ $# -gt 0 ]
+then
+	histo "$@"
+else
+	histo .
+fi
