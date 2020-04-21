@@ -9,12 +9,19 @@ ls -tr | grep -e -D$ | tail -$n > $t.fichiers
 
 tr '\012' '\000' < $t.fichiers | xargs -0 rspamc | LC_ALL=C awk '/^Results for file:/{f=$4}/^Score:/{p=$2;printf("%s%.2f%s %s\n", (p>=18.0?"\033[32m":(p>=15.0?"\033[33m":"\033[31m")), p, "\033[0m\t", f)}' > $t.resultats &
 
+att=30
 while read f
 do
-	while ! grep -q -F "$f" < $t.resultats
+	while [ "$att" -gt 0 ] && ! grep -q -F "$f" < $t.resultats
 	do
+		att=`expr $att - 1`
 		sleep 1
 	done
+	if ! grep -q -F "$f" < $t.resultats
+	then
+		printf "%s\t???\n" "$f"
+		continue
+	fi
 	grep -F "$f" < $t.resultats | while read n f
 	do
 		printf "%s\t" "$n"
