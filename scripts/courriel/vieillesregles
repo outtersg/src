@@ -1,0 +1,52 @@
+#!/bin/sh
+
+REGLES=/usr/local/_rspamd+paf-1.9.4/etc/rspamd.0/local.d/paf.regles
+
+# Repère les règles de paf.regles inusitées (et donc ralentissant inutilement l'analyse.
+
+faire()
+{
+	cd /home/mel/var/mail/spam
+	
+	f="`ls | tail -9999 | head -1`"
+	ENTRE="`date -r "$f" +%Y-%m-%d`"
+	ET="`date +%Y-%m-%d`"
+	
+	filtre > /tmp/temp.vr.$$.awk
+	
+	awk -f /tmp/temp.vr.$$.awk < "$REGLES" > /tmp/tmp/paf.regles
+	
+	echo "Veuillez maintenant (en root) faire un cat /tmp/tmp/paf.regles > $REGLES"
+}
+
+lignesUtilisees()
+{
+	if true
+	then
+		ls | tail -9999 | while read f
+		do
+			echo "$f" >&2
+			rspamc "$f"
+		done > /tmp/6
+	fi
+	sed -E < /tmp/6 \
+		-e '/G_PAF/!d' \
+		-e 's/^[^[]*[[]/, /' \
+		-e 's/[@#]//g' \
+		-e 's/, ([0-9]+\*)?\[([0-9]+)\] /@\2#/g' \
+		-e 's/#[^@]*(@|$)/ /g' \
+		-e 's/^@//' \
+	| tr ' ' '\012' | grep -v '^$' | sort -nu
+}
+
+filtre()
+{
+	lignesUtilisees | sed -e 's/^/NR==/' -e 's/$/{print;next}/'
+	echo '/^$/{print;next}'
+	echo '/^[ 	]*#/{print;next}'
+	echo '/^[^# 	]*[ 	]+-[0-9]/{print;next}' # Les règles décrémentant ont pour but de ne pas faire remonter les méls comme pourriel, et donc de les faire échapper à la corbeille: il est donc logique que ligneUtilisees ne les ait pas repérées, puisqu'il analyse ceux qui ont fini dans la corbeille. On la considère donc ici encore en cours.
+	echo '{print"#'"$ET -"' "$0}'
+	echo 'END{print"'"#$ET: règles désactivées car inusitées entre $ENTRE et $ET."'"}'
+}
+
+faire
