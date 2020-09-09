@@ -74,7 +74,7 @@ do
 		( cd $T/src && dcp --last=1 ) | ( cd $T/dst && darcs record -a --pipe )
 done
 
-rm -R "$dest"
+rm -Rf "$dest" # Euh est-ce une bonne idée? Ne devrait-on pas demander un -f pour ce faire?
 mv $T/dst "$dest"
 
 rm -R $T
