@@ -18,9 +18,9 @@ ici="`pwd`"
 descente=
 until [ -d "_darcs" ]
 do
-	ici="`pwd`"
 	descente="`basename "$ici"`/$descente"
 	cd ..
+	ici="`pwd`"
 done
 format="`grep darcs- _darcs/format`"
 cd "$ici"
