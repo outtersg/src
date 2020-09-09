@@ -34,6 +34,29 @@ mkdir $T/dst
 ( cd $T/src && darcs init $type )
 ( cd $T/dst && darcs init )
 
+# darcs changes pour pipe
+dcp()
+{
+	darcs changes "$@" --xml | awk \
+'
+/<patch /{
+	d = $0;
+	gsub(/.* date=['\''"]/, "", d); gsub(/['\''"].*/, "", d);
+	print d;
+	a = $0;
+	gsub(/.* author=['\''"]/, "", a); gsub(/['\''"].*/, "", a);
+	print a;
+}
+/<name>/{ gsub(/[ 	]*<[^>]*>[ 	]*/, ""); print; }
+/<comment>/{ sub(/.*<comment>/, ""); dedans = 1; }
+/<\/comment>/{ sub(/<\/comment>.*/, ""); dedans = 2; }
+/^Ignore-this: /{ next; }
+dedans{ print; }
+dedans==2{ dedans = 0; }
+' \
+	| php -r 'echo trim(html_entity_decode(stream_get_contents(STDIN), ENT_QUOTES|ENT_HTML5));'
+}
+
 	( cd "$ici/$descente" && darcs log "$@" ) | grep -n '^patch ' | sort -nr | while read blabla id
 do
 		echo a | darcs push -h "$id" $T/src
@@ -45,8 +68,7 @@ do
 	mv $T/dst_darcs $T/dst/_darcs
 	mv $T/src_darcs $T/src/_darcs
 	( cd $T/dst && darcs add -r "$@" ) || true
-	( cd $T/src && darcs cha --last=1 ) > $T/cha
-	( cd $T/dst && ( sed -e '1!d' -e 's/  [^ ]*$//' < $T/cha ; sed -e '1,2d' -e 's/^  //' < $T/cha ) | darcs record -a -A "`sed -e '1!d' -e 's/^.*  //' < $T/cha`" -m "`sed -e '2!d' -e 's/^  \* //' < $T/cha`" --pipe )
+		( cd $T/src && dcp --last=1 ) | ( cd $T/dst && darcs record -a --pipe )
 done
 
 rm -R "$dest"
