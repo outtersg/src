@@ -54,6 +54,7 @@ dcp()
 dedans{ print; }
 dedans==2{ dedans = 0; }
 ' \
+	| php -r 'foreach(explode("\n", trim(stream_get_contents(STDIN))) as $l) { $ic = iconv("utf-8", "cp1252//IGNORE", $l); if($l == iconv("cp1252", "utf-8", iconv("cp1252", "utf-8", iconv("utf-8", "cp1252//IGNORE", $ic)))) $l = $ic; echo "$l\n"; }' \
 	| php -r 'echo trim(html_entity_decode(stream_get_contents(STDIN), ENT_QUOTES|ENT_HTML5));'
 }
 
