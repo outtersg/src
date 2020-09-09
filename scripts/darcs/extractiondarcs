@@ -67,7 +67,7 @@ do
 	( cd $T/src/$descente && tar cf - . ) | ( cd $T/dst && tar xf - ) || true
 	mv $T/dst_darcs $T/dst/_darcs
 	mv $T/src_darcs $T/src/_darcs
-	( cd $T/dst && darcs add -r "$@" ) || true
+		( cd $T/dst && for f in "$@" ; do [ ! -e "$f" ] || darcs add -r "$f" ; done ) || true
 		( cd $T/src && dcp --last=1 ) | ( cd $T/dst && darcs record -a --pipe )
 done
 
