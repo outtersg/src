@@ -34,8 +34,9 @@ mkdir $T/dst
 ( cd $T/src && darcs init $type )
 ( cd $T/dst && darcs init )
 
-while ( echo y ; echo d ) | darcs push $T/src
+	( cd "$ici/$descente" && darcs log "$@" ) | grep -n '^patch ' | sort -nr | while read blabla id
 do
+		echo a | darcs push -h "$id" $T/src
 	mv $T/src/_darcs $T/src_darcs
 	mv $T/dst/_darcs $T/dst_darcs
 	rm -R $T/dst
