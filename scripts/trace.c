@@ -44,7 +44,7 @@ char * nomDe(char ** argv)
 void auSecours(char ** argv)
 {
 	char * nom;
-	CODE * code;
+	const CODE * code;
 	int pos;
 	nom = nomDe(argv);
 	fprintf(stderr, "# %s\n", nom);
@@ -151,7 +151,7 @@ int lireParametres(char ** argv)
 			if((*argv)[1] == 'S')
 			{
 				if(*++argv == NULL) auSecours(debut);
-				CODE * code;
+				const CODE * code;
 				for(code = facilitynames; code->c_name; ++code)
 					if(strcmp(code->c_name, *argv) == 0)
 						break;
