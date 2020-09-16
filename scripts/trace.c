@@ -200,7 +200,7 @@ void tourner(int s, int e)
 	
 	while(1)
 	{
-		FD_COPY(&voulus, &eus);
+		memcpy(&eus, &voulus, sizeof(eus));
 		switch(select(FD_SETSIZE, &eus, NULL, NULL, NULL))
 		{
 			case 0:
