@@ -175,6 +175,7 @@ int lireParametres(char ** argv)
 		}
 	}
 	auSecours(debut); /* On n'est pas passé par notre else, donc il manque au moins un argument donnant la commande à lancer et filtrer. */
+	return -1;
 }
 
 #define TAILLE_MAX 1048576
