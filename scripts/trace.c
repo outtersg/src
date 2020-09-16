@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #define SYSLOG_NAMES
 #include <syslog.h>
 #include <stdarg.h>
