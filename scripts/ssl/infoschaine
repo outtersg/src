@@ -1,0 +1,27 @@
+#!/bin/sh
+
+fais()
+{
+	awk \
+'
+/^-----BEGIN.*CERTIFICATE-----$/{ dedans = 1; accu = ""; }
+dedans{ accu = accu$0"\n"; }
+!dedans{ print; }
+/^-----END.*CERTIFICATE-----$/{
+	s = "openssl x509 -subject -issuer -enddate";
+	print accu|s;
+	close(s);
+	dedans = 0;
+}
+'
+}
+
+tourne()
+{
+	case "$#" in
+		0) fais ;;
+		*) cat "$@" | fais ;;
+	esac
+}
+
+tourne "$@"
