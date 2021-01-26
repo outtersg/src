@@ -34,9 +34,16 @@ case "$dest1" in
 		dest="/g/sauvegardes/$nom."
 		commande="o $commande"
 		;;
+	*)
+		if [ -d "$1" ]
+		then
+			dest="$1/$nom."
+			commande="o $commande"
+		fi
+		;;
 esac
 
-[ -z "$dest" ] && echo "# Utilisation: ouf.ks [carlo|sb|sg|006]" >&2 && exit 1
+[ -z "$dest" ] && echo "# Utilisation: ouf.ks [carlo|sb|sg|006|<dossier existant>]" >&2 && exit 1
 
 rs()
 {
