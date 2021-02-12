@@ -1,20 +1,22 @@
 #!/bin/sh
 # Ménage des photos et vidéos d'un téléphone Android, après s'être assuré qu'une copie figurait sur un ordi de sauvegarde.
 
-ORDI=clotilde@192.168.1.78:/tmp
-#ORDI=gui@192.168.1.3:/tmp
-
-# Sur Android, via adb:
-
-cd /sdcard/sauvegardes
-mkdir -p tmp
-find /sdcard/DCIM/Camera -type f -name '[A-Z]*_2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]*.[a-z][a-z][a-z0-9]' -mtime +90 -print0 | xargs -0 cksum > tmp/1
-scp tmp/1 $ORDI/
-
-# Sur bonemine:
-
+RA=/sdcard/sauvegardes
 IMAGES="$HOME/Pictures $HOME/Movies"
 #IMAGES="/Users/sauvegardes/photos/patatoide"
+
+set -e
+
+echo "# Sur le téléphone"
+./adb shell <<TERMINE
+cd $RA
+mkdir -p tmp
+find /sdcard/DCIM/Camera -type f -name '[A-Z]*_2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]*.[a-z][a-z][a-z0-9]' -mtime +90 -print0 | xargs -0 cksum > tmp/1
+TERMINE
+./adb pull $RA/tmp/1 /tmp/1
+
+echo "# Ici"
+# À FAIRE: un seul find pour tous
 cat /tmp/1 | while read s t c
 do
 	find $IMAGES -type f -size ${t}c | while read f
@@ -27,9 +29,14 @@ do
 	done
 done > /tmp/3
 
-# Sur frigovide:
-
-scp $ORDI/3 tmp/3 && cat tmp/3 | xargs rm -f
+echo "# Application"
+./adb push /tmp/3 $RA/tmp/3
+echo "Ménage de `wc -l < /tmp/3` fichiers"
+./adb shell <<TERMINE
+df -h $RA
+cat $RA/tmp/3 | xargs rm -f
+df -h $RA
+TERMINE
 
 # Autre tentative pour identifier les déjà sauvegardés:
 # cat /tmp/tmp/1 | while read droits compteur qui groupe taille date heure nom ; do n2="`echo "$nom" | sed -E -e 's/^(IMG|VID|PANO)_//' -e 's/\.[^.]*$//'`" ; if find . -name "*$n2*" -size "${taille}c" | grep -q "$n2" ; then echo "$nom" ; fi ; done
