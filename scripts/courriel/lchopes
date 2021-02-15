@@ -7,7 +7,7 @@ t=/tmp/temp.lchopes.$$
 
 ls -tr | grep -e -D$ | tail -$n > $t.fichiers
 
-tr '\012' '\000' < $t.fichiers | xargs -0 rspamc | LC_ALL=C awk '/^Results for file:/{f=$4}/^Score:/{p=$2;printf("%s%.2f%s %s\n", (p>=18.0?"\033[32m":(p>=15.0?"\033[33m":"\033[31m")), p, "\033[0m\t", f)}' > $t.resultats &
+tr '\012' '\000' < $t.fichiers | xargs -0 -n 10 rspamc | LC_ALL=C stdbuf -oL awk '/^Results for file:/{f=$4}/^Score:/{p=$2;printf("%s%.2f%s %s\n", (p>=18.0?"\033[32m":(p>=15.0?"\033[33m":"\033[31m")), p, "\033[0m\t", f)}' > $t.resultats &
 
 att=30
 while read f
@@ -20,13 +20,16 @@ do
 	if ! grep -q -F "$f" < $t.resultats
 	then
 		printf "%s\t???\n" "$f"
+		att=5
 		continue
+	else
+		att=30
 	fi
 	grep -F "$f" < $t.resultats | while read n f
 	do
 		printf "%s\t" "$n"
 		ls -l "$f" | awk '{printf("%s\t%s\t%s\t%s\t%s\t",$5,$6,$7,$8,$9)}'
-		grep ^Subject: < "$f" | head -1 | LANG=C LC_ALL=C cut -d ' ' -f 2-
+		awk 'oui&&!/^[ \t]|^$/{print oui;exit}/^$/{exit}oui{oui=oui""substr($0,2)}/^Subject: /{oui=substr($0,10)}END{if(!oui)print"---"}' < "$f"
 	done
 done < $t.fichiers | /tmp/tmp/src/scripts/texte/derfc822
 
