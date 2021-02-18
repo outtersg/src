@@ -1,0 +1,7 @@
+#!/bin/sh
+# À inclure dans son .shrc
+
+dw()
+{
+	DARCS_ALWAYS_COLOR=1 darcs w "$@" | less -RFX
+}
