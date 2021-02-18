@@ -15,7 +15,9 @@ dest="../$source.bis"
 set -e
 
 mkdir "$destemp"
-tar cf - _darcs/format _darcs/hashed_inventory _darcs/patches | ( cd "$destemp" && tar xf - )
+dph=_darcs/pristine.hashed ; [ -d "$dph" ] || dph=
+di=_darcs/inventories ; [ -d "$di" ] || di=
+tar cf - _darcs/format _darcs/hashed_inventory _darcs/patches $dph $di | ( cd "$destemp" && tar xf - )
 cd "$destemp/_darcs/patches/"
 
 for a in 0*
