@@ -5,3 +5,14 @@ dw()
 {
 	DARCS_ALWAYS_COLOR=1 darcs w "$@" | less -RFX
 }
+
+# Darcs Whatsnew Récents.
+dwr()
+{
+	local njours=10
+	case "$1" in
+		*[^0-9]*|"") true ;;
+		*) njours="$1" ; shift ;;
+	esac
+	dw "$@" `find . -mindepth 1 -not -path "./_darcs/*" -mtime -$njours | grep -v util.loca`
+}
