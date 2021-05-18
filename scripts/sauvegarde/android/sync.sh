@@ -121,6 +121,17 @@ dest="`cat "$TMPDIR/dest"`"
 - /jumobile/recyclebin
 TERMINE
 	
+	echo "=== Post-traitements ==="
+	
+	rsync -av --delete -e "$ssh" "$dest./" "$TMPDIR/syncscripts/" && \
+	(
+		cd "$TMPDIR/syncscripts/"
+		find . -type f -name "post.*.sh" | sort | while read script
+		do
+			"$script"
+		done
+	)
+
 	echo "=== Synchro musique ==="
 
 	local hote="`echo "$dest" | cut -d : -f 1`"
