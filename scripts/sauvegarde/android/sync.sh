@@ -104,6 +104,7 @@ dest="`cat "$TMPDIR/dest"`"
 
 	export TMPDIR="$HOME/tmp" # Va savoir pourquoi, si je ne réexporte pas, il est incapable de le détecter lorsque le répertoire vient d'être créé, pour le heredoc suivant.
 	sh "$R/bin/ouf" --sans-acl -r recycler -v --ssh "$ssh" -d /mnt/sdcard/ "$dest." <<TERMINE
+- **/.nomedia
 - **/.thumbnails
 - **/albumthumbs
 - **/cache
