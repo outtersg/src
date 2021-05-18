@@ -94,6 +94,11 @@ _dests()
 	# Si on fait un dest="`dests`", le manque de redirection semble faire croire à SSH qu'on est interactifs, et donc bloquer sur une invite de mot de passe.
 dests > "$TMPDIR/"dest
 dest="`cat "$TMPDIR/dest"`"
+	if [ -z "$dest" ]
+	then
+		echo "[31m# Aucune destination n'est joignable.[0m" >&2
+		exit 1
+	fi
 	
 	printf "%s" "-> " ; vert "$dest"
 
