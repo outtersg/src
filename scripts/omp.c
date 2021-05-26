@@ -598,10 +598,13 @@ int main(int argc, char * const argv[])
 	argv = analyserParams(argv, & premiereEtape);
 	if(!premiereEtape || !*argv)
 	{
-		fprintf(stderr, "# Utilisation: sonpty (-e <chaîne attendue> <réponse>|-)+ <commande> <arg>*\n");
+		fprintf(stderr, "# Utilisation: sonpty (-e <chaîne attendue> <réponse>|-|.)+ <commande> <arg>*\n");
 		fprintf(stderr, "   -\n");
 		fprintf(stderr, "     ouverture des vannes. À partir de ce -, le stdin est reversé vers le fils\n");
 		fprintf(stderr, "     en même temps que les réponses du scénario.\n");
+		fprintf(stderr, "   .\n");
+		fprintf(stderr, "     après la séquence de commandes, le stdin est fermé (simulation d'un ^D\n");
+		fprintf(stderr, "     dans un shell, ou d'un omp < /dev/null).\n");
 		exit(1);
 	}
 	
