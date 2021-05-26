@@ -40,7 +40,7 @@ enum
 };
 
 static struct termios g_infosStdin;
-static int g_fermeEnFin = 1;
+static int g_fermeEnFin = 0;
 static int g_pipelette = 1; /* Restitue-t-on sur le TTY maître le contenu de nos échanges scénarisés? */
 static int g_tuberAussiStderr = 0; /* Si l'on passe aussi le stderr du processus fils par notre crible, ça permet de vraiment tout maîtriser, mais ça peut aussi nous empêcher de voir les messages d'erreur. */
 
@@ -575,7 +575,7 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 			iDefaut = (Sortie *)I_STDIN;
 		}
 		else if(strcmp(argv[0], ".") == 0)
-			g_fermeEnFin = 0;
+			g_fermeEnFin = 1;
 		/* else if(!nEtapes) alors le premier argument est un script à exécuter, façon sed */
 		else
 			break;
