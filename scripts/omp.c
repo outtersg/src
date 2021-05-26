@@ -21,6 +21,12 @@
  */
 // *** AVEC UN IMMENSE MERCI, ISSU DE: ***
 // http://rachid.koucha.free.fr/tech_corner/pty_pdip_fr.html
+
+/* OMP: Oui Mon Pty?
+ * ASPIC: Aide à la Saisie dans un Pseudoterminal Interactif Combinatoire (combinant ses paramètres à son entrée)
+ * GOULP: Guillaume's Operable Unmodifying Light Pseudoterminal (well, *nearly* unmodifying its input)
+ */
+
 // Permet d'enrober un psql (ou un pg_dump, en lur balançant < /dev/null pour qu'il n'attende pas éternellement une entrée) pour que la saisie de mot de passe se fasse automatiquement depuis le programme, plutôt que de requérir une saisie dans le terminal.
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
