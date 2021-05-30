@@ -40,6 +40,7 @@
 #define __USE_BSD
 #endif
 #include <termios.h>
+#include <signal.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>
 #include <string.h>
@@ -67,7 +68,10 @@ enum
 	I_STDIN = -3
 };
 
+static int g_fils;
+static int g_stdinAppli;
 static struct termios g_infosStdin;
+static struct winsize g_dim;
 static int g_fermeEnFin = 0;
 static int g_pipelette = 1; /* Restitue-t-on sur le TTY maître le contenu de nos échanges scénarisés? */
 static int g_tuberAussiStderr = 0; /* Si l'on passe aussi le stderr du processus fils par notre crible, ça permet de vraiment tout maîtriser, mais ça peut aussi nous empêcher de voir les messages d'erreur. */
@@ -616,6 +620,21 @@ char * const * analyserParams(char * const argv[], Etape ** etapes)
 	return argv;
 }
 
+void redim()
+{
+	if(g_dim.ws_col > 0 && g_dim.ws_row > 0)
+		ioctl(g_stdinAppli, TIOCSWINSZ, &g_dim);
+}
+
+void choperRedim(int numSig)
+{
+	if(ioctl(0, TIOCGWINSZ, &g_dim) == 0)
+	{
+		redim();
+		kill(g_fils, numSig);
+	}
+}
+
 int main(int argc, char * const argv[])
 {
 	int fdm, fds;
@@ -643,6 +662,7 @@ int main(int argc, char * const argv[])
 	
 	/* Lancement. */
 	
+	memset(&g_dim, 0, sizeof(g_dim));
 	if((fdm = posix_openpt(O_RDWR)) < 0) { fprintf(stderr, "Erreur %d sur posix_openpt()\n", errno); return 1; }
 	if((rc = grantpt(fdm)) < 0) { fprintf(stderr, "Erreur %d sur grantpt()\n", errno); return 1; }
 	if((rc = unlockpt(fdm)) < 0) { fprintf(stderr, "Erreur %d sur unlockpt()\n", errno); return 1; }
@@ -652,7 +672,7 @@ int main(int argc, char * const argv[])
 	if(!(entreePty = isatty(0)))
 		if((rc = pipe(&tubeStdinAppli[0])) < 0) { fprintf(stderr, "Création du tube pour le stdin de l'appli: %s\n", strerror(rc)); return 1; }
 	// Création d'un processus fils
-	if (fork())
+	if ((g_fils = fork()))
 	{
 		int versStdinAppli;
 	close(fds);
@@ -665,6 +685,12 @@ int main(int argc, char * const argv[])
 			cfmakeraw(&infosStdin);
 			tcsetattr(0, TCSANOW, &infosStdin);
 			versStdinAppli = fdm;
+			if(ioctl(0, TIOCGWINSZ, &g_dim) == 0)
+			{
+				g_stdinAppli = fdm;
+				signal(SIGWINCH, &choperRedim);
+				redim();
+			}
 		}
 		else
 		{
