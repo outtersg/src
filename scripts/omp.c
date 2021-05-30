@@ -539,8 +539,13 @@ int  rc;
 		rc = select(fmax + 1, &fd_in, &etatsS, NULL, NULL);
       switch(rc)
       {
-        case -1 : fprintf(stderr, "Erreur %d sur select()\n", errno);
+			case -1:
+				if(errno != EINTR)
+				{
+					fprintf(stderr, "Erreur %d sur select()\n", errno);
                   exit(1);
+				}
+				break;
         default :
         {
 				Sortie_ecrireSi(&maitre.sorties[0], &etatsS);
