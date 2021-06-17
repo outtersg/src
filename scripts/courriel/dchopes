@@ -1,0 +1,62 @@
+#!/bin/sh
+
+n=128
+[ -z "$1" ] || n="$1"
+
+t=/tmp/temp.dchopes.$$
+
+# On cherche pour chaque cksum le fichier de référence.
+
+> $t.ref
+> $t.suppr
+ls -tr | tail -$n > $t.fichiers
+while read f
+do
+	# On compare le corps de message, pas les en-têtes (heure d'émission, expéditeur forgé, etc., peuvent différer).
+	empr="`sed -e '1,/^$/d' < "$f" | cksum | cut -d ' ' -f 1`"
+	[ -n "$empr" ] || continue
+	ref="`grep "^$empr " < $t.ref | cut -d ' ' -f 2-`"
+	if [ -z "$ref" ]
+	then
+		echo "$empr $f" >> $t.ref
+	else
+		echo "$ref $f" >> $t.suppr
+	fi
+done < $t.fichiers
+
+# On renomme les réf.
+
+awk < $t.suppr > $t.reno \
+'{
+	ref = $1;
+	dou = $2;
+	n = 1;
+	if(match(dou, /\+[0-9]+$/))
+		n += substr(dou, RSTART + 1, RLENGTH - 1);
+	if(!t[ref]) t[ref] = 0;
+	t[ref] += n;
+}
+END{
+	for(ref in t)
+	{
+		rr = ref;
+		if(match(rr, /\+[0-9]+$/))
+		{
+			t[ref] += 0 + substr(ref, RSTART + 1, RLENGTH - 1);
+			rr = substr(rr, 1, RSTART - 1);
+		}
+		print "mv \""ref"\" \""rr"+"t[ref]"\"";
+	}
+}'
+
+# Puis on supprime les doublons.
+
+while read ref dou
+do
+	echo rm -f "$dou"
+done < $t.suppr >> $t.reno
+
+cat $t.reno
+. $t.reno
+
+rm -f $t.*
