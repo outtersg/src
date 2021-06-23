@@ -106,7 +106,7 @@ affecterPlacement()
 	
 	awk -F '\011' '{ print $2; print $3; }' < "$TMP/pistes.encogg" | edulcorerChemin | sort -u | while read dossier ; do
 		echo "$racines" | tr : '\012' | while read racine ; do
-			( [ ! -z "$dossier" -a -d "$racine/$dossier" ] && cd "$racine/$dossier" 2> /dev/null && ls | sed -e 's/\.[0-9A-Za-z][0-9A-Za-z][0-9A-Za-z]$//' -e "s#^#$dossier/#" )
+			( [ ! -z "$dossier" -a -d "$racine/$dossier" ] && cd "$racine/$dossier" 2> /dev/null && ls | sed -E -e 's/\.[0-9A-Za-z]{1,4}$//' -e "s#^#$dossier/#" )
 		done
 	done | normaliserChemin > "$TMP/dejaEnPlace"
 	
