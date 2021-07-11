@@ -1,0 +1,37 @@
+#!/bin/sh
+# À inclure dans son .shrc
+
+gs()
+{
+	git status "$@"
+}
+
+gd()
+{
+	git diff --relative "$@"
+}
+
+gc()
+{
+	local titre="$1" ; shift
+	case "$1" in
+		*" "*) titre="$titre||$1" ; shift ;;
+	esac
+	git commit -m "`echo "$titre" | tr \| '\012'`" "$@"
+}
+
+gp()
+{
+	git fetch && git stash && git pull --rebase "$@" && git stash apply
+}
+
+gr()
+{
+	git fetch && git stash && git rebase "$@" && git stash apply
+}
+
+glog()
+{
+	# https://stackoverflow.com/a/13965459
+	git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit "$@"
+}
