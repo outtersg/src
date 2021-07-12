@@ -97,3 +97,21 @@ ep()
 		_epomp -d -a -e darcs tag --pipe "$ep_nom" "$@"
 	fi
 }
+
+#--- pp ---
+
+testi_darcs_pp()
+{
+	pp_decalage=
+	ep_decalage=
+	
+	# Pousse-projet, ou pousse-passé.
+	pp()
+	{
+		memeprojet || { [ $? = 2 ] && pp "$@" ; return ; }
+		
+		ep "$@"
+	}
+}
+
+DANSPROJET_TESTI_DARCS="$DANSPROJET_TESTI_DARCS testi_darcs_pp"
