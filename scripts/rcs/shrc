@@ -21,3 +21,34 @@
 
 # À inclure dans son .shrc
 # Penser à ajouter aussi les amorces spécifiques (darcs.shrc, git.shrc, etc.), APRÈS l'inclusion de celui-ci.
+
+#- memeprojet ------------------------------------------------------------------
+
+# Détermine si nous sommes encore dans le même projet.
+# À FAIRE: certains dossiers détectés comme projets (ex.: mon src) ont des sous-dossiers eux-mêmes projets (ex.: src/projets/alboretum). En ce cas il faudrait pouvoir marquer le projet comme "à vérifier à chaque sollicitation (qu'on n'est pas allé dans un sous-projet)", car le test de bascule se contente de vérifier qu'on est toujours dans une sous-arbo de la racine, donc ne verra pas le changement de projet.
+memeprojet()
+{
+	[ -n "$PROJET" ] && case "$PWD/" in "$PROJET"/*) return 0 ;; esac
+	
+	local type
+	
+	PROJET="$PWD"
+	while [ "$PROJET" != / ]
+	do
+		for testi in $DANSPROJET_TESTI
+		do
+			if $testi "$PROJET" ; then return 2 ; fi
+		done
+		PROJET="`dirname "$PROJET"`"
+	done
+	echo "# Veuillez vous placer dans un dossier projet." >&2
+	PROJET=
+	return 1
+}
+
+memeprojet_zero()
+{
+	DANSPROJET_TESTI=
+}
+
+memeprojet_zero
