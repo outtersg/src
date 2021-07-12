@@ -35,3 +35,40 @@ glog()
 	# https://stackoverflow.com/a/13965459
 	git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit "$@"
 }
+
+#- Projets ---------------------------------------------------------------------
+# Fonctionnement dans le cadre de rcs/shrc.
+
+testi_git()
+{
+	[ -d "$1/.git" ] || return
+	
+	local init
+	for init in $DANSPROJET_TESTI_GIT
+	do
+		$init "$1"
+	done
+}
+
+DANSPROJET_TESTI="$DANSPROJET_TESTI testi_git"
+DANSPROJET_TESTI_GIT=
+
+#--- pp ---
+
+testi_git_pp()
+{
+	pp_decalage=
+	
+	# Pousse-projet, ou pousse-passé.
+	pp()
+	{
+		memeprojet || { [ $? = 2 ] && pp "$@" ; return ; }
+		
+		[ -n "$pp_decalage" ] || pp_decalage
+		local q="`pp_maintenant`"
+		q="`date -r "$q" +"%Y-%m-%d %H:%M:%S"`"
+		GIT_AUTHOR_DATE="$q" GIT_COMMITTER_DATE="$q" gc "$@"
+	}
+}
+
+DANSPROJET_TESTI_GIT="$DANSPROJET_TESTI_GIT testi_git_pp"
