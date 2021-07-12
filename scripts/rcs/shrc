@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2021 Guillaume Outters
+# Copyright (c) 2016,2019,2021 Guillaume Outters
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,3 +52,40 @@ memeprojet_zero()
 }
 
 memeprojet_zero
+
+#- Commandes génériques --------------------------------------------------------
+# Ces commandes sont juste des amorces qui doivent être remplacées par une implémentation spécifique via DANSPROJETS_TESTI.
+
+# Pousse-projet, ou pousse-passé.
+pp()
+{
+	memeprojet || { [ $? = 2 ] && pp "$@" ; return ; }
+}
+
+# Initialise le décalage entre date hôte et date désirée.
+pp_decalage()
+{
+	local ep_optionsDateRef ep_dateRef ep_date ep_expr_date ep_a_ce_moment ep_maintenant
+	
+	ep_optionsDateRef=
+	[ -z "$ep_dateRef" ] || ep_optionsDateRef="-r $ep_dateRef"
+	ep_dateRef="`date $ep_optionsDateRef +%Y%m%d%H%M%S`"
+	echo "Date de référence (dernière modif): $ep_dateRef"
+	printf "À quelle date commençons-nous notre session ([[[aaaa]mm]jj]hhmm)? "
+	read ep_date
+	case "$ep_date" in
+		*.??) ep_date="`echo "$ep_date" | tr -d .`" ; ep_expr_date="$ep_date\(\)" ;;
+		*) ep_expr_date="$ep_date\(..\)" ;;
+	esac
+	ep_expr_date="`echo "$ep_expr_date" | tr '[0-9]' .`$"
+	ep_date="`echo "$ep_dateRef" | sed -e "s/$ep_expr_date/$ep_date\1/"`"
+	ep_a_ce_moment="`date -j -f %Y%m%d%H%M%S "$ep_date" +%s`"
+	ep_maintenant="`date +%s`"
+	ep_decalage="`expr $ep_maintenant - $ep_a_ce_moment`"
+	pp_decalage="$ep_decalage"
+}
+
+pp_maintenant()
+{
+	expr "`date +%s`" - $pp_decalage
+}
