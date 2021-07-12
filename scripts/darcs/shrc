@@ -16,3 +16,20 @@ dwr()
 	esac
 	dw "$@" `find . -mindepth 1 -not -path "./_darcs/*" -not -path "./.git/*" -mtime -$njours | grep -v util.loca`
 }
+
+#- Projets ---------------------------------------------------------------------
+# Fonctionnement dans le cadre de rcs/shrc.
+
+testi_darcs()
+{
+	[ -d "$1/_darcs" ] || return
+	
+	local init
+	for init in $DANSPROJET_TESTI_DARCS
+	do
+		$init "$1"
+	done
+}
+
+DANSPROJET_TESTI="$DANSPROJET_TESTI testi_darcs"
+DANSPROJET_TESTI_DARCS=
