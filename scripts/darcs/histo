@@ -14,6 +14,16 @@ histo_darcs()
 '
 }
 
+histo_git()
+{
+	( git log --since='3 months ago' --pretty=format:'%ae %at %ad # %s' ; echo ) | filtreAuteurs | while read adrel d reste
+	do
+		[ -n "$d" ] || continue
+		d="`TZ= date -r $d +%Y%m%d%H%M%S`"
+		echo "$d $reste"
+	done
+}
+
 histo()
 {
 	local d n=31 histo
@@ -26,6 +36,7 @@ histo()
 		esac
 		chemin="`echo "$d" | sed -e 's/.*\(..............\)$/@\1/' -e 's/$/                /' -e 's/^\(...............\).*/\1/' -e 's/^@/…/'`"
 		if [ -d "$d/_darcs" ] ; then histo=histo_darcs
+		elif [ -d "$d/.git" ] ; then histo=histo_git
 		else
 			echo "[31m# $d n'est pas un dossier darcs.[0m" >&2
 			continue
