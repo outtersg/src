@@ -1,5 +1,10 @@
 #!/bin/sh
 
+filtreAuteurs()
+{
+	egrep -i "$AUTEURS"
+}
+
 histo_darcs()
 {
 	darcs log --xml-output --match 'date "last 3 months"' | awk \
@@ -29,6 +34,7 @@ histo()
 	done | sort | cut -d ' ' -f 2-
 }
 
+[ -n "$AUTEURS" ] || filtreAuteurs() { cat ; }
 if [ $# -gt 0 ]
 then
 	histo "$@"
