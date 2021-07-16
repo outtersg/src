@@ -36,6 +36,12 @@ glog()
 	git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit "$@"
 }
 
+# Git Soumission Comme Poussage (pour remettre la date de soumission égale à la date de poussage, par exemple durant un git rebase -i)
+gscp()
+{
+	GIT_COMMITTER_DATE="`git log --pretty=format:%ad -1`" git commit --amend --no-edit
+}
+
 #- Projets ---------------------------------------------------------------------
 # Fonctionnement dans le cadre de rcs/shrc.
 
