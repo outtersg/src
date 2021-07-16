@@ -1,6 +1,12 @@
 #!/bin/sh
 # À inclure dans son .shrc
 
+dl()
+{
+	# darcs log embarque son propre pagineur, malheureusement il ne lui transmet pas les 'q' pour quitter.
+	darcs log "$@" | less
+}
+
 dw()
 {
 	DARCS_ALWAYS_COLOR=1 darcs w "$@" | less -RFX
