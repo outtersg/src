@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# Récupération des variables:
+# - $JIRA_RACINE: URL racine du JIRA Server
+# - $JIRA_ID_IC: identifiant de connexion JIRA
+# - $JIRA_MDP_IC: mot de passe de connexion JIRA
+. "$HOME/.ssh/mdp.ext.ini"
+
+c()
+{
+	uri="$1" ; shift
+	curl -s -H "Content-Type: application/json;charset=UTF-8" -u "$JIRA_ID_IC:$JIRA_MDP_IC" "$@" "$JIRA_RACINE/rest/api/latest/$uri"
+}
+
+autotrans()
+{
+	# On tente de trouver la transition vers l'état actuel.
+	c issue/$1 > $T.etat.json
+	c issue/$1/transitions > $T.trans.json
+	php -r \
+	'
+		$és = json_decode(file_get_contents("'"$T.etat.json"'"));
+		$idé = $és->fields->status->id;
+		$ts = json_decode(file_get_contents("'"$T.trans.json"'"));
+		foreach($ts->transitions as $t)
+			if($t->to->id == $idé)
+			{
+				echo $t->id;
+				exit(0);
+			}
+	'
+}
+
+deresouds()
+{
+	local t="`autotrans "$1"`"
+	echo '{"transition":{"id":'"$t"',"resolution":null}}' | c issue/$1/transitions -i -X POST --data-binary @-
+}
+
+T=/tmp/temp.$$.jira
+deresouds "$@"
+rm -f $T.*
