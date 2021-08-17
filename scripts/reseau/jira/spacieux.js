@@ -39,7 +39,19 @@
 		s.textContent = "(" + function()
 		{
 			// Comme on est chargés en premier, on se permet de piquer le raccourci 'l'. Si ce n'était le cas il nous faudrait au préalable virer celui par défaut.
-			AJS.KeyboardShortcut.fromJSON([ { moduleKey: "lien", context: "issueaction", op: "click", param: "#link-issue", keys: [ [ "l" ] ] } ]);
+			//AJS.KeyboardShortcut.fromJSON([ { moduleKey: "lien", context: "issueaction", op: "click", param: "#link-issue", keys: [ [ "l" ] ] } ]);
+			// Pour avoir en plus le curseur qui se positionne sur le champ "type", on doit ruser:
+			// - execute: pour une instruction complexe
+			// - setTimeout: pour passer APRÈS l'autofocus JIRA (https://jira.atlassian.com/browse/JRASERVER-15758; pourrait-on intercepter via https://confluence.atlassian.com/jirakb/focus-is-switched-to-a-different-field-224396165.html)
+			// - passivite: le premier chargement est un peu longuet, les suivants moins. On adapte.
+			var passivite = 1000;
+			var lien = function()
+			{
+				$('#link-issue').click();
+				setTimeout(function() { $('#link-type').focus(); }, passivite);
+				passivite = 200;
+			};
+			AJS.KeyboardShortcut.fromJSON([ { moduleKey: "lien", context: "issueaction", op: "execute", param: lien, keys: [ [ "l" ] ] } ]);
 		} + ")();";
 		document.body.appendChild(s);
 	}
