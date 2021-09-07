@@ -39,7 +39,10 @@ glog()
 # Git Soumission Comme Poussage (pour remettre la date de soumission égale à la date de poussage, par exemple durant un git rebase -i)
 gscp()
 {
-	GIT_COMMITTER_DATE="`git log --pretty=format:%ad -1`" git commit --amend --no-edit
+	GIT_COMMITTER_DATE="`git log --pretty=format:%ad -1`" \
+	GIT_COMMITTER_NAME="`git log --pretty=format:%an -1`" \
+	GIT_COMMITTER_EMAIL="`git log --pretty=format:%ae -1`" \
+	git commit --amend --no-edit
 }
 
 #- Projets ---------------------------------------------------------------------
