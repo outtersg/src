@@ -77,3 +77,26 @@ _ap_filtres()
 		echo "/`echo "$p" | sed -e 's#/#\\/#g'`/{ trouves[++nTrouves] = \$2; }"
 	done
 }
+
+#- PHP -------------------------------------------------------------------------
+
+compup()
+{
+	local fournisseur=gui
+	
+    (
+		local d="`pwd`"
+		while [ ! -d vendor -o ! -f composer.json ]
+		do
+			cd ..
+			[ "$PWD" != / ] || { echo "# composer.json et vendor introuvables dans $d." >&2 ; return 1 ; }
+		done
+		
+		local vendu="vendor/$fournisseur"
+        find "$vendu" -type l -exec rm \{\} \;
+        composer update "$@" || return $?
+		find "$vendu" -name _darcs | grep -q . && echo "# Trouvé des _darcs dans $PWD/$vendu; c'est louche, je sors." >&2 && return 1
+        rm -Rf "$vendu" || return $?
+        ln -s "$HOME/src/projets" "$vendu" || return $?
+    )
+}
