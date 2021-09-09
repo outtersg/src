@@ -1,0 +1,5 @@
+#!/bin/sh
+
+qui="`grep '^	for' < "$1" | head -1 | sed -E -e 's#^	for ([^-@]+)(-[^@]+)?@([^ ;]+).*#\3/\1#'`"
+set -x
+mv "$1" ../$qui/cur/`stat -f "%m" "$1"`.H123456P4321.mel\:2,be
