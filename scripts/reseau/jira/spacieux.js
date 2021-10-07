@@ -9,20 +9,23 @@
 /* ICI PLACEZ L'URL QUI RENVERRA LE HTML POUR LE JIRA DONT LE NUMÉRO LUI EST PASSÉ CONCATÉNÉ
  * L'exemple donné fonctionne sur Riquet (https://github.com/outtersg/riquet si un jour je le publie),
  * extracteur et présentateur de fiches ServiceNow. */
-var giraUrlIncs = 'http://riquet.local/liens.php?q=';
+var giraIncsUrl = 'http://riquet.local/liens.php?q=@NUM&num=@REFS';
+var giraIncsChamp = '#customfield_123456-val';
 
 var gira =
 {
 	incs: function()
 	{
 		var num = document.head.querySelector('meta[name="ajs-issue-key"]').attributes.content.value;
+		var refs = document.querySelector(giraIncsChamp);
+		if(refs && refs.innerHTML) refs = refs.innerHTML;
 		var req = new XMLHttpRequest();
 		req.addEventListener('load', function()
 		{
 			var infos = document.querySelector('#details-module .mod-content');
 			infos.insertAdjacentHTML('beforeend', '<ul class="property-list"><li class="item"><div class="wrap"><strong class="name">Incidents:</strong><div class="value type-readonlyfield" style="border: 1px solid black; background: #FFFFDF">'+req.responseText+'</div></div></li></ul>');
 		});
-		req.open('GET', giraUrlIncs+num);
+		req.open('GET', giraIncsUrl.replace(/@NUM/, num).replace(/@REFS/, refs));
 		req.send();
 	}
 };
