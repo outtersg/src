@@ -69,7 +69,7 @@ END{
 			for(p = trouves[numTrouve]; ps[p] && ps[p] != p; p = ps[p]) {}
 			chapeaux[p] = 1;
 		}
-	for(p in nfs)
+	for(p in ls)
 		if(!ps[p] || ps[p] == p)
 			if(!nTrouves || chapeaux[p])
 			faire(p, "");
