@@ -63,6 +63,9 @@ END{
 	for(s in ss)
 		for(numf = nfs[s]; numf-- > 0;)
 			ps[fs[s,numf]] = 0;
+	# Combien avait-on de paramètres? Si on n a rien trouvé mais qu on a cherché alors on n affiche rien.
+	if(!nTrouves && '"$#"' > 0)
+		exit;
 	if(nTrouves)
 		for(numTrouve = 0; ++numTrouve <= nTrouves;)
 		{
