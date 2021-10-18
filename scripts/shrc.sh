@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#- Processus -------------------------------------------------------------------
+
 # Arbre des Processus
 # Similaire au ps -faux Linux.
 # Utilisation: ap [<filtre>]
