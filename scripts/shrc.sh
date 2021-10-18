@@ -19,6 +19,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+#- Programmation ---------------------------------------------------------------
+
+# Attend une <condition> <n> fois <délai> secondes
+# Utilisation:
+#   attend [-c <n>] [-w <delai>] <condition>
+#   attend [<n> [<delai>]] <condition>
+attend()
+{
+	local n= delai=
+	
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			-c) n="$2" ; shift ;;
+			-w) delai="$2" ; shift ;;
+			*[^.0-9]*) break ;;
+			*)
+				{ [ -z "$n" ] && n="$1" ; } || { [ -z "$delai" ] && delai="$1" ; } || break
+				;;
+		esac
+		shift
+	done
+	while [ $n -gt 0 ]
+	do
+		"$@" && return || true
+		sleep "$delai"
+		n=`expr $n - 1`
+	done
+	"$@"
+}
+
 #- Processus -------------------------------------------------------------------
 
 # Arbre des Processus
