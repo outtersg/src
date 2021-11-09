@@ -43,7 +43,7 @@ var gira =
 		menu.setAttribute('class', 'pouet');
 		menu.setAttribute('style', 'display: inline-block; position: absolute; right: 0; z-index: 1; width: auto; padding: 5px; border: 1px solid #DFDFDF; background: white;');
 		zorro.setAttribute('class', 'zorro');
-		zorro.setAttribute('style', 'display: inline-block; width: 32px; height: 32px; right: 0; background: url(…) no-repeat center center;');
+		zorro.setAttribute('style', 'display: inline-block; width: 32px; height: 32px; right: 0; background: url('+document.querySelectorAll('#assignee-val img')[0].src+') no-repeat center center;');
 		pepere.setAttribute('style', 'width: 400px; padding: 0;');
 		menu.appendChild(zorro);
 		menu.appendChild(pepere);
