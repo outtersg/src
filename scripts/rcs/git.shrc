@@ -36,6 +36,14 @@ glog()
 	git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit "$@"
 }
 
+# Git Ancêtre Réellement Commun par Exploration
+garce()
+{
+	# merge-base ne fait pas l'affaire.
+	
+	php "$HOME/src/scripts/rcs/garce.php" "$@"
+}
+
 # compareBranches
 cb()
 {
