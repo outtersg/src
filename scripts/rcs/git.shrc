@@ -49,7 +49,8 @@ cb()
 {
 	local t=/tmp/temp.$$.cb b depuis rasage pos sep=:
 	
-	depuis="`git merge-base --octopus "$@"`"
+	#depuis="`git show-branch --merge-base "$@"`" # Cf. gare.php qui explique pourquoi cela ne marche pas.
+	depuis="`garce "$@"`"
 	rasage="`git log -n 1 --pretty=format:%P $depuis | sed -e '/^$/d' -e 's/^/^/' -e 's/ / ^/g'`"
 	
 	# Notre jolie trame avec graphe.
