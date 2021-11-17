@@ -36,6 +36,63 @@ glog()
 	git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit "$@"
 }
 
+# compareBranches
+cb()
+{
+	local t=/tmp/temp.$$.cb b depuis rasage pos sep=:
+	
+	depuis="`git merge-base --octopus "$@"`"
+	rasage="`git log -n 1 --pretty=format:%P $depuis | sed -e '/^$/d' -e 's/^/^/' -e 's/ / ^/g'`"
+	
+	# Notre jolie trame avec graphe.
+	# On veut tous les items des deux branches + leur ancêtre commun (ce que ne fournit pas A..B).
+	
+	git log --graph --color --pretty=format:':%H:%h:%Creset - %s %C(cyan)(%cr)%C(yellow)%d%Creset' $rasage "$@" > $t.log
+	
+	# Cherchons tous les items portés explicitement par chaque branche.
+	
+	{
+		echo "BEGIN{"
+		
+		echo "# ID d'items:"
+		git show `grep $sep < $t.log | cut -d $sep -f 2` | git patch-id | awk '{print "ids[\""$2"\"]=\""$1"\";"}'
+		
+		pos=0
+		for b in "$@"
+		do
+			echo "# Originaux (par sur $b:"
+			echo "delete modifs;"
+			{
+				git log --pretty=format:%H $depuis..$b
+				echo
+				git log -n 1 --pretty=format:%H $depuis
+				echo
+			} | sed -e '/^$/d' -e "s#^#modifs[\"#" -e 's#$#"]=1;#'
+			echo "for(modif in modifs) o[\"$pos:\"modif] = 1;"
+			echo "for(modif in modifs) r[\"$pos:\"ids[modif]] = 1;"
+			pos=`expr $pos + 1`
+		done
+		
+		echo "}"
+		
+		cat <<TERMINE
+{
+	marques = "";
+	for(n = -1; ++n < $pos;)
+		marques = marques""(\$2 ? (o[n":"\$2] ? "X" : (r[n":"ids[\$2]] ? "x" : " ")) : " ");
+	# S'il s'agit d'une topologie connue (à droite mais pas à gauche, etc.), on colore.
+	sub(/$sep[^$sep]*/, "");
+	sub(/$sep/, "["(toupper(marques) == "X " ? "31" : (toupper(marques) == " X" ? "32" : "90"))"m");
+	sub(/$sep/, "[0m");
+	print marques" "\$0;
+}
+TERMINE
+	} > $t.awk
+	
+	awk -F "$sep" -f $t.awk < $t.log | less
+	rm $t.*
+}
+
 # Git Soumission Comme Poussage (pour remettre la date de soumission égale à la date de poussage, par exemple durant un git rebase -i)
 gscp()
 {
