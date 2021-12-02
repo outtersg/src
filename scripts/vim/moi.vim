@@ -7,8 +7,8 @@
 "   /src/projets/(ng*|doctrine|orme/src/Doctrine)/
 "   FINI
 "   source ~/src/scripts/vim/moi.vim
-"   autocmd BufRead,BufNewFile * exec ChezNous()
-"   autocmd FileType sh exec ChezMoi()
+"   autocmd BufRead,BufNewFile * call ChezNous()
+"   autocmd FileType sh call ChezMoi()
 
 let g:lesmiens = join(map(g:lesmiens, 'substitute(substitute(v:val, "[(|).]", "\\\\&", "g"), "\*", ".*", "g")'), '\|')
 let g:lesautres = join(map(g:lesautres, 'substitute(substitute(v:val, "[(|).]", "\\\\&", "g"), "\*", ".*", "g")'), '\|')
@@ -33,6 +33,6 @@ endfunction
 function ChezNous()
 	" https://vi.stackexchange.com/a/2741
 	if expand('%:p') =~ g:lesmiens && expand('%:p') !~ g:lesautres
-		exec ChezMoi()
+		call ChezMoi()
 	endif
 endfunction
