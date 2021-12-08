@@ -124,6 +124,8 @@ valableJusquA=0
 trap menage EXIT
 
 touch /tmp/temp.$$.etoile
+	# Les étoiles n'apparaissent qu'une fois la nuit entamée: tout le monde au sleep!
+	# En vrai de vrai: si on se lance en tâche de fond, il est probable que cmus soit lancé simultanément. Or si etoile se trouve prêt avant cmus, il se barre immédiatement (ne voyant pas de cmus, il le croit terminé). On laisse donc à cmus un répit pour initialiser au moins sa socket (oui car notre étoile se branche sur le secteur).
 	sleep 1 # Pour attendre un éventuel cmus en cours de démarrage.
 boucler &
 
