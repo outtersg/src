@@ -10,7 +10,7 @@
 #   bind common 4 shell $HOME/src/scripts/musique/etoile 4
 #   bind common 5 shell $HOME/src/scripts/musique/etoile 5
 # Lancer la totale ainsi:
-#   ( $HOME/src/scripts/musique/etoile -d & ) ; cmus
+#   $HOME/src/scripts/musique/etoile -d & cmus
 
 convertisseur=cat
 case `uname` in
