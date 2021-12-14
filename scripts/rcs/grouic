@@ -1,0 +1,108 @@
+#!/bin/sh
+# Copyright (c) 2021 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+set -e
+
+Delicat() { local s2 ; while [ -h "$s" ] ; do s2="`readlink "$s"`" ; case "$s2" in [^/]*) s2="`dirname "$s"`/$s2" ;; esac ; s="$s2" ; done ; } ; SCRIPTS() { local s="`command -v "$0"`" ; [ -x "$s" -o ! -x "$0" ] || s="$0" ; case "$s" in */bin/*sh) case "`basename "$s"`" in *.*) true ;; *sh) s="$1" ;; esac ;; esac ; case "$s" in [^/]*) local d="`dirname "$s"`" ; s="`cd "$d" ; pwd`/`basename "$s"`" ;; esac ; Delicat ; s="`dirname "$s"`" ; Delicat ; SCRIPTS="$s" ; } ; SCRIPTS
+. "$SCRIPTS/git.shrc"
+
+auSecours()
+{
+	local moi="`basename "$0"`"
+	cat >&2 << TERMINE
+# $moi
+# Git Rebase On User's Interactive Comparison
+# Rebase la branche actuelle sur un nouveau socle, après avoir proposé la comparaison (éditable) des rustines à reprendre.
+# © 2021 Guillaume Outters
+
+Utilisation: $moi [<depuis>] <sur>
+  <depuis>
+    Racine de report. On n'ira pas chercher les commits en-dessous de celui-ci.
+    N.B.: <depuis> est inclus.
+  <sur>
+    Arrivée du report (--onto en terminologie git).
+TERMINE
+	exit 1
+}
+
+analyserParametres()
+{
+	# Mode "je suis le pseudo-éditeur pour git rebase -i".
+	if [ "x$1" = x--edit ]
+	then
+		cat "$2" > "$3"
+		exit 0
+	fi
+	
+	if [ "x$1" = x-f ]
+	then
+		CB="$2"
+		shift
+		shift
+	fi
+	
+	if [ $# -eq 1 ]
+	then
+		DEPUIS=
+		SUR="$1"
+	else
+		DEPUIS="$1"
+		SUR="$2"
+	fi
+	
+	[ -n "$SUR" ] || auSecours
+}
+
+tourner()
+{
+	local t=/tmp/temp.$$.grouic EDITOR="$EDITOR"
+	[ -n "$EDITOR" ] || EDITOR=vi
+	
+	if [ -z "$CB" ]
+	then
+		pondreCompareBranches > "$t"
+		$EDITOR "$t"
+	else
+		cat "$CB" > "$t"
+	fi
+	grep '^[xX] ' < "$t" | sed -e 's/^[^[]*\[/pick /' -e 's/\].*//' | awk '{print NR" "$0}' | sort -nr | cut -d ' ' -f 2- > "$t.1"
+	mv "$t.1" "$t"
+	
+	EDITOR="$SCRIPTS/grouic --edit $t" git rebase --onto "$SUR" -i
+	
+	rm "$t"
+}
+
+pondreCompareBranches()
+{
+	local depuis=
+	[ -z "$DEPUIS" ] || depuis="`git log -n 1 --pretty=format:%h "$DEPUIS" 2> /dev/null || true`"
+	
+	cat <<TERMINE
+# Seront reportées les modifications en "^[xX] " (avec l'espace).
+# Pour en annuler une, remplacez le x ou X par n'importe quoi d'autre.
+
+TERMINE
+	cb --nb HEAD "$SUR" | { [ -z "$depuis" ] && cat || sed -e '1,/\['"$depuis"'\]/!d' ; }
+}
+
+analyserParametres "$@"
+tourner
