@@ -4,7 +4,7 @@
 "   /src/
 "   FINI
 "   let g:lesautres =<< trim FINI
-"   /src/projets/(ng*|doctrine|orme/src/Doctrine)/
+"   /src/projets/(ng*|doctrine*|orme/src/Doctrine)/
 "   FINI
 "   source ~/src/scripts/vim/moi.vim
 "   autocmd BufRead,BufNewFile * call ChezNous()
