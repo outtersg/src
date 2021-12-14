@@ -47,7 +47,8 @@ garce()
 # compareBranches
 cb()
 {
-	local t=/tmp/temp.$$.cb b depuis rasage pos sep=:
+	local t=/tmp/temp.$$.cb b depuis rasage pos sep=: mode=couleur opglog=--color coul1 coul0
+	[ "x$1" != x--nb ] || { mode=nb ; opglog= ; shift ; }
 	
 	#depuis="`git show-branch --merge-base "$@"`" # Cf. gare.php qui explique pourquoi cela ne marche pas.
 	depuis="`garce "$@"`"
@@ -56,7 +57,7 @@ cb()
 	# Notre jolie trame avec graphe.
 	# On veut tous les items des deux branches + leur ancêtre commun (ce que ne fournit pas A..B).
 	
-	git log --graph --color --pretty=format:':%H:%h:%Creset - %s %C(cyan)(%cr)%C(yellow)%d%Creset' $rasage "$@" > $t.log
+	git log --graph $opglog --pretty=format:':%H:%h:%Creset - %s %C(cyan)(%cr)%C(yellow)%d%Creset' $rasage "$@" > $t.log
 	
 	# Cherchons tous les items portés explicitement par chaque branche.
 	
@@ -84,6 +85,14 @@ cb()
 		
 		echo "}"
 		
+		if [ $mode = couleur ]
+		then
+			coul1='"["(toupper(marques) == "X " ? "31" : (toupper(marques) == " X" ? "32" : "90"))"m"'
+			coul0='"[0m"'
+		else
+			coul1='"["'
+			coul0='"]"'
+		fi
 		cat <<TERMINE
 {
 	marques = "";
@@ -91,8 +100,8 @@ cb()
 		marques = marques""(\$2 ? (o[n":"\$2] ? "X" : (r[n":"ids[\$2]] ? "x" : " ")) : " ");
 	# S'il s'agit d'une topologie connue (à droite mais pas à gauche, etc.), on colore.
 	sub(/$sep[^$sep]*/, "");
-	sub(/$sep/, "["(toupper(marques) == "X " ? "31" : (toupper(marques) == " X" ? "32" : "90"))"m");
-	sub(/$sep/, "[0m");
+	sub(/$sep/, $coul1);
+	sub(/$sep/, $coul0);
 	print marques" "\$0;
 }
 TERMINE
