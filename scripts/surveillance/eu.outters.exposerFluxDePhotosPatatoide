@@ -5,7 +5,7 @@ set -e
 
 patatoide=/Users/sauvegardes/patatoide.dernier/DCIM/Camera
 moi=/Users/gui/perso/Photos/Patatoide
-elle=clotilde@f:"Pictures/Photos Guillaume"
+elle=clotilde@b:"Pictures/Photos Guillaume"
 
 set -x
 rsync -a --link-dest="$patatoide/" "$patatoide/" "$moi/"
