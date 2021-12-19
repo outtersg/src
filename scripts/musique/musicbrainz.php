@@ -272,7 +272,7 @@ class Interro
 		foreach($params as $clé => $val)
 			$params[$clé] = $clé.'='.urlencode($val);
 		
-		$ws = 'http://musicbrainz.org/ws/2';
+		$ws = 'https://musicbrainz.org/ws/2';
 		$c = curl_init();
 		curl_setopt($c, CURLOPT_URL, $ws.'/'.$type.'/'.$id.'?'.implode('&', $params).'&fmt=json');
 		curl_setopt($c, CURLOPT_USERAGENT, 'guillaume-musicbrainz@outters.eu/1.0');
