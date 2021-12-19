@@ -279,6 +279,8 @@ class Interro
 		curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
 		
 		$r = curl_exec($c);
+		if(!$r)
+			fprintf(STDERR, "# %s\n", curl_error($c));
 		curl_close($c);
 		
 		$this->_dernièreRequête = microtime(true);
