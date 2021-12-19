@@ -201,13 +201,13 @@ preparerDisque()
 
 transferer()
 {
-	until ping -W 2000 -c 1 falbala.local > /dev/null
+	until ping -W 2000 -c 1 bonemine.local > /dev/null
 	do
 		sleep 30
 	done
-	rsync -avz "$dest/" falbala.local:"/Users/Shared/Musique\\ Guillaume/"
+	rsync -avz "$dest/" bonemine.local:"/Users/Shared/Musique\\ Guillaume/"
 	# Pas d'open, car après l'import iTunes joue sans crier gare le premier morceau non des nouveaux mais de tous les importés, donc toujours le même (Shimmy Shake), ce qui est assez lourd à la longue.
-	#ssh falbala.local 'sudo -u clotilde open -a iTunes /Users/Shared/Musique\ Guillaume/'
+	#ssh bonemine.local 'sudo -u clotilde open -a iTunes /Users/Shared/Musique\ Guillaume/'
 }
 
 preparerSelection()
