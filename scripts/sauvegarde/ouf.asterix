@@ -33,7 +33,7 @@ case "$1" in
 		dest=k:sauvegardes/asterix.
 		;;
 	l)
-		dest=l:sauvegardes/asterix.
+		dest=sauvegardes.gclo.fr:sauvegardes/asterix.
 		;;
 	*)
 		echo "# Utilisation: machin <config à lancer>" >&2
