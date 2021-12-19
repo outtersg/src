@@ -35,7 +35,7 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - /dev
 - /data/clipboard
 - /data/dalvik-cache
-- /data/data/com.adobe.reader/files/Resource/Unicode/mappings
+- /data/data/com.adobe.reader/files/Resource
 - /data/data/com.adobe.reader/files/review/DB/CreativeCloud/CoreSync/*.log
 - /data/data/com.android.captiveportallogin
 - /data/data/com.google.android.apps.maps/files/DATA_ShortTermStorage*
