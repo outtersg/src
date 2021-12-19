@@ -51,7 +51,7 @@ analyserParametres()
 
 menage()
 {
-	kill `cat "$T/pids"`
+	[ -e "$T/pids" ] && kill `cat "$T/pids"` || true
 	[ -z "$T" ] || rm -Rf "$T"
 	exit 0
 }
