@@ -105,6 +105,7 @@ dest="`cat "$TMPDIR/dest"`"
 - **/uil-cache
 - /Android/data/com.google.android.apps.maps/testdata
 - /Android/data/com.google.android.googlequicksearchbox
+- /Android/data/com.infomil.leclercdrive/files/photos
 - /Android/data/com.microsoft.skydrive
 - /Android/media/com.google.android.talk/Ringtones
 - /Download

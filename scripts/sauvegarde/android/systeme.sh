@@ -21,6 +21,7 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - packages_gid.list
 - remove_userid
 - **/GPUCache
+- **/.Fabric
 - **/*.apk
 - **/*.dex
 - **/*.odex
@@ -34,6 +35,8 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - /dev
 - /data/clipboard
 - /data/dalvik-cache
+- /data/data/com.adobe.reader/files/Resource/Unicode/mappings
+- /data/data/com.adobe.reader/files/review/DB/CreativeCloud/CoreSync/*.log
 - /data/data/com.android.captiveportallogin
 - /data/data/com.google.android.apps.maps/files/DATA_ShortTermStorage*
 - /data/data/com.google.android.gms/app_bound_sslcache
@@ -51,9 +54,12 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - /data/data/com.sec.android.gallery3d
 - /data/data/com.sec.enterprise.knox.*
 - /data/data/com.sec.svoice*
+- /data/data/com.whatsapp
 - /data/data/com.waze/waze
 - /data/data/de.axelspringer.yana.zeropage
 - /data/data/edu.berkeley.cs.amplab.carat.android
+- /data/data/jackpal.androidterm/app_HOME/tmp/temp.*
+- /data/data/jackpal.androidterm/app_HOME/tmp/syncscripts/proc
 - /data/lineageos_updates
 - /data/magisk.img
 - /data/media
@@ -70,6 +76,7 @@ rsync --delete -av --exclude-from=- / /mnt/sdcard/sauvegardes/systeme/ <<TERMINE
 - /data/system_ce/0/recent_images
 - /data/system_ce/0/recent_tasks
 - /data/user_de/0/com.android.bluetooth
+- /data/user_de/0/com.google.android.tts
 - /mnt
 - /proc
 - /storage
