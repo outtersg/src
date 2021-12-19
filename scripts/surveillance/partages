@@ -4,6 +4,9 @@
 # http://stackoverflow.com/questions/22450292/how-to-encode-a-path-containing-spaces-in-a-cfstringref
 # (et j'ai essayé de le convertir en toutes les fragrances d'UTF-8 avant de chercher sur internet).
 
+mode=async
+mode=sync # En fait avec Unison le mode async ne marche pas, car Unison verrouille l'arbo quand il travaille dessus; du coup impossible d'avoir deux Unison tournant en même temps sur la même arbo.
+
 exec >> /tmp/p.log 2>&1
 
 auSecours()
@@ -57,9 +60,18 @@ initDest()
 {
 	dest="$1"
 	
+	numeroDest="`expr $numeroDest + 1`"
+
+	if [ $mode = sync ]
+	then
+		fichiertemps="$T/temps.$numeroDest"
+		echo "255 999999 $fichiertemps $dest" > "$fichiertemps"
+	fi
+
 	pousse "$dest"
 	
-	numeroDest="`expr $numeroDest + 1`"
+	[ $mode = async ] || return
+	
 	touch "$T/dest.$numeroDest"
 	(
 		tail -f "$T/dest.$numeroDest" | while read modif
@@ -71,11 +83,48 @@ initDest()
 	echo $! >> "$T/pids"
 }
 
+mesurer()
+{
+	# On n'utilise pas time, car ça entremêle sortie du process et de time. La précision de date +%s nous suffit.
+	t0="`date +%s`"
+	"$@"
+	r=$?
+	t1="`date +%s`"
+	echo "$r `expr $t1 - $t0` $fichiertemps $dest" > "$fichiertemps"
+}
+
+faireAsync()
+{
+	for f in "$T"/dest.*
+	do
+		echo 1 >> "$f"
+	done
+}
+
+faireSync()
+{
+	# On trie les derniers résultats pour tenter en premier la destination qui, ayant réussi (état de sortie 0), a mis le moins de temps.
+	# Coup de bol, parmi les différents états de sortie, le 1 (qui viendra se placer juste après le 0, et avant les autres cas d'erreur plus graves du genre impossible de joindre la cible) désigne une synchro partielle, 2 des erreurs non fatales, 3 un gros souci. Bref, les états sont bien triés.
+	cat "$T"/temps.* | sort -n -k 1 -n -k 2 | while read dernierestatut derniertemps fichiertemps dest
+	do
+		pousse "$dest"
+	done
+}
+
+if [ $mode = sync ]
+then
+	tracer() { mesurer "$@" ; }
+	faire() { faireSync "$@" ; }
+else
+	tracer() { "$@" ; }
+	faire() { faireAsync "$@" ; }
+fi
+
 pousse()
 {
 	dest="$1"
 	export UNISONLOCALHOSTNAME
-	unison -batch -backups -maxbackups 3 "$source" "$dest"
+	tracer unison -batch -backups -maxbackups 3 "$source" "$dest"
 }
 
 analyserParametres "$@"
@@ -98,8 +147,5 @@ done
 fswatch -e ".unison.*.unison.tmp" -e ".bak.*" "$source" | while read f
 do
 	echo "CHANGEMENT $f"
-	for f in "$T"/dest.*
-	do
-		echo 1 >> "$f"
-	done
+	faire
 done
