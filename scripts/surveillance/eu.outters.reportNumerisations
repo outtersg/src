@@ -2,7 +2,7 @@
 
 source="$1"
 dest="$2"
-nom="num*.pdf"
+nom="num*.jpg"
 
 temps=10 # Pour que LaunchAgents ne nous trouve pas trop farouches, il faut que nous tenions au moins 10 s à chaque lancement.
 
