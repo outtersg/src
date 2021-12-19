@@ -33,7 +33,7 @@ case "$1" in
 		dest=k:sauvegardes/falbala.
 		;;
 	l)
-		dest=l:sauvegardes/falbala.
+		dest=sauvegardes.gclo.fr:sauvegardes/falbala.
 		;;
 	*)
 		echo "# Utilisation: machin <config à lancer>" >&2
