@@ -1,4 +1,5 @@
 var treo = [ /Transmis/, /En traitement/, /En attente/, /Résolu/ ];
+var creo = [ [ 255, 127, 0 ], [ 255, 152, 25 ], [ 223, 223, 0 ], [ 143, 175, 0 ] ];
 var freo = function(bloc)
 {
 	var rects = bloc.querySelectorAll('.highcharts-column-series .highcharts-point');
@@ -13,6 +14,7 @@ var freo = function(bloc)
 		l = r.getAttribute('aria-label');
 		for(j = -1; ++j < treo.length && !treo[j].match(l);) {}
 		r.poids = j;
+		r.setAttribute('fill', 'rgb('+creo[j].join(',')+')');
 		cols[x].push(r);
 	}
 	for(col in cols)
