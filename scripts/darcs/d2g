@@ -158,7 +158,12 @@ fi
 # Y a-t-il de quoi générer une version?
 daterVersionComposer
 git push --tags -u origin master
+# Le truc suivant n'est à appeler que si on n'a pas effectué le branchement github -> packagist.
 curl -X POST -H 'Content-Type: application/json' "https://packagist.org/api/update-package?username=$moiComposer&apiToken=$PACKAGIST_API_TOKEN" -d '{"repository":{"url":"https://packagist.org/packages/'"$PACKAGIST_URI"'"}}'
+# Sinon il faut paramétrer sous github un webhook https://github.com/outtersg/$nom/settings/hooks/new en:
+#   https://packagist.org/api/github?username=Guillaume%20Outters
+#   application/json
+#   $PACKAGIST_API_TOKEN
 }
 
 faire "$@"
