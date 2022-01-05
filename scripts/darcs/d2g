@@ -4,6 +4,8 @@ moiGitHub=outtersg
 racineComposer=gui
 moiComposer="Guillaume Outters"
 
+PACKAGIST_API_TOKEN=xxxxxxxxxxxxxxxxxxxx
+
 set -e
 
 err()
@@ -49,14 +51,7 @@ daterVersionComposer()
 	
 	# Calcul de la date à coller commer version de rustine.
 	
-		dateDernier="`darcs changes --last 1 --xml | sed -e '/ date=/!d' -e 's/.* date=//' -e 's/ .*//' | head -1 | tr -d \''"'`"
-		case "$dateDernier" in
-			20????????????)
-				jourDernier="`echo "$dateDernier" | cut -c 1-8`"
-				heureDernier="`echo "$dateDernier" | cut -c 9-`"
-				jourDernierMoins2000="`expr "$jourDernier" - 20000000`"
-				;;
-		esac
+	local jourDernierMoins2000="`dateDernier`"
 	
 	# Parcours des étiquetages déjà effectués avec cette valeur.
 	
@@ -75,15 +70,44 @@ daterVersionComposer()
 	fi
 }
 
+dateDernier_git()
+{
+	git log -n 1 --date=format:%y%m%d --pretty=format:%cd
+}
+
+dateDernier_darcs()
+{
+	local dateDernier jourDernier heureDernier jourDernierMoins2000
+	
+		dateDernier="`darcs changes --last 1 --xml | sed -e '/ date=/!d' -e 's/.* date=//' -e 's/ .*//' | head -1 | tr -d \''"'`"
+		case "$dateDernier" in
+			20????????????)
+				jourDernier="`echo "$dateDernier" | cut -c 1-8`"
+				heureDernier="`echo "$dateDernier" | cut -c 9-`"
+				jourDernierMoins2000="`expr "$jourDernier" - 20000000`"
+				;;
+		esac
+	
+	echo "$jourDernierMoins2000"
+}
+
+prefs()
+{
+	[ ! -e .git/prefs ] || . .git/prefs
+	[ ! -z "$nomComp" ] || nomComp="$nom"
+	[ ! -z "$PACKAGIST_URI" ] || PACKAGIST_URI=$racineComposer/$nomComp
+}
+
+d2g()
+{
 [ -d _darcs ] || err "Vous devez vous trouver dans un dossier racine darcsisé (_darcs doit exister)."
 
 [ -e .git/index ] && err ".git contient déjà un dossier git. Je ne peux travailler dessus."
+	
+	dateDernier() { dateDernier_darcs "$@" ; }
 
 d2g="`command -v darcs-to-git`"
 [ 2 -eq "`grep Ignore-this: < "$d2g" | wc -l`" ] || err "Veuillez utiliser une version de darcs-to-git qui vire les Ignore-this:"
-
-nom="`basename "$PWD"`"
-PACKAGIST_API_TOKEN=xxxxxxxxxxxxxxxxxxxx
 
 if [ ! -d .git ]
 then
@@ -91,13 +115,10 @@ then
 	touch .git/prefs
 	mkdir .git/travail
 fi
-
+	
+	prefs
+	
 cd .git
-
-. prefs
-
-[ ! -z "$nomComp" ] || nomComp="$nom"
-[ ! -z "$PACKAGIST_URI" ] || PACKAGIST_URI=$racineComposer/$nomComp
 
 cd travail
 if [ ! -f ../auteurs ]
@@ -111,6 +132,25 @@ do
 	[ -f "$f" ] && darcs revert -a "$f" || true
 done
 darcs-to-git ../.. --author-map ../auteurs || true
+}
+
+g2g()
+{
+	dateDernier() { dateDernier_git "$@" ; }
+	
+	prefs
+}
+
+faire()
+{
+	nom="`basename "$PWD"`"
+	
+	if [ -e .git/index -a ! -e _darcs ]
+	then
+		g2g
+	else
+		d2g
+	fi
 if ! grep -q remote.\*origin .git/config
 then
 	git remote add origin git@github.com:$moiGitHub/$nom.git
@@ -119,3 +159,6 @@ fi
 daterVersionComposer
 git push --tags -u origin master
 curl -X POST -H 'Content-Type: application/json' "https://packagist.org/api/update-package?username=$moiComposer&apiToken=$PACKAGIST_API_TOKEN" -d '{"repository":{"url":"https://packagist.org/packages/'"$PACKAGIST_URI"'"}}'
+}
+
+faire "$@"
