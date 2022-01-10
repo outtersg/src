@@ -1,3 +1,14 @@
+// ==UserScript==
+// @name         ServiceNow en ordre
+// @namespace    http://outters.eu/
+// @description  Force l'ordre des barres d'un diagramme ServiceNow, ainsi que ses couleurs.
+// @include      https://….service-now.com/home.do*
+// @grant        none
+// ==/UserScript==
+
+(function(){
+
+/* ICI PARAMÉTREZ VOS ÉTATS ET COULEURS */
 var treo = [ /Transmis/, /En traitement/, /En attente/, /Résolu/ ];
 var creo = [ [ 255, 127, 0 ], [ 255, 152, 25 ], [ 223, 223, 0 ], [ 143, 175, 0 ] ];
 
@@ -73,4 +84,24 @@ lreo = function(bloc)
 	// De plus attention à ce que ça tienne encore dans le contenant (si SNow avait réparti Riquiqui, Petit, Long, Gigantesque en 2 lignes R - L et G - P, le R et le G étaient sur la même large colonne (mettons 150px), et le L et le P sur une autre (mettons 100px), pour un total de 250px. Si maintenant R et G sont chacun sur une colonne, les *deux* colonnes devront faire 150px, pour un total de 300px: rentré-ce encore?).
 };
 
-document.querySelectorAll('.highcharts-series-group').forEach(freo);
+var traiter = function()
+{
+	var attente = setInterval(function()
+	{
+		var t = document.querySelectorAll('.highcharts-series-group');
+		var i;
+		// À FAIRE: les camemberts.
+		// À FAIRE: quand on passe la souris ça remet la couleur d'origine.
+		for(i = -1; ++i < t.length;)
+			if(typeof(t[i].fait) == 'undefined' && t[i].querySelectorAll('.highcharts-column-series').length)
+			{
+				t[i].fait = true;
+				freo(t[i]);
+			}
+	}, 100);
+	setTimeout(function() { clearInterval(attente); }, 5000);
+};
+
+traiter();
+
+})();
