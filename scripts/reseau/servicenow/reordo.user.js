@@ -12,7 +12,7 @@ var freo = function(bloc)
 		if(typeof cols[x] == 'undefined')
 			cols[x] = [];
 		l = r.getAttribute('aria-label');
-		for(j = -1; ++j < treo.length && !treo[j].match(l);) {}
+		for(j = -1; ++j < treo.length && !treo[j].test(l);) {}
 		r.poids = j;
 		r.setAttribute('fill', 'rgb('+creo[j].join(',')+')');
 		cols[x].push(r);
