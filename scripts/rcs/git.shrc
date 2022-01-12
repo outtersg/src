@@ -120,6 +120,18 @@ gscp()
 	git commit --amend --no-edit
 }
 
+# https://stackoverflow.com/questions/372506/how-can-i-search-git-branches-for-a-file-or-directory#comment23099369_372654
+gfind()
+{
+	local b refs=refs/heads
+	[ "x$1" = x-r ] && refs=refs/remotes && shift
+	
+	for b in `git for-each-ref --format="%(refname)" $refs`
+	do
+		git ls-tree -r --name-only $b | grep "$1" | sed -e "s#^#$b: #"
+	done
+}
+
 #- Projets ---------------------------------------------------------------------
 # Fonctionnement dans le cadre de rcs/shrc.
 
