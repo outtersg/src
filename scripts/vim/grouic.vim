@@ -6,8 +6,8 @@ if exists("b:current_syntax")
 endif
 
 syn match diffComment '^#.*'
-syn match diffRemoved '^[xX] [^[]*\[[^]]*\]'
-syn match diffAdded   '^ [xX][^[]*\[[^]]*\]'
+syn match diffRemoved '^[xX] [^[xX]*\[[^]]*\]'
+syn match diffAdded   '^  *[xX][^[]*\[[^]]*\]'
 
 " Commentaire en NonText plutôt que Comment, ce dernier ayant tendance à adopter le vert qui se confond avec diffAdded.
 hi def link diffComment	NonText
