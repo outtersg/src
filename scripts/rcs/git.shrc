@@ -87,7 +87,7 @@ cb()
 		
 		if [ $mode = couleur ]
 		then
-			coul1='"["(toupper(marques) == "X " ? "31" : (toupper(marques) == " X" ? "32" : "90"))"m"'
+			coul1='"["(marques ~ /^[xX] *$/ ? "31" : (marques ~ /^  *[xX]/ ? "32" : "90"))"m"'
 			coul0='"[0m"'
 		else
 			coul1='"["'
