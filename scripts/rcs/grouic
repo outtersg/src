@@ -86,7 +86,9 @@ tourner()
 	grep '^[xX] ' < "$t" | sed -e 's/^[^[]*\[/pick /' -e 's/\].*//' | awk '{print NR" "$0}' | sort -nr | cut -d ' ' -f 2- > "$t.1"
 	mv "$t.1" "$t"
 	
-	EDITOR="$SCRIPTS/grouic --edit $t" git rebase --onto "$SUR" -i
+	# Le HEAD^ est arbitraire, c'est juste pour lui donner un socle de rebase au cas où il n'y a pas de branche distante (qui sert par défaut de point de départ).
+	# On en prend donc un non vide, mais tout petit pour éviter à git de faire trop de calculs (puisque tout ce qu'il calcule finit à la trappe: on l'écrase par le contenu de $t).
+	EDITOR="$SCRIPTS/grouic --edit $t" git rebase --autostash HEAD^ --onto "$SUR" -i
 	
 	rm "$t"
 }
