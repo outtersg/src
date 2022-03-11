@@ -27,6 +27,12 @@ var gira =
 		});
 		req.open('GET', giraIncsUrl.replace(/@NUM/, num).replace(/@REFS/, refs));
 		req.send();
+	},
+	/* Les listes déroulantes ont un [max-]width: 100% qui prend trop de place une fois qu'on supprime le menu droite;
+	 * donc visuellement déjà ça fait moche, mais pire: les suggestions du menu s'affichant à droite du menu lui-même, tombent hors page lorsque le menu prend toute la largeur! */
+	deroulantes: function(css)
+	{
+		css.appendChild(document.createTextNode('.full-width { max-width: 512px; }'));
 	}
 };
 
@@ -80,6 +86,7 @@ var gira =
 		} + ")();";
 		document.body.appendChild(s);
 		
+		gira.deroulantes(st);
 		gira.incs();
 	}
 )
