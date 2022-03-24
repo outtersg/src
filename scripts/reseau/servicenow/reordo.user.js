@@ -2,7 +2,7 @@
 // @name         ServiceNow en ordre
 // @namespace    http://outters.eu/
 // @description  Force l'ordre des barres d'un diagramme ServiceNow, ainsi que ses couleurs.
-// @include      https://….service-now.com/home.do*
+// @include      https://….service-now.com/*
 // @grant        none
 // ==/UserScript==
 
@@ -86,7 +86,7 @@ lreo = function(bloc)
 
 var traiter = function()
 {
-	var attente = setInterval(function()
+	var appliquer = function(document)
 	{
 		var t = document.querySelectorAll('.highcharts-series-group');
 		var i;
@@ -98,6 +98,14 @@ var traiter = function()
 				t[i].fait = true;
 				freo(t[i]);
 			}
+	};
+	var attente = setInterval(function()
+	{
+		appliquer(document);
+		// https://stackoverflow.com/a/55837286/1346819
+		var i;
+		for(i = -1; ++i < frames.length;)
+			appliquer(frames[i].document);
 	}, 100);
 	setTimeout(function() { clearInterval(attente); }, 5000);
 };
