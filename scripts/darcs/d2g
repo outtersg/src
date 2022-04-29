@@ -60,6 +60,7 @@ daterVersionComposer()
 	if nouvelleEtiquettePour "$etiquette" "`git rev-list -n 1 master`"
 	then
 		local v="$nouvelleEtiquette"
+		git checkout master
 				git branch "$v"
 				git checkout "$v"
 		sed -E -e 's#("version": *")[^"]*"#\1'"$nouvelleEtiquette"'"#g' < composer.json > composer2.json && mv composer2.json composer.json
