@@ -22,9 +22,18 @@ gris()
 	echo "[90m$*[0m"
 }
 
+sauSys()
+{
+	# À FAIRE: avoir une panoplie de trucs à essayer (su systeme.sh, à défaut un machin qui permet à certaines applications de se déverser vers /sdcard/ type SMS Backup & Restore).
+	if command -v su 2>&1 > /dev/null
+	then
 echo "=== Sauvegarde système ==="
 
 su -c "sh < $R/bin/systeme.sh"
+	fi
+}
+
+sauSys
 
 echo "=== Transfert de la sauvegarde ==="
 
