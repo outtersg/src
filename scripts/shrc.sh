@@ -152,3 +152,16 @@ compup()
         ln -s "$HOME/src/projets" "$vendu" || return $?
     )
 }
+
+#- Variables et manipulations --------------------------------------------------
+
+# incruster <chaîne hôte> <pos début incrustation> <pos fin incrustation> <chaîne incrustée>
+incruster()
+{
+	local n=`expr $3 - $2`
+	local fin1=`expr $3 + 1`
+	local reste="`echo "$1" | cut -c $fin1-`"
+	# À FAIRE: justifications à gauche et au centre.
+	# À FAIRE: savoir que les séquences d'échappement ANSI occupent une place nulle. Et que les accents n'en prennent qu'une?
+	printf "%$2.$2s%$n.${n}s%s" "$1" "$4" "$reste"
+}
