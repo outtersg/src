@@ -155,13 +155,113 @@ compup()
 
 #- Variables et manipulations --------------------------------------------------
 
-# incruster <chaîne hôte> <pos début incrustation> <pos fin incrustation> <chaîne incrustée>
-incruster()
-{
-	local n=`expr $3 - $2`
-	local fin1=`expr $3 + 1`
-	local reste="`echo "$1" | cut -c $fin1-`"
+# incruster <incruste> <dans> <début> <fin>
+# incruster <incruste> <dans> -b <bloc> <pos bloc 1> <pos bloc 2>…
+# incruster <incruste> <dans> -b <bloc> / <n blocs> <largeur totale>
+# À FAIRE: -B, où le bloc prend toute la largeur (-b s'arrête 1 avant, pour laisser un séparateur entre les blocs).
 	# À FAIRE: justifications à gauche et au centre.
 	# À FAIRE: savoir que les séquences d'échappement ANSI occupent une place nulle. Et que les accents n'en prennent qu'une?
-	printf "%$2.$2s%$n.${n}s%s" "$1" "$4" "$reste"
+incruster()
+{
+	# Pour le formatage (justification centrée), awk se révélera précieux (même si printf permettrait de faire du justifié à droite);
+	# et plutôt que de bricoler un assemblage de shell (interprétation des paramètres) et d'awk (travail effectif),
+	# partons sur du tout awk, qui sera plus efficace.
+	awk '
+function err(message){
+	print "# "message > "/dev/stderr";
+	exit 2;
+}
+# Division entière arrondie.
+function divarr(dividende, diviseur){
+	modulo = dividende % diviseur;
+	r = (dividende - modulo) / diviseur;
+	if(modulo >= diviseur / 2) ++r;
+	return r;
+}
+function serpe(chaine, taille){
+	chaine = substr(chaine, 1, taille);
+	if(length(chaine) < taille)
+	{
+		manque = taille - length(chaine);
+		chaine = chaine""sprintf("%"manque"."manque"s", "");
+	}
+	return chaine;
+}
+BEGIN{
+	#- Analyse des paramètres --------------------------------------------------
+	
+	split("incruste,dans", paramsARemplir, /,/);
+	numParamARemplir = 1;
+	autoblocs = 0;
+	for(i = 0; ++i < ARGC;)
+	{
+		if(ARGV[i] == "-b")
+		{
+			numBloc = 0 + ARGV[++i];
+			if(ARGV[i + 1] == "/")
+			{
+				nBlocs = 0 + ARGV[i + 2];
+				autoblocs = 1;
+				i += 2;
+			}
+			continue;
+		}
+		if(numParamARemplir <= 2)
+		{
+			if(paramsARemplir[numParamARemplir] == "incruste")
+				incruste = ARGV[i];
+			else if(paramsARemplir[numParamARemplir] == "dans")
+				dans = ARGV[i];
+			++numParamARemplir;
+			continue;
+		}
+		if(numBloc)
+			if(autoblocs)
+				largeur = 0 + ARGV[i];
+			else
+			{
+				--i;
+				posBlocs[nBlocs = 0] = 0;
+				while(++i < ARGC)
+					posBlocs[++nBlocs] = 0 + ARGV[i];
+				largeur = posBlocs[nBlocs];
+			}
+		else
+		{
+			debut = 0 + ARGV[i++];
+			fin = 0 + ARGV[i++];
+		}
+	}
+	
+	if(autoblocs && !largeur)
+	{
+		"tput cols" | getline largeur;
+		--largeur; # Dans un terminal, on ne veut surtout pas occuper la dernière colonne, sinon ça repousse le curseur un caractère après c est-à-dire sur une nouvelle ligne.
+	}
+	
+	#- Traitement --------------------------------------------------------------
+	
+	if(!debut)
+	{
+		if(autoblocs)
+		{
+			debut = divarr(numBloc * largeur, nBlocs);
+			fin = divarr((numBloc + 1) * largeur, nBlocs);
+		}
+		else
+		{
+			if(numBloc > 0 && !posBlocs[numBloc + 1]) err("numBloc demande à ce que la position du bloc soit définie.");
+			debut = posBlocs[numBloc];
+			fin = posBlocs[numBloc + 1];
+		}
+		if(numBloc + 1 < nBlocs) --fin; # On laisse un espace entre deux blocs.
+	}
+	
+	avant = serpe(dans, debut);
+	incruste = serpe(incruste, fin - debut);
+	apres = substr(dans, fin + 1);
+	print avant""incruste""apres;
+	exit;
+}
+' "$@"
 }
