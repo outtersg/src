@@ -155,11 +155,14 @@ compup()
 
 #- Variables et manipulations --------------------------------------------------
 
-# incruster <incruste> <dans> <début> <fin>
-# incruster <incruste> <dans> -b <bloc> <pos bloc 1> <pos bloc 2>…
-# incruster <incruste> <dans> -b <bloc> / <n blocs> <largeur totale>
+# incruster [-c|-d] <incruste> <dans> <début> <fin>
+# incruster [-c|-d] <incruste> <dans> -b <bloc> <pos bloc 1> <pos bloc 2>…
+# incruster [-c|-d] <incruste> <dans> -b <bloc> / <n blocs> <largeur totale>
+#   -c
+#     Justification centrée.
+#   -d
+#     Justification à droite.
 # À FAIRE: -B, où le bloc prend toute la largeur (-b s'arrête 1 avant, pour laisser un séparateur entre les blocs).
-	# À FAIRE: justifications à gauche et au centre.
 	# À FAIRE: savoir que les séquences d'échappement ANSI occupent une place nulle. Et que les accents n'en prennent qu'une?
 incruster()
 {
@@ -193,6 +196,7 @@ BEGIN{
 	split("incruste,dans", paramsARemplir, /,/);
 	numParamARemplir = 1;
 	autoblocs = 0;
+	justif = -1;
 	for(i = 0; ++i < ARGC;)
 	{
 		if(ARGV[i] == "-b")
@@ -206,6 +210,8 @@ BEGIN{
 			}
 			continue;
 		}
+		if(ARGV[i] == "-c") { justif = 0; continue; }
+		if(ARGV[i] == "-d") { justif = 1; continue; }
 		if(numParamARemplir <= 2)
 		{
 			if(paramsARemplir[numParamARemplir] == "incruste")
@@ -258,6 +264,8 @@ BEGIN{
 	}
 	
 	avant = serpe(dans, debut);
+	if(justif >= 0 && (tVide = fin - debut - length(incruste)) > 0)
+		incruste = serpe("", justif > 0 ? tVide : (tVide - tVide % 2) / 2)""incruste;
 	incruste = serpe(incruste, fin - debut);
 	apres = substr(dans, fin + 1);
 	print avant""incruste""apres;
