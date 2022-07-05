@@ -19,7 +19,7 @@ tifs()
 ep_init()
 {
 	ep_dateRef="`darcs changes --xml . | head -3 | sed -e '/ date=/!d' -e "s/.* date='//" -e "s/'.*//"`"
-	ep_dateRef="`TZ=GMT date -j -f %Y%m%d%H%M%S "$ep_dateRef" +%s`"
+	ep_dateRef="`TZ=GMT datedens "$ep_dateRef"`"
 	
 	pp_decalage
 	
@@ -73,7 +73,7 @@ ep()
 	ep_descr="$1" ; shift
 	[ ! -z "$ep_decalage" ] || ep_init
 	local ep_maintenant="`pp_maintenant`"
-	ep_maintenant="`TZ=GMT date -r $ep_maintenant +%Y%m%d%H%M%S`"
+	ep_maintenant="`TZ=GMT datesend $ep_maintenant +%Y%m%d%H%M%S`"
 	local s3="`printf '\003'`"
 	local comm="`echo "$ep_descr" | sed -e 's/\([^\]\)|/\1'"$s3"'/g' -e 's/[\]|/|/g' | tr "$s3" '\012' | $ep_filtrage`"
 	if [ -z "$tiquette" ]
