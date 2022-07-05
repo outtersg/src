@@ -29,7 +29,10 @@
 
 // Permet d'enrober un psql (ou un pg_dump, en lur balançant < /dev/null pour qu'il n'attende pas éternellement une entrée) pour que la saisie de mot de passe se fasse automatiquement depuis le programme, plutôt que de requérir une saisie dans le terminal.
 #ifndef _XOPEN_SOURCE
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 600
+#endif
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
 #endif
 #include <stdlib.h>
 #include <fcntl.h>
