@@ -62,14 +62,35 @@ pp()
 	memeprojet || { [ $? = 2 ] && pp "$@" ; return ; }
 }
 
+#- Calculs de dates ------------------------------------------------------------
+
+# date: secondes (depuis l'Epoch) en date (+%… à ajouter en paramètre).
+datesend()
+{
+	local secondes="$1" ; shift
+	case `uname` in
+		FreeBSD) date -r $secondes "$@" ;;
+		*) date -d @$secondes "$@" ;;
+	esac
+}
+
+# date: date (AAAAMMJJHHMMSS) en secondes (depuis l'Epoch)
+datedens()
+{
+	case `uname` in
+		FreeBSD) date -j -f %Y%m%d%H%M%S "$1" +%s ;;
+		*) date -d "`echo "$1" | sed -E -e 's/^([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3 \4:\5:\6/'`" +%s ;;
+	esac
+}
+
 # Initialise le décalage entre date hôte et date désirée.
 pp_decalage()
 {
 	local ep_optionsDateRef ep_dateRef ep_date ep_expr_date ep_a_ce_moment ep_maintenant
 	
-	ep_optionsDateRef=
-	[ -z "$ep_dateRef" ] || ep_optionsDateRef="-r $ep_dateRef"
-	ep_dateRef="`date $ep_optionsDateRef +%Y%m%d%H%M%S`"
+	local dateur=date
+	[ -z "$ep_dateRef" ] || dateur="datesend $ep_dateRef"
+	ep_dateRef="`$dateur +%Y%m%d%H%M%S`"
 	echo "Date de référence (dernière modif): $ep_dateRef"
 	printf "À quelle date commençons-nous notre session ([[[aaaa]mm]jj]hhmm)? "
 	read ep_date
@@ -79,7 +100,7 @@ pp_decalage()
 	esac
 	ep_expr_date="`echo "$ep_expr_date" | tr '[0-9]' .`$"
 	ep_date="`echo "$ep_dateRef" | sed -e "s/$ep_expr_date/$ep_date\1/"`"
-	ep_a_ce_moment="`date -j -f %Y%m%d%H%M%S "$ep_date" +%s`"
+	ep_a_ce_moment="`datedens "$ep_date"`"
 	ep_maintenant="`date +%s`"
 	ep_decalage="`expr $ep_maintenant - $ep_a_ce_moment`"
 	pp_decalage="$ep_decalage"
