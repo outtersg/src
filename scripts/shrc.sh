@@ -303,3 +303,29 @@ BEGIN{
 }
 ' "$@"
 }
+
+#- Dates -----------------------------------------------------------------------
+
+# À FAIRE: rapatrier datesend de rcs/shrc
+
+# Détermine si nous sommes un jour donné dans le mois, ou un dernier jour.
+# Ex.: pseudojour 01 d # Vrai si nous sommes le 1er ou le dernier jour du mois.
+pseudojour()
+{
+	local jour=`date +%d`
+	local t
+	for t in "$@"
+	do
+		case $jour in
+			$t|0$t) return ;;
+		esac
+		case $t in
+			dernier|D|d)
+				local maintenant=`date +%s`
+				local demain=$((maintenant+3600*24))
+				case `datesend $demain +%d` in 01) return ;; esac
+				;;
+		esac
+	done
+	false
+}
