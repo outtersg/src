@@ -309,21 +309,37 @@ BEGIN{
 # À FAIRE: rapatrier datesend de rcs/shrc
 
 # Détermine si nous sommes un jour donné dans le mois, ou un dernier jour.
-# Ex.: pseudojour 01 d # Vrai si nous sommes le 1er ou le dernier jour du mois.
+# Ex.: pseudojour 01 d -2 # Vrai si nous sommes le 1er, le dernier, ou l'avant-dernier jour du mois (d est synonyme de -1).
+# /!\ -1 signifie "1 jour avant le 1er", soit le dernier du mois; l'arithmétique voudrait que cette veille du 1er soit le 0 (plutôt que le -1), mais les usages sont ce qu'ils sont.
 pseudojour()
 {
 	local jour=`date +%d`
-	local t
+	local t jplus28= maintenant demain
+	
 	for t in "$@"
 	do
+		# Jour numérique: facile, ça colle ou ça ne colle pas.
 		case $jour in
 			$t|0$t) return ;;
 		esac
+		
+		# Jour symbolique: on va avoir devoir calculer.
+		
 		case $t in
-			dernier|D|d)
-				local maintenant=`date +%s`
-				local demain=$((maintenant+3600*24))
-				case `datesend $demain +%d` in 01) return ;; esac
+			[0-9]*) continue ;; # Ah non là pas symbolique.
+			dernier|D|d) t=-1 ;;
+		esac
+		
+		case "$maintenant" in "") maintenant=`date +%s` ;; esac
+		case $t in
+			# À FAIRE: f, f-1 pour les fériés. Notons que pour f-1 on ne pourra reposer sur jplus28, il faudra un jplus1.
+			-[0-9]*)
+				case "$jplus28" in "")
+					jplus28=$((maintenant+3600*24*28))
+					jplus28=`datesend $jplus28 +%d`
+					;;
+				esac
+				case $((28-jplus28+t)) in -1) return ;; esac
 				;;
 		esac
 	done
