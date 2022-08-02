@@ -118,7 +118,7 @@ _ap_filtres()
 	local p
 	for p in "$@"
 	do
-		echo "/`echo "$p" | sed -e 's#/#\\/#g'`/{ trouves[++nTrouves] = \$2; }"
+		echo "/`echo "$p" | sed -e 's#/#\\/#g'`/{ if(\$3 != $$) trouves[++nTrouves] = \$2; }"
 	done
 }
 
