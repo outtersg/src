@@ -30,10 +30,25 @@ gr()
 	git fetch && git stash && git rebase "$@" && git stash apply
 }
 
+# git cherry-pick interactif.
+# Utilisation: gcp <la branche dont on veut ramener des trucs sur l'actuelle>
+gcp()
+{
+	local tete=`git log --pretty=format:%H -n 1`
+	local b="`git symbolic-ref --short HEAD`"
+	git branch -m "$b.bis" && git checkout -b "$b" "$1" && { git rebase -i "$tete" && git branch -d "$b.bis" || echo "[31m# Après finalisation, pensez à un git branch -d $b.bis[0m" >&2 ; } || git branch -m "$b"
+}
+
 glog()
 {
 	# https://stackoverflow.com/a/13965459
 	git log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr)%Creset' --abbrev-commit "$@"
+}
+
+# git stash diff
+gsd()
+{
+	git stash show -p "$@"
 }
 
 # Git Ancêtre Réellement Commun par Exploration
