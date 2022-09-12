@@ -62,6 +62,11 @@ o()
 }
 
 (
+#- /home/bethleem
+#- /home/gui
+# Apache, Roundcube, exim, nous font monter de 1 Go à chaque sauvegarde. Bon, c'est quand même important de savoir ce qu'il s'est passé.
+#- **/logs
+#- **/log
 cat <<TERMINE
 - /dev
 - /home/jails/*/basejail
@@ -151,12 +156,14 @@ cat <<TERMINE
 - /usr/share
 - /usr/src
 - /var/db/freebsd-update
+- /var/db/locate.database
 - /var/tmp
 - var/run/dovecot
 - **/temp/*.128.jpg
 - **/temp/*.cache
 - **/temp/*.session
 - **/temp/*.sessions
+- **/*.core
 - **/imagettes
 TERMINE
 ) | $commande
