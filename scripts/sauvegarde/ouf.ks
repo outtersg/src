@@ -29,6 +29,11 @@ case "$dest1" in
 	006)
 		dest="/Users/sauvegardes/$nom."
 		commande="o $commande"
+		;;
+	muxdemux)
+		dest="/g/sauvegardes/$nom."
+		commande="o $commande"
+		;;
 esac
 
 [ -z "$dest" ] && echo "# Utilisation: ouf.ks [carlo|sb|sg|006]" >&2 && exit 1
