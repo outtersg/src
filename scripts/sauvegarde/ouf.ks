@@ -10,7 +10,10 @@ nom=ks
 [ "x$1" = x-ls ] && serveur=l && nom=ls && shift && commande="$commande -l l" # l, toutes les semaines.
 [ "x$1" = x-r ] && commande="$commande $1 $2" && shift && shift
 
-case "$1" in
+dest1="$1"
+[ -n "$dest1" ] || dest1="`hostname`"
+
+case "$dest1" in
 	carlo)
 		dest="/Volumes/CARLOMAN/sauvegardes/$nom/"
 		commande=rs
