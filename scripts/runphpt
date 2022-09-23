@@ -1,0 +1,48 @@
+#!/bin/sh
+# Un php *.phpt un peu plus joli.
+
+res=
+
+raff() { printf '\r' ; }
+aff() { printf '\r%s ' "$*" ; }
+
+faire()
+{
+	local t=/tmp/temp.phpt.$$ r="[32m.[0m" test="${1}t"
+	aff "$res? $1"
+	
+	awk "BEGIN{p=\"$t\"}"'/^--TEST--$/{s=p".titre";next}/^--FILE--$/{s=p".php";next}/^--EXPECT--/{s=p".ref";next}{print>s}' < "$1"
+	cat $t.php > "$test" # On replace le .php extrait dans son dossier de départ, pour que les __FILE__ soient relatifs au .phpt.
+	
+	if ! php "$test" > $t.stdout 2> $t.stderr
+	then
+		r="[31mE[0m"
+		raff
+		echo "[90m=== $1 ===[0m"
+		for s in stderr stdout
+		do
+			if [ -s $t.$s ]
+			then
+				echo "[90m--- $s ---[0m"
+				cat $t.$s
+			fi
+		done
+	elif ! diff -uw $t.ref $t.stdout > $t.diff
+	then
+		r="[33mf[0m"
+		raff
+		echo "[90m=== $1 ===[0m"
+		echo "[90m--- diff ---[0m"
+		cat $t.diff
+	fi
+	res="$res$r"
+	aff "$res"
+	
+	rm -f "$test" $t.*
+}
+
+for f in "$@"
+do
+	faire "$f"
+done
+echo
