@@ -71,6 +71,12 @@ gsd()
 	git stash show -p "$@"
 }
 
+# git stash log
+gsl()
+{
+	git stash list --date=local "$@"
+}
+
 # Git Ancêtre Réellement Commun par Exploration
 garce()
 {
