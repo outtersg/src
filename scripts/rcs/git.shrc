@@ -106,7 +106,7 @@ cb()
 		echo "BEGIN{"
 		
 		echo "# ID d'items:"
-		git show `grep $sep < $t.log | cut -d $sep -f 2` | git patch-id | awk '{print "ids[\""$2"\"]=\""$1"\";"}'
+		grep $sep < $t.log | cut -d $sep -f 3 | xargs git show | git patch-id | awk '{print "ids[\""$2"\"]=\""$1"\";"}'
 		
 		pos=0
 		for b in "$@"
