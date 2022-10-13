@@ -59,6 +59,21 @@ gcp()
 	git branch -m "$b.bis" && git checkout -b "$b" "$1" && { git rebase -i "$tete" && git branch -d "$b.bis" || echo "[31m# Après finalisation, pensez à un git branch -d $b.bis[0m" >&2 ; } || git branch -m "$b"
 }
 
+# git supprime si inutile.
+gssi()
+{
+	git branch | grep '^ ' | while read b
+	do
+		echo "=== $b ==="
+		# On s'assure que le cb (pas d'une propreté exemplaire en matière de robustesse) nous sort au moins une ligne commune comme témoin de bon déroulé.
+		if cb "$b" origin/master | awk '/^[xX] /{diff=1;print}/^[xX][xX]/{bon=$0}END{if(!bon){print "[31mERR[0m";exit(1);}if(diff)exit(2);if(bon)print"ancêtre: "bon}'
+		then
+			echo "[35mSuppression[0m"
+			git branch -D "$b"
+		fi
+	done
+}
+
 glog()
 {
 	# https://stackoverflow.com/a/13965459
