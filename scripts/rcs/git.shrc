@@ -42,12 +42,12 @@ gc()
 
 gp()
 {
-	git fetch && git stash && git pull --rebase "$@" && git stash apply
+	git fetch && git stash && git pull --rebase "$@" && git stash pop
 }
 
 gr()
 {
-	git fetch && git stash && git rebase "$@" && git stash apply
+	git fetch && git stash && git rebase "$@" && git stash pop
 }
 
 # git cherry-pick interactif.
