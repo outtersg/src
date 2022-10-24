@@ -22,26 +22,49 @@
 # À FAIRE: afficher le NR, pour recoupement avec un script qui irait chercher les function et autres suivant l'annotation.
 # À FAIRE: séparateurs spécifiables.
 # À FAIRE: liste blanche ou liste noire.
-# À FAIRE: mode LDAP (les multi-lignes sont restitués sous forme d'une ligne supplémentaire avec espace initial)
 # À FAIRE: mode CR (les LF sont remplacés par un CR, ce qui permet de tout restituer en mono-ligne et donc de filtrer d'un simple grep).
 
 BEGIN{
 	enCours = "";
-	sep = sprintf("\003");
+	sepv = sprintf("\003"); # Séparateur attribut - valeur.
+	sepf = sepv; # Séparateur de fin de valeur.
+	sepl = "\n"; # Séparateur de fin de ligne.
+	for(i = 0; ++i < ARGC;)
+	{
+		j = i;
+		# Paramètres à la Windows (/ au lieu de --) car POSIX précise que tout paramètre en - appartient à awk et non au programme.
+		if(ARGV[i] == "/ldif")
+		{
+			sepv = ": "
+			sepl = "\n ";
+			sepf = "\n";
+		}
+		else
+		{
+			print "# Paramètre "ARGV[i]" non reconnu."
+			exit(1);
+			# Et pour si jamais un jour on décide de ne pas sortir à la ligne du dessus:
+			continue;
+		}
+		# On consomme "nos" paramètres pour éviter qu'en fin de BEGIN awk tente de les lire comme fichiers.
+		while(j <= i)
+			ARGV[j++] = "";
+	}
 }
 function finir(){
-	printf "%s%s", enCours, sep;
+		printf "%s%s", enCours, sepf;
 	enCours = "";
 }
 enCours&&/^[ \t]*(--|#|\/\/)   *[^@]/{
 	sub(/^[ \t]*(--|#|\/\/) */, "");
-	enCours = enCours"\n"$0;
+	enCours = enCours""sepl""$0;
 	next;
 }
 enCours{ finir(); }
 /^[ \t]*(--|#|\/\/) *@[-_a-zA-Z0-9]+ /{
 	sub(/^[ \t]*(--|#|\/\/) *@/, "");
-	sub(/ +/, sep);
+	attr = $1;
+	sub(/ +/, sepv);
 	enCours = $0;
 }
 END{ if(enCours) finir(); }
