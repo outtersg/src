@@ -21,7 +21,7 @@
 # À FAIRE: gérer les commentaires /* */ multilignes (donc une annotation commence par une * @, sans le /* détecté avant).
 # À FAIRE: afficher le NR, pour recoupement avec un script qui irait chercher les function et autres suivant l'annotation.
 # À FAIRE: séparateurs spécifiables.
-# À FAIRE: liste blanche ou liste noire.
+# À FAIRE: liste noire (--sauf)
 # À FAIRE: mode CR (les LF sont remplacés par un CR, ce qui permet de tout restituer en mono-ligne et donc de filtrer d'un simple grep).
 
 BEGIN{
@@ -29,6 +29,7 @@ BEGIN{
 	sepv = sprintf("\003"); # Séparateur attribut - valeur.
 	sepf = sepv; # Séparateur de fin de valeur.
 	sepl = "\n"; # Séparateur de fin de ligne.
+	mode = 0;
 	for(i = 0; ++i < ARGC;)
 	{
 		j = i;
@@ -38,6 +39,14 @@ BEGIN{
 			sepv = ": "
 			sepl = "\n ";
 			sepf = "\n";
+		}
+		else if(ARGV[i] == "/seult")
+		{
+			mode = 1; # Liste blanche.
+			split(ARGV[i + 1], seult0);
+			for(k = 0; seult0[++k];)
+				seult[seult0[k]] = 1;
+			++i;
 		}
 		else
 		{
@@ -52,6 +61,7 @@ BEGIN{
 	}
 }
 function finir(){
+	if(!mode || seult[attr])
 		printf "%s%s", enCours, sepf;
 	enCours = "";
 }
