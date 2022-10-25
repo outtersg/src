@@ -67,11 +67,11 @@ function finir(){
 }
 enCours&&/^[ \t]*(--|#|\/\/)   *[^@]/{
 	sub(/^[ \t]*(--|#|\/\/) */, "");
-	enCours = enCours""sepl""$0;
+	enCours = enCours""(enCours == attr ? sepv : sepl)""$0;
 	next;
 }
 enCours{ finir(); }
-/^[ \t]*(--|#|\/\/) *@[-_a-zA-Z0-9]+ /{
+/^[ \t]*(--|#|\/\/) *@[-_a-zA-Z0-9]+( |$)/{
 	sub(/^[ \t]*(--|#|\/\/) *@/, "");
 	attr = $1;
 	sub(/ +/, sepv);
