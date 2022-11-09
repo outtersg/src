@@ -394,6 +394,7 @@ int Sortie_ecrire(Sortie * this)
 	}
 	else
 	{
+		TRACE(stderr, "-> Fermeture du %d (sortie, sur erreur: %s)\n", this->sortie, strerror(errno));
 		close(this->sortie);
 		this->sortie = -1;
 	}
@@ -482,7 +483,10 @@ void Sortie_fermer(Sortie * this, char * motif)
 			write(this->sortie, "\x04", 1);
 		}
 		else
+		{
+			TRACE(stderr, "-> Fermeture du %d (sortie, %s)\n", this->sortie, motif);
 			close(this->sortie);
+		}
 		this->sortie = -1;
 	}
 }
