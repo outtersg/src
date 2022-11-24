@@ -56,7 +56,9 @@ gcp()
 {
 	local tete=`git log --pretty=format:%H -n 1`
 	local b="`git symbolic-ref --short HEAD`"
+	local orig="`git rev-parse --abbrev-ref --symbolic-full-name @{u}`" # https://stackoverflow.com/a/9753364
 	git branch -m "$b.bis" && git checkout -b "$b" "$1" && { git rebase -i "$tete" && git branch -d "$b.bis" || echo "[31m# Après finalisation, pensez à un git branch -d $b.bis[0m" >&2 ; } || git branch -m "$b"
+	[ -z "$orig" ] || git branch -u "$orig"
 }
 
 # git supprime si inutile.
