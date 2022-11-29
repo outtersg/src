@@ -6,6 +6,11 @@
 
 # Cache le résultat d'une requête DNS dans le resolv.conf
 
+domaines()
+{
+	egrep '^domain|^search' < /etc/resolv.conf | cut -d ' ' -f 2- | tail -1
+}
+
 for DIG in dig drill
 do
 	command -v $DIG > /dev/null 2>&1 && break || true
@@ -13,12 +18,22 @@ done
 
 ip()
 {
-	$DIG "$1" | sed -e '/.*	A	\([0-9a-f]\)/!d' -e 's//\1/' | head -1
+	case "$1" in
+		*.*) $DIG "$1" ;;
+		*)
+			for domaine in $domaines
+			do
+				$DIG "$1.$domaine"
+			done
+			;;
+	esac \
+	| sed -e '/.*	A	\([0-9a-f]\)/!d' -e 's//\1/' | head -1
 }
 
 faire()
 {
 	local h ip expr sed ajouts
+	local domaines="`domaines`"
 	for h in "$@"
 	do
 		ip="`ip "$h"`"
