@@ -67,6 +67,7 @@ foreach(glob($fichiersGlob) as $fichier)
 	if(preg_match($expr, $fichier))
 	$t[extraireDate($fichier, $fichiers)] = $fichier;
 ksort($t);
+$dernier = array_pop($t); // On conserve tel quel le dernier.
 
 $frequence = null;
 $dGarde = null;
@@ -105,5 +106,8 @@ foreach($t as $d => $fichier)
 	else
 		unlink($fichier);
 }
+
+if(isset($dernier) && !$faire)
+	echo '+ '.$dernier."\n";
 
 ?>
