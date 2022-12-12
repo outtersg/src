@@ -16,6 +16,7 @@ $fichiers = "/Users/gui/Downloads/Mail.%d-%d:%d.tar.gz";
 
 $faire = true;
 $suffixe = null;
+$témoin = null;
 array_shift($argv);
 while(($arg = array_shift($argv)) !== null)
 {
@@ -31,6 +32,10 @@ while(($arg = array_shift($argv)) !== null)
 			break;
 		case '-n':
 			$faire = false;
+			break;
+		case '--temoin':
+		case '-t':
+			$témoin = array_shift($argv);
 			break;
 		default:
 			$fichiers = $arg;
@@ -64,7 +69,7 @@ $t = array();
 $fichiersGlob = preg_replace('/%[a-z]|\([^)]*\)/', '*', $fichiers);
 $expr = '#^'.preg_replace('#%[a-z]#', '[0-9]+', $fichiers).'$#';
 foreach(glob($fichiersGlob) as $fichier)
-	if(preg_match($expr, $fichier))
+	if(preg_match($expr, $fichier) && (!isset($témoin) || file_exists($fichier.'/'.$témoin)))
 	$t[extraireDate($fichier, $fichiers)] = $fichier;
 ksort($t);
 $dernier = array_pop($t); // On conserve tel quel le dernier.
