@@ -18,7 +18,7 @@ var gira =
 	{
 		var num = document.head.querySelector('meta[name="ajs-issue-key"]').attributes.content.value;
 		var refs = document.querySelector(giraIncsChamp);
-		if(refs && refs.innerHTML) refs = refs.innerHTML;
+		if(refs && refs.innerHTML) refs = refs.innerHTML.replace('&nbsp;', '').trim();
 		var req = new XMLHttpRequest();
 		req.addEventListener('load', function()
 		{
