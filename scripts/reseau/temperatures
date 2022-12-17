@@ -1,0 +1,27 @@
+#!/bin/sh
+
+URL="https://www.infoclimat.fr/climatologie-mensuelle/07147/@mois@/@an@/villacoublay-velizy.html"
+URL="https://www.infoclimat.fr/climatologie-mensuelle/ME113/@mois@/@an@/-mae-lycee-parc-de-vilgenis-massy.html"
+
+recup()
+{
+	local an="$1" mois="$2"
+	case $mois in
+		1|01) moisA=janvier ;;
+		2|02) moisA=fevrier ;;
+		3|03) moisA=mars ;;
+		4|04) moisA=avril ;;
+		5|05) moisA=mai ;;
+		6|06) moisA=juin ;;
+		7|07) moisA=juillet ;;
+		8|08) moisA=aout ;;
+		9|09) moisA=septembre ;;
+		10) moisA=octobre ;;
+		11) moisA=novembre ;;
+		12) moisA=decembre ;;
+	esac
+	local url="`echo "$URL" | sed -e "s/@mois@/$moisA/g" -e "s/@an@/$an/g"`"
+	curl -s "$url" | awk 'function n(){ sub(/^[^>]*>/, ""); sub(/<.*/, ""); sub(/\./, ","); }/<span class=.climday.>/{ n(); jour = $0; trouve = 0; }jour&&/<span class="named-units"/{ n(); t[++trouve] = $0; if(trouve == 2) { print (length(jour) == 1 ? "0" : "")jour"/"'$mois'"/"'$an'" "t[1]" "t[2]" "((t[1] + t[2]) / 2); jour = ""; } }'
+}
+
+recup "$@"
