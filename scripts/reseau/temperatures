@@ -6,6 +6,8 @@ URL="https://www.infoclimat.fr/climatologie-mensuelle/ME113/@mois@/@an@/-mae-lyc
 recup()
 {
 	local an="$1" mois="$2"
+	local format="jour\"/$mois/$an\""
+	case "$3" in iso) format="\"$an-$mois-\"jour" ;; esac
 	case $mois in
 		1|01) moisA=janvier ;;
 		2|02) moisA=fevrier ;;
@@ -30,6 +32,8 @@ function n(){
 /<span class=.climday.>/{
 	n();
 	jour = $0;
+	if(length(jour) == 1)
+		jour = "0"jour;
 	trouve = 0;
 }
 jour&&/<\/tr>/{ jour = ""; }
@@ -38,7 +42,7 @@ jour&&/<span class="named-units"/{
 	t[++trouve] = $0;
 	if(trouve == 2)
 	{
-		print (length(jour) == 1 ? "0" : "")jour"/"'$mois'"/"'$an'" "t[1]" "t[2]" "((t[1] + t[2]) / 2);
+		print '"$format"'" "t[1]" "t[2]" "((t[1] + t[2]) / 2);
 		jour = "";
 	}
 }'
