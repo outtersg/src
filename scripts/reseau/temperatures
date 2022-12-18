@@ -32,6 +32,7 @@ function n(){
 	jour = $0;
 	trouve = 0;
 }
+jour&&/<\/tr>/{ jour = ""; }
 jour&&/<span class="named-units"/{
 	n();
 	t[++trouve] = $0;
