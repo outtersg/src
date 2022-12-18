@@ -48,4 +48,62 @@ jour&&/<span class="named-units"/{
 }'
 }
 
+# Sort les températures moyennes pour une liste de dates fournies en entrée.
+# Si une date est suivie d'un trou, la moyenne donnée comprendra le trou
+# (ex.: si l'on demande les moyennes pour le 6, le 8, et le 9 du mois, seront renvoyées pour le 6 la moyenne du 6 ET du 7, tandis que le 8 et le 9 auront juste la moyenne propre au jour).
+pourListe()
+{
+	local t=/tmp/temp.temp.$$
+	# La liste de dates à récupérer est mise au propre.
+	sed -E -e 's#^([0-3]?[0-9])/([0-1][0-9])/(20)?([0-9][0-9]).*#20\4-\2-\1#' -e 's#-([0-9])$#-0\1#' > $t.afaire
+	{
+		# On récupère les températures (mois par mois):
+		cut -d - -f 1,2 < $t.afaire | sort -u | tr - ' ' \
+		| while read an mois
+		do
+			recup $an $mois iso
+		done \
+		| awk '{print $1" "$4}'
+		# Et on y entremêle les dates souhaitées:
+		cat $t.afaire
+	} \
+	| sort | awk '
+function aff(dern)
+{
+	if(njours > 0)
+		val = dern ? jourmeme : cumul / njours;
+	else
+		val = "";
+	while(--nocc >= 0)
+		print dcherchee" "val;
+}
+/^[^ ]+$/{
+	if(dcherchee == $1)
+	{
+		++nocc;
+		next;
+	}
+	aff();
+	
+	dcherchee = $1;
+	nocc = 1;
+	cumul = 0;
+	njours = 0;
+	next;
+}
+dcherchee{
+	if(!njours) jourmeme = $2;
+	cumul += $2;
+	++njours;
+}
+END{ aff(1); }'
+}
+
+case "$1" in
+	-)
+		pourListe
+		;;
+	*)
 recup "$@"
+		;;
+esac
