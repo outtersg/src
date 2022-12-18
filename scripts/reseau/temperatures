@@ -21,7 +21,26 @@ recup()
 		12) moisA=decembre ;;
 	esac
 	local url="`echo "$URL" | sed -e "s/@mois@/$moisA/g" -e "s/@an@/$an/g"`"
-	curl -s "$url" | awk 'function n(){ sub(/^[^>]*>/, ""); sub(/<.*/, ""); sub(/\./, ","); }/<span class=.climday.>/{ n(); jour = $0; trouve = 0; }jour&&/<span class="named-units"/{ n(); t[++trouve] = $0; if(trouve == 2) { print (length(jour) == 1 ? "0" : "")jour"/"'$mois'"/"'$an'" "t[1]" "t[2]" "((t[1] + t[2]) / 2); jour = ""; } }'
+	curl -s "$url" | awk '
+function n(){
+	sub(/^[^>]*>/, "");
+	sub(/<.*/, "");
+	sub(/\./, ",");
+}
+/<span class=.climday.>/{
+	n();
+	jour = $0;
+	trouve = 0;
+}
+jour&&/<span class="named-units"/{
+	n();
+	t[++trouve] = $0;
+	if(trouve == 2)
+	{
+		print (length(jour) == 1 ? "0" : "")jour"/"'$mois'"/"'$an'" "t[1]" "t[2]" "((t[1] + t[2]) / 2);
+		jour = "";
+	}
+}'
 }
 
 recup "$@"
