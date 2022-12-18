@@ -71,7 +71,12 @@ pourListe()
 function aff(dern)
 {
 	if(njours > 0)
+	{
 		val = dern ? jourmeme : cumul / njours;
+		# Arrondi au dixième.
+		frac = val % 0.1;
+		val += (frac >= 0.049 ? 0.1 : (frac <= -0.049 ? -0.1 : 0)) - frac;
+	}
 	else
 		val = "";
 	while(--nocc >= 0)
