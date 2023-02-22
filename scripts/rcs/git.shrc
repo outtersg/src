@@ -76,6 +76,11 @@ gssi()
 	done
 }
 
+gbranches()
+{
+	git branch --sort=-committerdate "$@"
+}
+
 glog()
 {
 	# https://stackoverflow.com/a/13965459
