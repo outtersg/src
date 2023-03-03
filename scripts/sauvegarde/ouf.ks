@@ -125,7 +125,7 @@ cat <<TERMINE
 # MySQL binaire (donc complète chaque jour: 100 Mo), utilisée seulement par Roundcube.
 - /home/jails/bdd/usr/home/bdd/var/db/mysql
 - /home/jails/mel/usr/home/mel/var/mail/*/*/.Trash
-- /home/jails/sauvegardes/usr/home/sauvegardes/sauvegardes
+- /home/jails/*/usr/home/*/sauvegardes
 # Pijul crée ses pristine comme un méga fichier virtuel (taille visible: 4 To).
 - **/.pijul/pristine
 - /home/jails/*/usr/home/*/.cache
