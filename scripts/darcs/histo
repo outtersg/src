@@ -1,5 +1,7 @@
 #!/bin/sh
 
+N_MOIS=3
+
 filtreAuteurs()
 {
 	egrep -i "$AUTEURS"
@@ -7,7 +9,7 @@ filtreAuteurs()
 
 histo_darcs()
 {
-	darcs log --xml-output --match 'date "last 3 months"' | awk \
+	darcs log --xml-output --match 'date "last '$N_MOIS' months"' | awk \
 '
 /<patch/{ sub(/.* date=["'\'']/, ""); sub(/["'\''].* local_date=["'\'']/, " "); sub(/["'\''].*/, ""); dates = $0; }
 /<name>/{ sub(/.*<name>/, ""); sub(/<\/name>.*/, ""); print dates" # "$0; }
@@ -16,7 +18,7 @@ histo_darcs()
 
 histo_git()
 {
-	( git log --since='3 months ago' --pretty=format:'%ae %at %ad # %s' ; echo ) | filtreAuteurs | while read adrel d reste
+	( git log --since="$N_MOIS months ago" --pretty=format:'%ae %at %ad # %s' ; echo ) | filtreAuteurs | while read adrel d reste
 	do
 		[ -n "$d" ] || continue
 		d="`TZ= date -r $d +%Y%m%d%H%M%S`"
