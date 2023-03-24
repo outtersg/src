@@ -9,7 +9,7 @@ t=/tmp/temp.dchopes.$$
 
 > $t.ref
 > $t.suppr
-ls -tr | tail -$n > $t.fichiers
+ls -tr | egrep -v '\.(bz2|gz)$' | tail -$n > $t.fichiers
 while read f
 do
 	# On compare le corps de message, pas les en-têtes (heure d'émission, expéditeur forgé, etc., peuvent différer).
