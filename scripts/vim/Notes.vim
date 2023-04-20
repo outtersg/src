@@ -22,7 +22,7 @@ hi def link notesAbandon  Identifier
 
 " Alias F comme Fini (prendre une tâche et la caler dans les Terminées, puis retour).
 
-:map F l/^[^<C-V><TAB>]<CR>meklmd?^[^<C-V><TAB>]<CR>r+d'd/^+<CR>?^$<CR>p'e
+:map F $/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>r+d'd/^+<CR>?^$<CR>p'e
 :map - $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr-
 :map = $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr=
 :map + $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr+
