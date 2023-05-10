@@ -25,6 +25,7 @@ hi def link notesAbandon  Identifier
 :map F $/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>r+d'd/^+<CR>?^$<CR>p'e
 :map - $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr-
 :map = $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr=
-:map + $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr+A []<ESC>"=strftime('%Y-%m-%d')<CR>P
-:map ++ +a<SPACE>
+:map + $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr+
+:map ++ +A []<ESC>"=strftime('%Y-%m-%d')<CR>P
+:map +++ ++a<SPACE>
 :map * $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr*
