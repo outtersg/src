@@ -1,6 +1,8 @@
 #!/bin/sh
 # Ménage des photos et vidéos d'un téléphone Android, après s'être assuré qu'une copie figurait sur un ordi de sauvegarde.
 
+#PREFIXE="[A-Z]*_"
+PREFIXE=
 RA=/sdcard/sauvegardes
 IMAGES="$HOME/Pictures $HOME/Movies"
 #IMAGES="/Users/sauvegardes/photos/patatoide"
@@ -11,7 +13,7 @@ echo "# Sur le téléphone"
 ./adb shell <<TERMINE
 cd $RA
 mkdir -p tmp
-find /sdcard/DCIM/Camera -type f -name '[A-Z]*_2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]*.[a-z][a-z][a-z0-9]' -mtime +90 -print0 | xargs -0 cksum > tmp/1
+	find /sdcard/DCIM/Camera -type f -name "$PREFIXE"'2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]*.[a-z][a-z][a-z0-9]' -mtime +90 -print0 | xargs -0 cksum > tmp/1
 TERMINE
 ./adb pull $RA/tmp/1 /tmp/1
 
