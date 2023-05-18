@@ -4,48 +4,56 @@
 #PREFIXE="[A-Z]*_"
 PREFIXE=
 RA=/sdcard/sauvegardes
-IMAGES="$HOME/Pictures $HOME/Movies"
+#IMAGES="$HOME/Pictures $HOME/Movies"
 #IMAGES="/Users/sauvegardes/photos/patatoide"
+SAUVEGARDES=partage
+IMAGES=sauvegardes/photos/triees
 
 set -e
 
 echo "# Sur le téléphone"
 function lister()
 {
-./adb shell <<TERMINE
+	#./adb shell <<TERMINE
 cd $RA
 mkdir -p tmp
 	find /sdcard/DCIM/Camera -type f -name "$PREFIXE"'2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]*.[a-z][a-z][a-z0-9]' -mtime +90 -print0 | xargs -0 cksum > tmp/1
-TERMINE
-./adb pull $RA/tmp/1 /tmp/1
+	#TERMINE
+	#./adb pull $RA/tmp/1 /tmp/1
+	scp $RA/tmp/1 $SAUVEGARDES:/tmp/1
 }
 
 lister
 
 echo "# Recherche des sauvegardes correspondantes"
+# Autrefois (cf. les ./adb restants commentés): joué en direct plutôt que via ssh.
+ssh $SAUVEGARDES <<TERMINE
 # À FAIRE: un seul find pour tous
 cat /tmp/1 | while read s t c
 do
-	find $IMAGES -type f -size ${t}c | while read f
+	find $IMAGES -type f -size \${t}c | while read f
 	do
-		if [ "`cksum "$f" | awk '{print$1}'`" = $s ]
+		if [ "\`cksum "\$f" | awk '{print\$1}'\`" = \$s ]
 		then
-			echo "$c"
+			echo "\$c"
 			break
 		fi
 	done
 done > /tmp/3
+exit
+TERMINE
 
 echo "# Application"
 purger()
 {
-./adb push /tmp/3 $RA/tmp/3
-echo "Ménage de `wc -l < /tmp/3` fichiers"
-./adb shell <<TERMINE
+	#./adb push /tmp/3 $RA/tmp/3
+	scp $SAUVEGARDES:/tmp/3 $RA/tmp/3
+	echo "Ménage de `wc -l < $RA/tmp/3` fichiers"
+	#./adb shell <<TERMINE
 df -h $RA
 cat $RA/tmp/3 | xargs rm -f
 df -h $RA
-TERMINE
+	#TERMINE
 }
 purger
 
