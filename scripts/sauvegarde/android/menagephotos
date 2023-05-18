@@ -22,7 +22,7 @@ TERMINE
 
 lister
 
-echo "# Ici"
+echo "# Recherche des sauvegardes correspondantes"
 # À FAIRE: un seul find pour tous
 cat /tmp/1 | while read s t c
 do
