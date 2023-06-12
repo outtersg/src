@@ -25,14 +25,18 @@ function auSecours()
 	print "# Répartit les lignes en entrée sur plusieurs fichiers en sortie" > "/dev/fd/2"
 	print "# © Guillaume Outters 2023" > "/dev/fd/2"
 	print "" > "/dev/fd/2"
-	print "Utilisation: lotir <n lots> <chemin de sortie> [<gabarit ligne>*]" > "/dev/fd/2"
+	print "Utilisation: lotir <n lots> <chemin de sortie> [--prologue <prologue>] [--epilogue <épilogue>] [<gabarit ligne>*]" > "/dev/fd/2"
 	print "  <n lots>" > "/dev/fd/2"
 	print "    Entier (>= 2 pour avoir un intérêt)" > "/dev/fd/2"
 	print "  <chemin de sortie>" > "/dev/fd/2"
 	print "    Chemin des fichiers de sortie; le \%d sera remplacé par un nombre de la plage [0;<n lots>[" > "/dev/fd/2"
+	print "  --prologue <prologue>"
+	print "    Ligne à ajouter en début de chaque fichier pondu" > "/dev/fd/2"
 	print "  <gabarit ligne>" > "/dev/fd/2"
 	print "    Si mentionné, les lignes ne seront pas réparties telles quelles, mais incluses dans un gabarit (devant contenir un \%s qui sera remplacé par la ligne)" > "/dev/fd/2"
 	print "    Si plusieurs <gabarit ligne> se suivent, chaque ligne d'entrée donnera lieu à autant de lignes en sortie qu'en comporte le gabarit." > "/dev/fd/2"
+	print "  --epilogue <épilogue>"
+	print "    Ligne à ajouter en fin de chaque fichier pondu" > "/dev/fd/2"
 	exit(1);
 }
 BEGIN{
@@ -40,9 +44,14 @@ BEGIN{
 	GABARIT_SORTIES = "";
 	GL_N = 0;
 	gl_a_rempl = 0;
+	PROLOGUE = "";
+	EPILOGUE = "";
 	
 	for(i = 0; ++i < ARGC;)
 	{
+		if(ARGV[i] == "--prologue") { delete ARGV[i]; PROLOGUE = ARGV[++i]; }
+		else if(ARGV[i] == "--epilogue") { delete ARGV[i]; EPILOGUE = ARGV[++i]; }
+		else
 		{
 			if(!N_LOTS)
 			{
@@ -81,7 +90,15 @@ BEGIN{
 	for(i = -1; ++i < N_LOTS;)
 		SORTIES[i] = sprintf(GABARIT_SORTIES, i);
 }
+NR<=N_LOTS&&PROLOGUE{
+	print PROLOGUE > SORTIES[NR - 1];
+}
 {
 	for(i = -1; ++i < GL_N;)
 		print sprintf(GABARIT_LIGNES[i], $0) > SORTIES[(NR - 1) % N_LOTS];
+}
+END{
+	if(EPILOGUE)
+		for(i = N_LOTS > NR ? NR : N_LOTS; --i >= 0;)
+			print EPILOGUE > SORTIES[i];
 }
