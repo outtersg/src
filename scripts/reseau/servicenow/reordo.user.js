@@ -112,4 +112,59 @@ var traiter = function()
 
 traiter();
 
+/*- Page ticket individuel -*/
+
+// Zone de description trop courte.
+var descr = document.getElementById('sys_readonly.incident.description');
+if(descr) descr.style.height = '256px';
+
+// Les "titres" de section sont noyés parmi leurs sous-éléments (au même niveau, à l'intérieur d'un row; et parfois on a <row><titre1><élém1.1><élém1.2><titre2></row><row><élém2.1></row>)
+// On réorganise donc tout ce bazar.
+var bloquer = function()
+{
+	var css = document.createElement('style');
+	css.setAttribute('type', 'text/css');
+	document.getElementsByTagName('head')[0].appendChild(css);
+	css.appendChild
+	(
+		document.createTextNode
+		(
+			'.titre-bloc { cursor: pointer; position: relative; }'+
+			'.titre-bloc .annotation-wrapper { margin: 0!important; font-size: 12px!important; line-height: 1!important; }'+
+			'.fleche-bloc { position: absolute; top: 0; }'+
+			'.fleche-bloc:after { content: " ▼"; }'+
+			'.sous-bloc { display: none; }'
+		)
+	);
+	
+	var titre;
+	var blocs = document.querySelectorAll('.form-group');
+	var bloc, i, classes, fleche;
+	for(i = -1; ++i < blocs.length;)
+	{
+		bloc = blocs[i];
+		if(bloc.getAttribute('sn-atf-whitelist'))
+		{
+			titre = bloc.querySelector('.annotation-wrapper').innerText;
+			if(titre == 'Descriptif')
+				break;
+			bloc.setAttribute('onclick', 'var b = document.body.toggleClassName("sous-blocs-'+titre+'-affiches");');
+			bloc.setAttribute('class', ((classes = bloc.getAttribute('class')) ? classes+' ' : '')+'titre-bloc titre-bloc-'+titre);
+			bloc.appendChild(fleche = document.createElement('div'));
+			fleche.setAttribute('class', 'fleche-bloc fleche-bloc-'+titre);
+			css.appendChild(document.createTextNode('.sous-blocs-'+titre+'-affiches .sous-bloc-'+titre+' { display: block; }'));
+			css.appendChild(document.createTextNode('.sous-blocs-'+titre+'-affiches .fleche-bloc-'+titre+':after { content: "▲"; }'));
+		}
+		else if(titre)
+		{
+			if(!(classes = bloc.getAttribute('class')))
+				classes = '';
+			classes = classes+' sous-bloc sous-bloc-'+titre;
+			bloc.setAttribute('class', classes);
+		}
+	}
+};
+
+bloquer();
+
 })();
