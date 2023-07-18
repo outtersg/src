@@ -115,8 +115,10 @@ traiter();
 
 /*- Page ticket individuel -*/
 
-var bloquer = function()
+var bloquer = function(document)
 {
+  	if(!document.querySelectorAll('.form-group').length) return false;
+	
 // Zone de description trop courte.
 var descr = document.getElementById('sys_readonly.incident.description');
 if(descr) descr.style.height = '256px';
@@ -164,9 +166,9 @@ if(descr) descr.style.height = '256px';
 			bloc.setAttribute('class', classes);
 		}
 	}
+	
+	return true;
 };
-
-bloquer();
 
 // ServiceNow a tendance à ne pas charger dans ses iframes directement la page voulue,
 // mais un simple JS de remplissage du <body> par invocation de la vraie URL sous-jacente.
@@ -192,5 +194,7 @@ var attendreEtRetaperDocEtCadres = function(retape)
 		frame.addEventListener('load', function(e) { attendreEtRetaper(retape, [ e.target.contentDocument ]); });
 	});
 };
+
+attendreEtRetaperDocEtCadres(bloquer);
 
 })();
