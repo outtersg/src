@@ -114,14 +114,14 @@ traiter();
 
 /*- Page ticket individuel -*/
 
+var bloquer = function()
+{
 // Zone de description trop courte.
 var descr = document.getElementById('sys_readonly.incident.description');
 if(descr) descr.style.height = '256px';
 
 // Les "titres" de section sont noyés parmi leurs sous-éléments (au même niveau, à l'intérieur d'un row; et parfois on a <row><titre1><élém1.1><élém1.2><titre2></row><row><élém2.1></row>)
 // On réorganise donc tout ce bazar.
-var bloquer = function()
-{
 	var css = document.createElement('style');
 	css.setAttribute('type', 'text/css');
 	document.getElementsByTagName('head')[0].appendChild(css);
