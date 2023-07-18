@@ -3,6 +3,7 @@
 // @namespace    http://outters.eu/
 // @description  Force l'ordre des barres d'un diagramme ServiceNow, ainsi que ses couleurs.
 // @include      https://….service-now.com/*
+// @require      https://git.io/waitForKeyElements.js
 // @grant        none
 // ==/UserScript==
 
@@ -166,5 +167,30 @@ if(descr) descr.style.height = '256px';
 };
 
 bloquer();
+
+// ServiceNow a tendance à ne pas charger dans ses iframes directement la page voulue,
+// mais un simple JS de remplissage du <body> par invocation de la vraie URL sous-jacente.
+// On doit donc attendre la survenue de cet appel avant d'appliquer.
+var attendreEtRetaper = function(retape, params)
+{
+  	if(retape.apply(null, params)) return;
+	var attente, fini;
+	fini = function() { clearInterval(attente); }
+	attente = setInterval(function() { if(retape.apply(null, params)) fini(); }, 100);
+	setTimeout(fini, 5000);
+};
+
+// Sous GreaseMonkey 4, notre JS n'est pas automatiquement invoqué sur les iframes (même si l'URL respecte l'@include), à nous de nous appliquer aussi bien sur eux que sur le document principal.
+// https://stackoverflow.com/questions/37616818 dit que les iframe ne reçoivent pas les événements.
+// https://bleepingcoder.com/greasemonkey/259598810/execute-in-frames
+// https://github.com/greasemonkey/greasemonkey/issues/2574
+var attendreEtRetaperDocEtCadres = function(retape)
+{
+	attendreEtRetaper(retape, [ document ]);
+	waitForKeyElements("iframe, frame", function(frame)
+	{
+		frame.addEventListener('load', function(e) { attendreEtRetaper(retape, [ e.target.contentDocument ]); });
+	});
+};
 
 })();
