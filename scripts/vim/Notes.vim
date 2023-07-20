@@ -14,6 +14,7 @@ syn match notesFini   '^	*[+*]'
 syn match notesAbandon   '^	*[*]'
 " À FAIRE: pas en erreur si déjà traité (+ ou *)
 syn match notesAlerte    '/!\\'
+syn match notesComm      '^#.*'
 
 " Cf. les couleurs dans syntax/syncolor.vim (merci https://askubuntu.com/questions/24544/what-is-the-default-vim-colorscheme#comment31987_24548)
 hi def link notesTitre    Statement
@@ -22,6 +23,7 @@ hi def link notesEnCours  Statement
 hi def link notesFini     MoreMsg
 hi def link notesAbandon  Identifier
 hi def link notesAlerte   ErrorMsg
+hi def link notesComm     Identifier
 
 " Alias F comme Fini (prendre une tâche et la caler dans les Terminées, puis retour).
 
