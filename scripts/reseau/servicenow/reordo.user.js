@@ -132,6 +132,8 @@ if(descr) descr.style.height = '256px';
 	(
 		document.createTextNode
 		(
+			'.barreDuHaut .vsplit { width: 20%; }'+
+			'.barreDuHaut .control-label, .barreDuHaut .form-field { width: auto; padding-right: 0; }'+
 			'.titre-bloc { cursor: pointer; position: relative; }'+
 			'.titre-bloc .annotation-wrapper { margin: 0!important; font-size: 12px!important; line-height: 1!important; }'+
 			'.fleche-bloc { position: absolute; top: 0; }'+
@@ -140,6 +142,21 @@ if(descr) descr.style.height = '256px';
 		)
 	);
 	
+	// Certains éléments importants remontent en haut.
+	var rapat = { assignment_group: 30 , priority: 10 }; // Avec leur largeur en % de la ligne du haut.
+	var barreDuHaut = document.getElementById('element.incident.number').parentElement.parentElement;
+	barreDuHaut.setAttribute('class', barreDuHaut.getAttribute('class')+' barreDuHaut');
+	for(x in rapat)
+	{
+		var rangeur = document.createElement('div');
+		rangeur.setAttribute('class', 'vsplit col-sm-6');
+		rangeur.appendChild(document.getElementById('element.incident.'+x));
+		if(rapat[x])
+			rangeur.setAttribute('style', 'width: '+rapat[x]+'%;');
+		barreDuHaut.appendChild(rangeur);
+	}
+	
+	// Les blocs ne conservant plus que des infos mineures sont masqués.
 	var titre;
 	var blocs = document.querySelectorAll('.form-group');
 	var bloc, i, classes, fleche;
