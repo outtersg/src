@@ -24,7 +24,7 @@ nouvelleEtiquettePour()
 		return 1
 	fi
 	
-	local nmax="`git tag -l "$prefixe" "$prefixe.*" | sed -e "s/^$prefixe//" -e 's/^$/.0/' | cut -d . -f 2 | sort -n | tail`"
+	local nmax="`git tag -l "$prefixe" "$prefixe.*" | sed -e "s/^$prefixe//" -e 's/^$/.0/' | cut -d . -f 2 | sort -n | tail -1`"
 	suffixe=
 	[ -z "$nmax" ] || suffixe=".`expr "$nmax" + 1`"
 	nouvelleEtiquette="$prefixe$suffixe" # Variable globale.
