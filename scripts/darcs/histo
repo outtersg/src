@@ -15,6 +15,11 @@ histo_darcs()
 /<name>/{
 	sub(/.*<name>/, "");
 	sub(/<\/name>.*/, "");
+	gsub(/&amp;/, "\\&");
+	gsub(/&apos;/, "'\''");
+	gsub(/&gt;/, ">");
+	gsub(/&lt;/, "<");
+	gsub(/&quot;/, "\"");
 	print dates" # "$0;
 }
 '
