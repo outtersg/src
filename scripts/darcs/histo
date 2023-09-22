@@ -28,7 +28,8 @@ histo_git()
 
 histo()
 {
-	local d n=31 histo
+	local d n=31 histo t=/tmp/temp.histo.$$ num=0
+	rm -f $t.* 2> /dev/null
 	for d in "$@"
 	do
 		case "$n" in
@@ -36,6 +37,7 @@ histo()
 			36) n=90 ;;
 			*) n=`expr $n + 1` ;;
 		esac
+		{
 		chemin="`echo "$d" | sed -e 's/.*\(..............\)$/@\1/' -e 's/$/                /' -e 's/^\(...............\).*/\1/' -e 's/^@/…/'`"
 		if [ -d "$d/_darcs" ] ; then histo=histo_darcs
 		elif [ -d "$d/.git" ] ; then histo=histo_git
@@ -44,7 +46,12 @@ histo()
 			continue
 		fi
 		( cd "$d" && $histo ) | sed -e "s|[ 	]*#[ 	]*|	[${n}m$chemin[0m	|" 
-	done | sort | cut -d ' ' -f 2-
+		} > $t.$num.liste &
+		num=$((num+1))
+	done
+	wait
+	cat $t.*.liste | sort | cut -d ' ' -f 2-
+	rm -f $t.*
 }
 
 [ -n "$AUTEURS" ] || filtreAuteurs() { cat ; }
