@@ -12,7 +12,11 @@ histo_darcs()
 	darcs log --xml-output --match 'date "last '$N_MOIS' months"' | awk \
 '
 /<patch/{ sub(/.* date=["'\'']/, ""); sub(/["'\''].* local_date=["'\'']/, " "); sub(/["'\''].*/, ""); dates = $0; }
-/<name>/{ sub(/.*<name>/, ""); sub(/<\/name>.*/, ""); print dates" # "$0; }
+/<name>/{
+	sub(/.*<name>/, "");
+	sub(/<\/name>.*/, "");
+	print dates" # "$0;
+}
 '
 }
 
