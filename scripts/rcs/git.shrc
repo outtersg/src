@@ -82,6 +82,12 @@ gr()
 	git fetch && git stash && git rebase "$@" && git stash pop
 }
 
+# git rebase --continue
+grc()
+{
+	GIT_EDITOR=true git rebase --continue
+}
+
 # git cherry-pick interactif.
 # Utilisation: gcp <la branche dont on veut ramener des trucs sur l'actuelle>
 gcp()
