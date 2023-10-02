@@ -26,6 +26,38 @@ gs()
 	git status "$@"
 }
 
+# Git Whatsnew
+gw()
+{
+	local f="`_gw -print0 "$@" | tr '\000' '\003'`"
+	IFS="`printf '\003'`"
+	gd $f
+	unset IFS
+}
+
+gws()
+{
+	_gw -print0 "$@" | xargs -0 git status -u --
+}
+
+_gw()
+{
+	local peint="$1" ; shift
+	local njours=10
+    case "$1" in
+		*[^0-9]*|"") true ;;
+		*) njours="$1" ; shift ;;
+	esac
+	
+	if [ -z "$*" ]
+	then
+		_gw $peint $njours "`git rev-parse --show-toplevel || echo .`"
+		return
+	fi
+	
+	find "$@" \( \( -name .git -o -name cache \) -prune -false \) -o \( -type f -a -mtime -$njours -a -not -name '.*.sw?' $peint \)
+}
+
 gd()
 {
 	git diff --relative "$@"
