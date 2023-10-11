@@ -102,11 +102,14 @@ gcp()
 # git supprime si inutile.
 gssi()
 {
+	local origines="origin/master origin/develop" eaucun= etous= origine
+	for origine in $origines ; do eaucun=" $eaucun" ; etous="[xX]$etous" ; done
+	
 	git branch | grep '^ ' | while read b
 	do
 		echo "=== $b ==="
 		# On s'assure que le cb (pas d'une propreté exemplaire en matière de robustesse) nous sort au moins une ligne commune comme témoin de bon déroulé.
-		if cb "$b" origin/master | awk '/^[xX] /{diff=1;print}/^[xX][xX]/{bon=$0}END{if(!bon){print "[31mERR[0m";exit(1);}if(diff)exit(2);if(bon)print"ancêtre: "bon}'
+		if cb "$b" $origines | awk "/^[xX]$eaucun/{diff=1;print}/^[xX]$etous/"'{bon=$0}END{if(!bon){print "[31mERR[0m";exit(1);}if(diff)exit(2);if(bon)print"ancêtre: "bon}'
 		then
 			echo "[35mSuppression[0m"
 			git branch -D "$b"
