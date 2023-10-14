@@ -13,6 +13,12 @@ case "`hostname`" in
 		dests="ssh://clotilde@f/Documents/ Partage;ssh://gclo.fr/var/partage"
 		dests="ssh://clotilde@f/Documents/ Partage"
 		;;
+	[bB]onemine*)
+		nom=bonemine.local
+		source="$HOME/Documents/ Partage"
+		dests="ssh://gui@zerozerosix.local/Documents/ Partage"
+		dests="ssh://gui@zerozerosix.local/Documents/ Partage;ssh://partage/sauvegardes/partage"
+		;;
 	falbala*)
 		nom=falbala.lan
 		source="$HOME/Documents/ Partage"
