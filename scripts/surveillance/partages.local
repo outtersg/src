@@ -7,7 +7,7 @@ absolutiseScripts() { SCRIPTS="$1" ; echo "$SCRIPTS" | grep -q ^/ || SCRIPTS="`d
 # (et j'ai essayé de le convertir en toutes les fragrances d'UTF-8 avant de chercher sur internet).
 
 case "`hostname`" in
-	zerozerosix*)
+	[zZ]erozerosix*)
 		nom=zerozerosix.lan
 		source="$HOME/Documents/ Partage"
 		dests="ssh://clotilde@f/Documents/ Partage;ssh://gclo.fr/var/partage"
