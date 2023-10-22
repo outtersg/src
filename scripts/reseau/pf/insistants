@@ -9,8 +9,9 @@ njours=11
 j=`date +%s`
 jn=`date -r $((j-njours*24*3600)) +%Y-%m-%d`
 sed -e "1,/^$jn/d" < /home/jails/mel/usr/local/var/spool/exim/log/mainlog \
-| grep "no host name found for IP" \
-| cut -d ' ' -f 10 \
+| awk '
+/no host name found for IP address/{ print $10; }
+' \
 | sort \
 | awk 'function a(){if(ip&&n>40)print n" "ip;ip=$0;n=0}$0!=ip{a()}{++n}END{a()}' \
 | while read n ip
