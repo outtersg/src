@@ -34,3 +34,10 @@ do
 done < $t.fichiers | /tmp/tmp/src/scripts/texte/derfc822
 
 rm -f $t.*
+
+# Pour faire la part des choses:
+# lchopes
+# fs="<fichier 1 potentiel faux positif> <fichier 2> <etc.>"
+# for f in $fs ; do rspamc $f ; grep ^From "$f" ; done | egrep '^Results|^Score|^From|G_PAF' | sed -e 's/ ([^ ]* seconds)//' > /tmp/1
+# # Bidouiller dans les règles
+# # Relancer le for pour voir si les choses ont évolué.
