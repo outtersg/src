@@ -11,6 +11,7 @@ jn=`date -r $((j-njours*24*3600)) +%Y-%m-%d`
 sed -e "1,/^$jn/d" < /home/jails/mel/usr/local/var/spool/exim/log/mainlog \
 | awk '
 /no host name found for IP address/{ print $10; }
+/535 Incorrect authentication data/{ sub(/\]: 535.*/, ""); sub(/.*\[/, ""); print; }
 ' \
 | sort \
 | awk 'function a(){if(ip&&n>40)print n" "ip;ip=$0;n=0}$0!=ip{a()}{++n}END{a()}' \
