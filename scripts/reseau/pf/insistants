@@ -1,0 +1,23 @@
+#!/bin/sh
+
+poubelle()
+{
+	pfctl -t pourriture -T add "$@"
+}
+
+njours=11
+j=`date +%s`
+jn=`date -r $((j-njours*24*3600)) +%Y-%m-%d`
+sed -e "1,/^$jn/d" < /home/jails/mel/usr/local/var/spool/exim/log/mainlog \
+| grep "no host name found for IP" \
+| cut -d ' ' -f 10 \
+| sort \
+| awk 'function a(){if(ip&&n>40)print n" "ip;ip=$0;n=0}$0!=ip{a()}{++n}END{a()}' \
+| while read n ip
+do
+	echo "=== $ip: $n ==="
+	poubelle "$ip"
+done
+
+# Pour ensuite repérer les blocs d'IP:
+# pfctl -t pourriture -T show | awk -F . 'function si(){if(n>4)print"=== "n" ===\n"bloc}{pici=$1"."$2"."$3;if(pici!=pavant){si();n=0;bloc=$0;pavant=pici}else{bloc=bloc"\n"$0;++n}}END{si()}'
