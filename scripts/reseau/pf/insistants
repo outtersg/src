@@ -15,6 +15,7 @@ sed -e "1,/^$jn/d" < /home/jails/mel/usr/local/var/spool/exim/log/mainlog \
 ' \
 | sort \
 | awk 'function a(){if(ip&&n>40)print n" "ip;ip=$0;n=0}$0!=ip{a()}{++n}END{a()}' \
+| sort -n \
 | while read n ip
 do
 	echo "=== $ip: $n ==="
