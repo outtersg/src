@@ -4,6 +4,9 @@
 
 taqf()
 {
+	# Traitement du CSV à la Excel (rajoutant des " en début et fin pour marquer le multi-lignes):
+	awk 'NR==1&&/^".*[^"]$/{multi=1;sub(/^"/,"")}/""/&&multi{gsub(/""/,"\"")}prec{print prec}{prec=$0}END{if(multi)sub(/"$/,"",prec);print prec}' |
+	#printf '%s\n' ----
 	awk '{print NR" "$0}' | sort -nr -k 1 | cut -d ' ' -f 2-
 }
 
