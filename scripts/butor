@@ -36,4 +36,4 @@ sqlo "
 	order by sql_exec_start, a.process
 " | less
 printf "Lequel buter? " ; read cible
-ssho "kill $cible ; sleep 20 ; kill -9 $cible"
+ssho "kill $cible ; sleep 5 ; kill -9 $cible"
