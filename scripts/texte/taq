@@ -1,0 +1,17 @@
+#!/bin/sh
+# Tête-À-Queue
+# Lit un document en sens inverse.
+
+taqf()
+{
+	awk '{print NR" "$0}' | sort -nr -k 1 | cut -d ' ' -f 2-
+}
+
+case "$1" in
+	"")
+		taqf
+		;;
+	*)
+		taqf < "$1"
+		;;
+esac
