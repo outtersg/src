@@ -10,6 +10,29 @@ TMP=/tmp/temp.$$.encogg
 temp=$TMP/morceaux
 mkdir -p "$temp"
 
+commande() { command -v "$@" > /dev/null 2>&1 || { local r=$? ; echo "# $# introuvable." >&2 ; return $r ; } ; }
+
+prerequis()
+{
+	local r=0
+	
+	# Pour MusicBrainz
+	commande "$SCRIPTS/discid" || r=$?
+	PKG_CONFIG_PATH="$HOME/local/lib/pkgconfig:/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH" pkg-config libdiscid || { r=$? ; echo "# libdiscid introuvable." >&2 ; }
+	commande php || r=$?
+	
+	# Pour l'encodage
+	commande opusenc || r=$?
+	#commande oggenc || r=$?
+	#commande vorbiscomment || r=$?
+	commande ffmpeg || r=$?
+	
+	# Pour diffuser
+	commande rsync || r=$?
+	
+	return $r
+}
+
 champ()
 {
 	cat $TMP/pistes.encogg | awk FNR==${numero} | cut -f $1
@@ -285,6 +308,7 @@ analyserParametres()
 }
 
 analyserParametres "$@"
+prerequis
 
 if [ $recuperer = oui ] ; then
 case "`head -1 < "$TMP/parametres"`" in
