@@ -38,6 +38,7 @@ BEGIN{
 	nt = 0; # Nombre de Tâches.
 }
 {
+	tis[nt] = $1; # Tâches indexées
 	++nt;
 	ts[$1] = $2; # Tâches
 	trs[$1] = 1; # Tâches réelles; car tester la présence d'une tâche va créer une entrée dans le tableau, on ne veut donc pas polluer les index de ts. trs nous sert à ce test.
@@ -52,7 +53,9 @@ function trouer(cle, numpr){
 }
 END{
 	# On signale les prérequis introuvables.
-	for(t in ts)
+	for(it = -1; ++it < nt;)
+	{
+		t = tis[it];
 		for(i = -1; ++i < npr[t];)
 			if(!trs[pr[t"/"i]])
 			{
@@ -60,14 +63,17 @@ END{
 				trouer(t, i);
 				--i;
 			}
+	}
 	# Puis on affiche, en commençant par ceux sans prérequis.
-	while(nt)
+	ntr = nt; # Nombre de tâches restantes.
+	while(ntr)
 	{
 		minnpr = -1;
 		pppr = ""; # Plus Petit PréRequéreur (celui qui a le moins de prérequis).
 		
-		for(t in ts)
+		for(it = -1; ++it < nt;)
 		{
+			t = tis[it];
 			# Si cette tâche a déjà été sortie, on passe.
 			if(!trs[t]) continue;
 			
@@ -91,7 +97,7 @@ END{
 						trouer(t2, i);
 						--i;
 					}
-			--nt;
+			--ntr;
 		}
 		
 		# Bon si rien n'a avancé ce tour-ci, on fait sauter un prérequis presque au pif.
