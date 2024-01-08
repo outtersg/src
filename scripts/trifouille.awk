@@ -96,6 +96,10 @@ END{
 					{
 						trouer(t2, i);
 						--i;
+						# Et si nous étions le dernier prérequis pour cette tâche, on la remet en lice immédiatement après nous,
+						# afin que le tri soit le plus stable possible (si la première était bloquée par des prérequis, on la cale la plus première possible après ses prérequis).
+						if(!npr[t2])
+							it = -1;
 					}
 			--ntr;
 		}
