@@ -248,6 +248,11 @@ function()
 		faire1();
 	};
 	
+	var attendreMenu = function(libelléMenu, maxims)
+	{
+		return attendre(function() { return menu(libelléMenu); }, maxims);
+	};
+	
 	faire1 = function()
 	{
 		if(!àFaire.length) return;
@@ -256,17 +261,17 @@ function()
 		var de = e.de, dest = e.vers, objet = e.objet;
 		
 				souris(de, 'contextmenu');
-		puis(500, function()
+		puis(attendreMenu('Déplacer', 1000), function(menu)
 		{
-				souris(menu('Déplacer'), 'mouseover');
+				souris(menu, 'mouseover');
 		})
-		.puis(500, function()
+		.puis(attendreMenu('Déplacer vers un autre dossier...', 1000), function(menu)
 		{
-				souris(menu('Déplacer vers un autre dossier...'), 'click');
+				souris(menu, 'click');
 		})
-		.puis(500, function()
+		.puis(attendreMenu(dest, 1000), function(menu)
 		{
-				souris(menu(dest), 'click');
+				souris(menu, 'click');
 				info(objet+' → '+dest.innerText);
 		})
 		.puis(500, faire1);
