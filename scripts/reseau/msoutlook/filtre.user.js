@@ -6,6 +6,13 @@
 // @include      https://outlook.office365.com/*
 // ==/UserScript==
 
+/* À FAIRE: un cadre translucide pour empêcher les interférences de la vraie souris */
+/* À FAIRE: défiler tout seul pour aller chercher les vieux messages */
+/* À FAIRE: sur demande (consacrer un onglet à ce tri mais permettre de naviguer ailleurs sans interférence) */
+/* À FAIRE: parfois il bute aussi le message suivant: emmêlage si une tâche n'avait pas fini? */
+/* À FAIRE: ne pas marquer lu */
+/* À FAIRE: passer en jaune ceux en instance de déplacement */
+
 var Dests =
 {
 	p: 'Éléments supprimés',
