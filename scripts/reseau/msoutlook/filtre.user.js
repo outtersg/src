@@ -175,8 +175,15 @@ function()
 		}
 	};
 	
+	var àFaire = [], faire1;
+	
+	/* À FAIRE: vérifier qu'on est toujours sur la bonne BàL, aussi bien dans tourner qu'à chaque étape de faire1. */
+	
 	var tourner = function()
 	{
+		// On ne fait rien si on tourne encore sur la détection précédente.
+		if(àFaire.length) return;
+		
 		var bal;
 		document.querySelectorAll('span.screenReaderOnly').forEach(function(x)
 		{
@@ -194,15 +201,35 @@ function()
 			if(dest)
 			{
 				var de = x.querySelectorAll('[title]')[2]; // Surtout pas le [0], qui est le marqueur "lu / non lu"; le 1 est l'expéditeur, le 2 le titre.
+				àFaire.push({ de: de, vers: dest, objet: objet });
+			}
+		});
+		
+		faire1();
+	};
+	
+	faire1 = function()
+	{
+		if(!àFaire.length) return;
+		
+		var e = àFaire.pop(); // On part de la fin, ne sachant pas si retirer les premiers ne va pas tout décaler et faire sauter nos suivants.
+		var de = e.de, dest = e.vers, objet = e.objet;
+		
 				souris(de, 'contextmenu');
-				// Tempo à mettre?
+		puis(500, function()
+		{
 				souris(menu('Déplacer'), 'mouseover');
-				// Tempo à mettre?
+		})
+		.puis(500, function()
+		{
 				souris(menu('Déplacer vers un autre dossier...'), 'click');
+		})
+		.puis(500, function()
+		{
 				souris(menu(dest), 'click');
 				info(objet+' → '+dest.innerText);
-			}
-		}); 
+		})
+		.puis(500, faire1);
 	};
 	
 	var installer = function()
