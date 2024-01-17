@@ -71,9 +71,9 @@ function()
 				return suite;
 			}
 		};
-		var fe = function() // Fonction Encapsulée.
+		var fe = function(x) // Fonction Encapsulée.
 		{
-			f();
+			f(x);
 			if(promesse.suite)
 				promesse.suite();
 		};
@@ -81,6 +81,11 @@ function()
 		{
 			if(typeof cond === 'number')
 				window.setTimeout(fe, cond);
+			else if(typeof cond == 'object' && cond.attendre)
+			{
+				cond.f = fe;
+				cond.attendre();
+			}
 		};
 		if(!interne)
 			promesse.déclencher();
