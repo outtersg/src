@@ -58,6 +58,8 @@ function()
 				window.clearInterval(attente.attente);
 				if(r && attente.f)
 					attente.f(r);
+				else if(attente.ferr)
+					attente.ferr();
 				else
 					console.log(r ? '# attendre(): pas de fonction à appeler' : '# attendre(): attente expirée');
 				return r;
@@ -67,13 +69,13 @@ function()
 		return attente;
 	};
 	
-	var puis = function(cond, f, interne)
+	var puis = function(cond, f, ferr, interne)
 	{
 		var promesse =
 		{
 			puis: function(cond, f)
 			{
-				var suite = puis(cond, f, true);
+				var suite = puis(cond, f, ferr, true);
 				promesse.suite = suite.déclencher;
 				return suite;
 			}
@@ -91,6 +93,8 @@ function()
 			else if(typeof cond == 'object' && cond.attendre)
 			{
 				cond.f = fe;
+				if(ferr)
+					cond.ferr = ferr;
 				cond.attendre();
 			}
 		};
@@ -260,6 +264,8 @@ function()
 		return attendre(function() { return menu(libelléMenu); }, maxims);
 	};
 	
+	var tantPis = function() { àFaire = []; info('# Impossible d\'aller au bout, on retentera plus tard.'); };
+	
 	faire1 = function()
 	{
 		if(!àFaire.length) return;
@@ -271,16 +277,16 @@ function()
 		puis(attendreMenu('Déplacer', 1000), function(menu)
 		{
 				souris(menu, 'mouseover');
-		})
+		}, tantPis)
 		.puis(attendreMenu('Déplacer vers un autre dossier...', 1000), function(menu)
 		{
 				souris(menu, 'click');
-		})
+		}, tantPis)
 		.puis(attendreMenu(dest, 1000), function(menu)
 		{
 				souris(menu, 'click');
 				info(objet+' → '+dest.innerText);
-		})
+		}, tantPis)
 		.puis(500, faire1);
 	};
 	
