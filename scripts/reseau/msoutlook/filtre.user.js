@@ -25,6 +25,41 @@ function()
 {
 	/*- Utilitaires génériques -----------------------------------------------*/
 	
+	/**
+	 * Renvoie un objet attendeur, dont la fonction attendre() scrutera selon un test, et appellera en cas de succès une fonction adjointe a posteriori à l'objet.
+	 * Ex.:
+	 *   var attente = attendre(function() { return document.querySelector('.toto'); }, 5000);
+	 *   attente.f = function(trouvaille) { console.log('trouvé '+trouvaille.innerText); };
+	 *   attente.attendre();
+	 */
+	var attendre = function(test, maxims)
+	{
+		if(!maxims) maxims = 5000;
+		var freq = 50;
+		var attente =
+		{
+			reste: maxims / freq,
+			tentation: test,
+			attendre: function()
+			{
+				attente.attente = window.setInterval(attente.tenter, freq);
+			},
+			tenter: function()
+			{
+				var r = attente.tentation();
+				if(!r && --attente.reste > 0) return;
+				window.clearInterval(attente.attente);
+				if(r && attente.f)
+					attente.f(r);
+				else
+					console.log(r ? '# attendre(): pas de fonction à appeler' : '# attendre(): attente expirée');
+				return r;
+			}
+		};
+		
+		return attente;
+	};
+	
 	var puis = function(cond, f, interne)
 	{
 		var promesse =
