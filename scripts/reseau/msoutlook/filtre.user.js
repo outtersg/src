@@ -23,6 +23,37 @@ var Règles = function(objet, émetteur)
 (
 function()
 {
+	/*- Utilitaires génériques -----------------------------------------------*/
+	
+	var puis = function(cond, f, interne)
+	{
+		var promesse =
+		{
+			puis: function(cond, f)
+			{
+				var suite = puis(cond, f, true);
+				promesse.suite = suite.déclencher;
+				return suite;
+			}
+		};
+		var fe = function() // Fonction Encapsulée.
+		{
+			f();
+			if(promesse.suite)
+				promesse.suite();
+		};
+		promesse.déclencher = function()
+		{
+			if(typeof cond === 'number')
+				window.setTimeout(fe, cond);
+		};
+		if(!interne)
+			promesse.déclencher();
+		return promesse;
+	};
+	
+	/*- Initialisation -------------------------------------------------------*/
+	
 	// Ensemble de classes CSS porté par les <span> où figure l'objet du mél.
 	var classeObjet = '';
 	var classesExpéditeur = [];
