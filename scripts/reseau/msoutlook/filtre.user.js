@@ -292,8 +292,13 @@ function()
 	{
 		if(!classeObjet && !détection()) return;
 		if(!destinations()) return;
-		var barre = document.getElementById('headerButtonsRegionId');
-		if(!barre) return;
+		// La barre d'outils à laquelle se greffer.
+		// On ne peut directement taper headerButtonsRegionId ni même un de ses fils (ex.: owaSettingsBtn_container),
+		// car ils apparaissent brièvement puis sont supprimés pour être regénérés, cette fois avec tous les outils standard.
+		// Si on s'est greffé à la première instance on perd notre bouton.
+		// On s'insère donc de façon violente sous une icône plus générale mais stable.
+		var barre = document.getElementById('O365_MainLink_Me');
+		if(!barre || !(barre = barre.parentElement)) return;
 		
 		window.clearInterval(scrutateur);
 		
