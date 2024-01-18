@@ -320,7 +320,7 @@ function()
 	var lancer = function()
 	{
 		var masque = document.createElement('div');
-		masque.style = 'position: absolute; border: 3px solid red; width: 100%; height: 100%; left: 0; top: 0; background: white; opacity: 50%;';
+		masque.style = 'position: absolute; width: 100%; height: 100%; left: 0; top: 0; background: white; opacity: 50%;';
 		document.body.appendChild(masque);
 		
 		tourner();
