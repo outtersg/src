@@ -7,7 +7,6 @@
 // ==/UserScript==
 
 /* À FAIRE: défiler tout seul pour aller chercher les vieux messages */
-/* À FAIRE: sur demande (consacrer un onglet à ce tri mais permettre de naviguer ailleurs sans interférence) */
 /* À FAIRE: parfois il bute aussi le message suivant: emmêlage si une tâche n'avait pas fini? */
 /* À FAIRE: ne pas marquer lu */
 
@@ -293,12 +292,28 @@ function()
 	{
 		if(!classeObjet && !détection()) return;
 		if(!destinations()) return;
+		var barre = document.getElementById('headerButtonsRegionId');
+		if(!barre) return;
 		
 		window.clearInterval(scrutateur);
 		
 		sélecteurObjet = '.'+classeObjet.replaceAll(/ +/g, '.')+' [title]';
 		sélecteurExpéditeur = classesExpéditeur.map(x => '.'+x.replaceAll(/ +/g, '.')+' [title]').join(', ');
 		
+		var lf = document.createElement('span'); // Lanceur Filtrage.
+		lf.className = barre.children[0].className+' monBouton';
+		lf.innerText = 'Filtrage auto';
+		lf.onclick = lancer;
+		barre.appendChild(lf);
+		
+		var st = document.createElement('style');
+		st.setAttribute('type', 'text/css');
+		st.innerText = '.monBouton { color: white; cursor: pointer; padding: 0 1em 0 1em; } .monBouton:hover { background: #bfbf9f; color: #df7f00; }';
+		document.head.appendChild(st);
+	};
+	
+	var lancer = function()
+	{
 		var masque = document.createElement('div');
 		masque.style = 'position: absolute; border: 3px solid red; width: 100%; height: 100%; left: 0; top: 0; background: white; opacity: 50%;';
 		document.body.appendChild(masque);
