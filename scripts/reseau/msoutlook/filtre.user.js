@@ -11,7 +11,6 @@
 /* À FAIRE: sur demande (consacrer un onglet à ce tri mais permettre de naviguer ailleurs sans interférence) */
 /* À FAIRE: parfois il bute aussi le message suivant: emmêlage si une tâche n'avait pas fini? */
 /* À FAIRE: ne pas marquer lu */
-/* À FAIRE: passer en jaune ceux en instance de déplacement */
 
 var Dests =
 {
@@ -251,6 +250,7 @@ function()
 			var dest = Règles(objet, expé);
 			if(dest)
 			{
+				x.children[0].children[0].children[0].style = 'background: #ffffbf;';
 				var de = x.querySelectorAll('[title]')[2]; // Surtout pas le [0], qui est le marqueur "lu / non lu"; le 1 est l'expéditeur, le 2 le titre.
 				àFaire.push({ de: de, vers: dest, objet: objet });
 			}
