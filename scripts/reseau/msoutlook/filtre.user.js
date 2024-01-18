@@ -283,7 +283,7 @@ function()
 		.puis(attendreMenu(dest, 1000), function(menu)
 		{
 				souris(menu, 'click');
-				info(objet+' → '+dest.innerText);
+				info(objet+' → '+dest);
 		}, tantPis)
 		.puis(500, faire1);
 	};
