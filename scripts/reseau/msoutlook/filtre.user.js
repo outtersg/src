@@ -6,7 +6,6 @@
 // @include      https://outlook.office365.com/*
 // ==/UserScript==
 
-/* À FAIRE: un cadre translucide pour empêcher les interférences de la vraie souris */
 /* À FAIRE: défiler tout seul pour aller chercher les vieux messages */
 /* À FAIRE: sur demande (consacrer un onglet à ce tri mais permettre de naviguer ailleurs sans interférence) */
 /* À FAIRE: parfois il bute aussi le message suivant: emmêlage si une tâche n'avait pas fini? */
@@ -299,6 +298,10 @@ function()
 		
 		sélecteurObjet = '.'+classeObjet.replaceAll(/ +/g, '.')+' [title]';
 		sélecteurExpéditeur = classesExpéditeur.map(x => '.'+x.replaceAll(/ +/g, '.')+' [title]').join(', ');
+		
+		var masque = document.createElement('div');
+		masque.style = 'position: absolute; border: 3px solid red; width: 100%; height: 100%; left: 0; top: 0; background: white; opacity: 50%;';
+		document.body.appendChild(masque);
 		
 		tourner();
 		window.setInterval(tourner, 10000);
