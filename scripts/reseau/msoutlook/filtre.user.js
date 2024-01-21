@@ -242,13 +242,17 @@ function()
 		
 		document.querySelectorAll('[title="Marquer comme lu"]').forEach(function(x)
 		{
-			while((x = x.parentNode) && x.getAttribute && !x.getAttribute('data-animatable')); if(!x) return;
+			// On remonte à l'élément englobant le message.
+			// data-animatable est trop haut, car dans le cas du premier message d'un bloc "Reçus le mois dernier", il se trouve non sur le message mais sur un <div> regroupant le titre "Le mois dernier" et le premier message lui-même :-(
+			// draggable est un coup trop bas (c'est peut-être lui qu'il faudrait cibler pour déplacer par glisser-déposer?)
+			// aria-selected est pile au bon niveau (celui qui possède tous les attributs dont pour aria-label une grosse concaténation des champs indexés affichés: état, expéditeur, objet, début du message).
+			while((x = x.parentNode) && x.getAttribute && !x.getAttribute('aria-selected')); if(!x) return;
 			var objet = x.querySelector(sélecteurObjet).innerText;
 			var expé = x.querySelector(sélecteurExpéditeur);
 			var dest = Règles(objet, expé);
 			if(dest)
 			{
-				x.children[0].children[0].children[0].style = 'background: #ffffbf;';
+				x.children[0].children[0].style = 'background: #ffffbf;';
 				var de = x.querySelectorAll('[title]')[2]; // Surtout pas le [0], qui est le marqueur "lu / non lu"; le 1 est l'expéditeur, le 2 le titre.
 				àFaire.push({ de: de, vers: dest, objet: objet });
 			}
