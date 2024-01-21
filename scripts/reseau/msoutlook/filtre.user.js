@@ -3,7 +3,7 @@
 // @namespace    http://outters.eu/
 // @description  Ces gros débiles de MS virent le support VBA, ne proposent pas de remplacement JS, mais n'ont même pas songé à offrir un filtre "l'objet est exactement blabla".
 // @grant        none
-// @include      https://outlook.office365.com/*
+// @include      https://outlook.office.com/*
 // ==/UserScript==
 
 /* À FAIRE: défiler tout seul pour aller chercher les vieux messages */
