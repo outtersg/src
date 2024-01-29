@@ -254,7 +254,7 @@ function()
 			{
 				x.children[0].children[0].style = 'background: #ffffbf;';
 				var de = x.querySelectorAll('[title]')[2]; // Surtout pas le [0], qui est le marqueur "lu / non lu"; le 1 est l'expéditeur, le 2 le titre.
-				àFaire.push({ de: de, vers: dest, objet: objet });
+				àFaire.push({ de: de, vers: dest, objet: objet, bloc: x });
 			}
 		});
 		
@@ -266,6 +266,11 @@ function()
 		return attendre(function() { return menu(libelléMenu); }, maxims);
 	};
 	
+	var attenteLuOuNon = function(bloc)
+	{
+		return attendre(function() { return bloc.querySelector('[title="Marquer comme non lu"], [title="Marquer comme lu"]'); });
+	};
+	
 	var tantPis = function() { àFaire = []; info('# Impossible d\'aller au bout, on retentera plus tard.'); };
 	
 	faire1 = function()
@@ -275,8 +280,26 @@ function()
 		var e = àFaire.pop(); // On part de la fin, ne sachant pas si retirer les premiers ne va pas tout décaler et faire sauter nos suivants.
 		var de = e.de, dest = e.vers, objet = e.objet;
 		
+		/* NOTE: marquage non lu
+		 * Le dépliement du menu déroulant est considéré comme un clic: au bout de quelques secondes, Outlook considérera le message comme lu.
+		 * Or notre filtre travaille uniquement sur les non lus: si la suite des opérations foire, le message, lu, ne sera pas retenté.
+		 * On force donc son passage à lu puis re à non lu, pour en garantir l'état.
+		 */
+		souris(de, 'clic');
+		puis(attenteLuOuNon(e.bloc), function(lecteur)
+		{
+			souris(lecteur, 'click');
+		}, tantPis)
+		.puis(attenteLuOuNon(e.bloc), function(lecteur)
+		{
+			if(lecteur.getAttribute('title') == 'Marquer comme non lu')
+				souris(lecteur, 'click');
+		}, tantPis)
+		.puis(attendre(function() { return true; }), function()
+		{
 				souris(de, 'contextmenu');
-		puis(attendreMenu('Déplacer', 1000), function(menu)
+		}, tantPis)
+		.puis(attendreMenu('Déplacer', 1000), function(menu)
 		{
 				souris(menu, 'mouseover');
 		}, tantPis)
