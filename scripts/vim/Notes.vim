@@ -15,7 +15,7 @@ syn match notesAbandon   '^	*[*]'
 " À FAIRE: pas en erreur si déjà traité (+ ou *)
 syn match notesAlerte    '/!\\'
 syn match notesComm      '^#.*'
-syn match notesImportant ' \*[^ ].*[^ ]\*[ ,;.?!]'
+syn match notesImportant ' \*[^ ][^*]*[^ ]\*[ ,;.?!]'
 
 " Cf. les couleurs dans syntax/syncolor.vim (merci https://askubuntu.com/questions/24544/what-is-the-default-vim-colorscheme#comment31987_24548)
 hi def link notesTitre    Statement
