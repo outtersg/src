@@ -20,6 +20,7 @@
 # SOFTWARE.
 
 # Bute un processus Oracle après sélection.
+# N.B.: si le processus père apparaît en 1234 c'est qu'il est déjà en cours de piqûre, en attente de libération des ressources par ex. autres instances participant à un parallel().
 
 sqlo() { … }
 ssho() { … }
@@ -28,12 +29,12 @@ sqlo "
 	select
 		'[32m'||to_char(a.sql_exec_start, 'YYYY-MM-DD HH24:MI:SS')||'[0m' debut, a.process pid, '[31m'||spid||'[0m' spid, a.sid, a.serial#, a.username,b.sql_id, substr(b.sql_fulltext, 1, 99999),
 	    a.*
-	from v\\\$session a, v\\\$sql b, v\\\$process p
+	from v\$session a, v\$sql b, v\$process p
 	where a.sql_id = b.sql_id and a.status = 'ACTIVE' and a.username != 'SYS'
 	and p.addr = a.paddr
 	--and substr(b.sql_fulltext, 1, 300) not like '%fulltext%9999%' -- Ça te me tue les perfs, même avec le substr.
 	and a.audsid <> userenv('sessionid')
 	order by sql_exec_start, a.process
-" | less
+" | tee /tmp/reqlongues.sql | less
 printf "Lequel buter? " ; read cible
 ssho "kill $cible ; sleep 5 ; kill -9 $cible"
