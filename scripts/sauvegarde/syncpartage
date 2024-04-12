@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for dest in \
+	ssh://b/Documents/partage \
+	ssh://mdm/Documents/partage \
+	ssh://partage/sauvegardes/partage
+do
+	lockf -t 10 $HOME/tmp/partage.verrou $HOME/local/bin/unison -batch -backups -maxbackups 3 $HOME/partage $dest
+done
