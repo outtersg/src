@@ -2,4 +2,6 @@
 
 qui="`grep '^	for' < "$1" | head -1 | sed -E -e 's#^	for ([^-@]+)(-[^@]+)?@([^ ;]+).*#\3/\1#' | tr A-Z a-z`"
 set -x
+case "$qui" in gclo.fr/gclo) qui2=gclo.fr/gcc ;; esac
+[ -z "$qui2" ] || cp "$1" ../$qui2/cur/`stat -f "%m" "$1"`.H123456P4321.mel\:2,be
 mv "$1" ../$qui/cur/`stat -f "%m" "$1"`.H123456P4321.mel\:2,be
