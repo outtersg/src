@@ -27,7 +27,9 @@ ssho() { … }
 
 sqlo "
 	select
-		'[32m'||to_char(a.sql_exec_start, 'YYYY-MM-DD HH24:MI:SS')||'[0m' debut, a.process pid, '[31m'||spid||'[0m' spid, a.sid, a.serial#, a.username,b.sql_id, substr(b.sql_fulltext, 1, 99999),
+		'[32m'||to_char(a.sql_exec_start, 'YYYY-MM-DD HH24:MI:SS')||'[0m' debut, a.process pid, '[31m'||spid||'[0m' spid, a.sid, a.serial#, a.username,b.sql_id,
+		wait_class, wait_time_micro, blocking_session_status, '[33m'||event||'[0m' event,
+		replace(chr(10)||substr(b.sql_fulltext, 1, 99999), chr(10), chr(10)||chr(9))||chr(10) req,
 	    a.*
 	from v\$session a, v\$sql b, v\$process p
 	where a.sql_id = b.sql_id and a.status = 'ACTIVE' and a.username != 'SYS'
