@@ -15,7 +15,9 @@ syn match notesAbandon   '^	*[*]'
 " À FAIRE: pas en erreur si déjà traité (+ ou *)
 syn match notesAlerte    '/!\\'
 syn match notesComm      '^#.*'
-syn match notesImportant ' \*[^ ][^*]*[^ ]\*[ ,;.?!]'
+" https://vi.stackexchange.com/a/22293 pour détecter sur une délimitation de mot autre que l'espace (qui était un peu facile: un espace jaune, ça ne se voyait pas trop).
+" dans la même veine, https://vi.stackexchange.com/a/29547 pourrait un jour servir.
+syn region notesImportant start="[ '\]]\*"ms=e end="\*[ ,;.?!\]]"me=s
 
 " Cf. les couleurs dans syntax/syncolor.vim (merci https://askubuntu.com/questions/24544/what-is-the-default-vim-colorscheme#comment31987_24548)
 hi def link notesTitre    Statement
