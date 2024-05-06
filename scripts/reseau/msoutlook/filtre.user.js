@@ -238,7 +238,6 @@ function()
 			if(x.innerText == 'sélectionné')
 				bal = x.parentNode.querySelector('div > span').innerText;
 		});
-		if(bal != 'Boîte de réception') return;
 		
 		document.querySelectorAll('[title="Marquer comme lu"]').forEach(function(x)
 		{
@@ -250,7 +249,7 @@ function()
 			var objet = x.querySelector(sélecteurObjet).innerText;
 			var expé = x.querySelector(sélecteurExpéditeur);
 			var dest = Règles(objet, expé);
-			if(dest)
+			if(dest && dest != bal)
 			{
 				x.children[0].children[0].style = 'background: #ffffbf;';
 				var de = x.querySelectorAll('[title]')[2]; // Surtout pas le [0], qui est le marqueur "lu / non lu"; le 1 est l'expéditeur, le 2 le titre.
