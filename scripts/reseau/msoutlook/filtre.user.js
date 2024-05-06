@@ -340,7 +340,7 @@ function()
 		
 		var st = document.createElement('style');
 		st.setAttribute('type', 'text/css');
-		st.innerText = '.monBouton { color: white; cursor: pointer; padding: 0 1em 0 1em; } .monBouton:hover { background: #bfbf9f; color: #df7f00; }';
+		st.innerText = '.monBouton { color: white; cursor: pointer; padding: 0 1em 0 1em; } .monBouton:hover { background: #bfbf9f; color: #df7f00; } #CenterRegion { width: auto !important; }';
 		document.head.appendChild(st);
 	};
 	
