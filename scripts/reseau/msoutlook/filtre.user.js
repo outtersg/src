@@ -312,7 +312,7 @@ function()
 				souris(menu, 'click');
 				info(objet+' → '+dest);
 		}, tantPis)
-		.puis(500, faire1);
+		.puis(200, faire1);
 	};
 	
 	var installer = function()
@@ -356,7 +356,7 @@ function()
 		);
 		
 		tourner();
-		window.setInterval(tourner, 10000);
+		window.setInterval(tourner, 5000);
 	};
 	var scrutateur = window.setInterval(installer, 1000);
 }
