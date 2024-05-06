@@ -349,6 +349,11 @@ function()
 		var masque = document.createElement('div');
 		masque.style = 'position: absolute; width: 100%; height: 100%; left: 0; top: 0; background: white; opacity: 50%;';
 		document.body.appendChild(masque);
+		var rien = function(e) { e.stopPropagation(); e.preventDefault(); };
+		[ 'contextmenu','mousemove','mouseover','mouseout','mouseenter','mouseleave','mousedown','mouseup','click','visibilitychange' ].forEach
+		(
+			function(quoi) { masque.addEventListener(quoi, rien); }
+		);
 		
 		tourner();
 		window.setInterval(tourner, 10000);
