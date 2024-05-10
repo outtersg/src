@@ -6,12 +6,12 @@ if exists("b:current_syntax")
  finish
 endif
 
-syn match notesEnCours '^	*[=]'
+syn match notesEnCours '^	*[=] '
 syn match notesTitre '^==.*'
-syn match notesAFaire '^	*[-]'
+syn match notesAFaire '^	*[-] '
 syn match notesTitre '^--.*'
-syn match notesFini   '^	*[+*]'
-syn match notesAbandon   '^	*[*]'
+syn match notesFini   '^	*[+*] '
+syn match notesAbandon   '^	*[*] '
 " À FAIRE: pas en erreur si déjà traité (+ ou *)
 syn match notesAlerte    '/!\\'
 syn match notesComm      '^#.*'
