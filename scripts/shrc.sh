@@ -345,3 +345,19 @@ pseudojour()
 	done
 	false
 }
+
+#- Réseau ----------------------------------------------------------------------
+
+# curl qui renvoie son code HTTP si différent de 2xx.
+curly()
+{
+	local r t=/tmp/temp.curly.$$.stderr
+	
+	curl -v -L "$@" 2> $t || { r=$? ; rm -f $t ; return $r ; }
+	
+	r="`awk '/< HTTP\//{r=$3}END{print r}' < $t`"
+	case "$r" in 2??) r=0 ;; esac
+	
+	rm -f $t
+	return $r
+}
