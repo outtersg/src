@@ -356,6 +356,7 @@ curly()
 	curl -v -L "$@" 2> $t || { r=$? ; rm -f $t ; return $r ; }
 	
 	r="`awk '/< HTTP\//{r=$3}END{print r}' < $t`"
+	HTTP_STATUS=$r
 	case "$r" in 2??) r=0 ;; esac
 	
 	rm -f $t
