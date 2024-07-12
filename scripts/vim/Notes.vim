@@ -12,6 +12,8 @@ syn match notesAFaire '^	*[-] '
 syn match notesTitre '^--.*'
 syn match notesFini   '^	*[+*] '
 syn match notesAbandon   '^	*[*] '
+" À FAIRE: distinguer puces de titre: le titre est suivi et précédé d'une ligne vide (ou début de fichier), la puce non (autre puce, retour à la ligne ds la puce, retour à un para normal).
+syn match notesNum       '^	*\([a-zA-Z]\|[IVX0-9]\+\)[.] '
 " À FAIRE: pas en erreur si déjà traité (+ ou *)
 syn match notesAlerte    '/!\\'
 syn match notesComm      '^#.*'
@@ -26,6 +28,7 @@ hi def link notesAFaire   WarningMsg
 hi def link notesEnCours  Statement
 hi def link notesFini     MoreMsg
 hi def link notesAbandon  Identifier
+hi def link notesNum      Identifier
 hi def link notesAlerte   ErrorMsg
 hi def link notesComm     Identifier
 hi def link notesImportant Gras
