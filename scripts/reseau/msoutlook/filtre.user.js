@@ -8,7 +8,6 @@
 
 /* À FAIRE: défiler tout seul pour aller chercher les vieux messages */
 /* À FAIRE: parfois il bute aussi le message suivant: emmêlage si une tâche n'avait pas fini? */
-/* À FAIRE: ne pas marquer lu */
 
 var Dests =
 {
@@ -284,6 +283,8 @@ function()
 		 * Or notre filtre travaille uniquement sur les non lus: si la suite des opérations foire, le message, lu, ne sera pas retenté.
 		 * On force donc son passage à lu puis re à non lu, pour en garantir l'état.
 		 */
+		/* Bon finalement le menu déroulant marche tout aussi bien sans clic préalable; de plus il évite de s'embarrasser de déselection en cas de souci. */
+		/*
 		souris(de, 'clic');
 		puis(attenteLuOuNon(e.bloc), function(lecteur)
 		{
@@ -299,6 +300,10 @@ function()
 				souris(de, 'contextmenu');
 		}, tantPis)
 		.puis(attendreMenu('Déplacer', 1000), function(menu)
+		*/
+		souris(de, 'contextmenu');
+		var attente =
+		puis(attendreMenu('Déplacer', 1000), function(menu)
 		{
 				souris(menu, 'mouseover');
 		}, tantPis)
@@ -311,7 +316,19 @@ function()
 				souris(menu, 'click');
 				info(objet+' → '+dest);
 		}, tantPis)
+		.puis(0, function()
+		{
+			var sel = document.querySelector('[aria-selected=true] [title="Marquer comme lu"]');
+			if(sel)
+				attente = attente.puis(10, function()
+				{
+					var coche = document.querySelector('[aria-selected=true] [aria-label="Sélectionner une conversation"]');
+					souris(coche, 'click');
+					souris(coche, 'click');
+				});
+			attente
 		.puis(200, faire1);
+		});
 	};
 	
 	var installer = function()
