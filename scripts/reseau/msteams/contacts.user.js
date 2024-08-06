@@ -32,7 +32,9 @@ var retaperUn = function(document)
 {
 	document.querySelectorAll(retapages).forEach(function(i)
 	{
-		// À FAIRE: marquer l'élément comme déjà retapé, histoire d'éviter de repasser dessus.
+		if(i.dejaFait == i.innerHTML) return;
+		i.dejaFait = i.innerHTML;
+		
 		if(unsafeWindow.retape[i.innerHTML]) i.innerHTML = unsafeWindow.retape[i.innerHTML];
 	});
 };
@@ -51,7 +53,7 @@ var retaper = function()
 	function()
 	{
 		// À FAIRE: détecter les changements pour mettre à jour plus rapidement.
-		window.setInterval(retaper, 20000);
+		window.setInterval(retaper, 5000);
 	}
 )
 ();
