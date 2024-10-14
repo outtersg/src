@@ -325,7 +325,7 @@ function()
 			if(sel)
 				attente = attente.puis(10, function()
 				{
-					var coche = document.querySelector('[aria-selected=true] [aria-label="Sélectionner une conversation"]');
+					var coche = document.querySelector('[aria-selected=true] :is([aria-label="Sélectionner une conversation"],[aria-label="Sélectionner un message"])');
 					souris(coche, 'click');
 					souris(coche, 'click');
 				});
