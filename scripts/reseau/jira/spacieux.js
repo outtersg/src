@@ -2,7 +2,8 @@
 // @name         JIRA spacieux
 // @namespace    http://outters.eu/
 // @description  Masque le gros pâté à droite qui bouffe un tiers de la largeur de l'écran pour pas grand-chose.
-// @include      http://…/*
+// @include      https://jira.…/*
+// @include      https://*.atlassian.net/browse/*
 // ==/UserScript==
 
 
@@ -16,13 +17,17 @@ var gira =
 {
 	incs: function()
 	{
-		var num = document.head.querySelector('meta[name="ajs-issue-key"]').attributes.content.value;
-		var refs = document.querySelector(giraIncsChamp);
+		var num;
+		if((num = document.head.querySelector('meta[name="ajs-issue-key"]')))
+			num = num.attributes.content.value;
+		else if((num = document.querySelector('[data-testid="issue.views.issue-base.foundation.breadcrumbs.current-issue.item"]')))
+			num = num.textContent;
+		var refs = document.querySelector(giraIncsChamp); // À FAIRE sous JiraNuage.
 		if(refs && refs.innerHTML) refs = refs.innerHTML.replace('&nbsp;', '').trim();
 		var req = new XMLHttpRequest();
 		req.addEventListener('load', function()
 		{
-			var infos = document.querySelector('#details-module .mod-content');
+			var infos = document.querySelector('#details-module .mod-content'); // À FAIRE sous JiraNuage.
 			infos.insertAdjacentHTML('beforeend', '<ul class="property-list"><li class="item"><div class="wrap"><strong class="name">Incidents:</strong><div class="value type-readonlyfield" style="border: 1px solid black; background: #FFFFDF">'+req.responseText+'</div></div></li></ul>');
 		});
 		req.open('GET', giraIncsUrl.replace(/@NUM/, num).replace(/@REFS/, refs));
@@ -36,28 +41,72 @@ var gira =
 	}
 };
 
-(
-	function()
+{
+	var ints;
+	var inst = function()
 	{
+		var style = '';
 		var tete = document.getElementsByTagName('head')[0];
-		var st = document.createElement('style');
-		var gp = document.querySelector('.issue-body-content');
+		var gp = document.querySelector('.issue-body-content, [data-testid="issue.views.issue-details.issue-layout.container-left"]');
+		if(gp) window.clearInterval(ints); else return;
+		document.querySelector('[data-testid="issue.views.issue-details.issue-layout.container-right"]').id = 'viewissuesidebar';
 		var pepere = document.getElementById('viewissuesidebar');
 		var menu = document.createElement('DIV');
 		var zorro = document.createElement('DIV');
+		var i;
 		
+		var commentaireFlottant = document.querySelector('[data-testid="issue.activity.comment"]');
+		if(commentaireFlottant)
+			commentaireFlottant.parentNode.parentNode.style.setProperty('position', 'static'); // Au lieu de sticky.
+		
+		var agrandissement = document.querySelector('[data-component-selector="jira-issue-view-common-component-resize-handle"]');
+		if(agrandissement)
+			for(i = agrandissement.classList.length; --i >= 0;)
+				if(document.querySelectorAll('.'+agrandissement.classList[i]).length == 1)
+					style += '.'+agrandissement.classList[i]+'[role="separator"] { display: none; }\n';
 		menu.setAttribute('class', 'pouet');
-		menu.setAttribute('style', 'display: inline-block; position: absolute; right: 0; z-index: 1; width: auto; padding: 5px; border: 1px solid #DFDFDF; background: white;');
 		zorro.setAttribute('class', 'zorro');
-		zorro.setAttribute('style', 'display: inline-block; width: 32px; height: 32px; right: 0; background: url('+document.querySelectorAll('#assignee-val img')[0].src+') no-repeat center center;');
+		zorro.setAttribute('style', 'display: inline-block; width: 32px; height: 32px; right: 0; background: url('+document.querySelectorAll('#assignee-val img, [data-testid="issue.views.field.user.assignee"] img')[0].src+') no-repeat center center; background-size: contain;');
 		pepere.setAttribute('style', 'width: 400px; padding: 0;');
 		menu.appendChild(zorro);
 		menu.appendChild(pepere);
 		gp.insertBefore(menu, gp.childNodes[0]);
 		
-		st.setAttribute('type', 'text/css');
-		st.appendChild(document.createTextNode('.pouet #viewissuesidebar { display: none; } .pouet:hover #viewissuesidebar { display: block; } .pouet .zorro { position: relative; } .pouet:hover .zorro { position: absolute; }'));
-		tete.appendChild(st);
+		style +=
+			'.pouet { display: inline-block; position: absolute; right: 0; z-index: 256; width: auto; padding: 5px; border: 1px solid #DFDFDF; background: white; }\n'+
+			'.pouet #viewissuesidebar { display: none; max-height: 400px; }\n'+
+			'.pouet:hover #viewissuesidebar { display: block; }\n'+
+			'.pouet .zorro { position: relative; }\n'+
+			'.pouet:hover .zorro { position: absolute; }\n';
+		
+		// Recherche de la classe CSS en tête de tout le contenu.
+		var unTitre = document.querySelector('[class^="css-"] h2[data-testid="issue.views.issue-base.common.description.label"]');
+		var unTexte = document.querySelector('.is-comment [class^="css-"]');
+		if(unTexte)
+		{
+			while(unTitre && !(unTitre.className && unTitre.className.match(/^css-/))) unTitre = unTitre.parentNode;
+			if(unTexte) // Marcherait aussi avec unTitre finalement.
+				style +=
+					'.'+unTexte.classList[0]+' p { line-height: 1.1 !important; letter-spacing: 0 !important; }\n'+
+					'.'+unTexte.classList[0]+' { font-size: 9pt; }\n';
+		}
+		document.body.style.setProperty('--ds-font-body', '9pt sans-serif'); // Celui-là est paramétrable par une simple pseudo-prop du corps, ouf!, qui passe avant tout le fatras qu'ils ont définir par défaut.
+		style += '.code-block code[class*="language-"] { font-size: 9pt; line-height: 1; }\n';
+		
+		// Les réactions: on va choper la classe "privée" du conteneur.
+		var uneReac = document.querySelector('[data-testid="issue-comment-base.ui.comment.reactions-container"]');
+		if(uneReac)
+		{
+			uneReac = uneReac.parentNode;
+			style +=
+				'.'+uneReac.classList[0]+' { position: absolute; bottom: 0; left: 0; opacity: 0.33; }\n'+
+				'.'+uneReac.classList[0]+':hover { z-index: 2; opacity: 1; background: var(--ds-surface, white); }\n'+
+				'.'+uneReac.previousSibling.classList[0]+' { z-index: 1; }'+
+				'.'+uneReac.previousSibling.querySelector('h3').classList[0]+' { font-size: 80%; }';
+		}
+		
+		tete.insertAdjacentHTML('beforeend', '<style type="text/css">\n'+style+'</style>');
+		var st = tete.lastChild;
 		
 		// Accès à AJS pour lui injecter de nouveaux raccourcis clavier.
 		// Pas besoin de ruser façon http://5.9.10.113/58877097/add-a-custom-key-shortcut-within-javascript-in-confluence (car on est déjà chargés une fois la page bien installée).
@@ -88,6 +137,13 @@ var gira =
 		
 		gira.deroulantes(st);
 		gira.incs();
-	}
-)
-();
+		
+		// Et pourquoi notre société considérerait-elle que les vieux sont sans intérêt et doivent être masqués?
+		// (bon d'accord ce ne sont que de vieux *commentaires*)
+		var plus = document.querySelector('[data-testid="issue.activity.common.component.load-more-button.loading-button"]');
+		if(plus) plus.click();
+	};
+	
+	ints = window.setInterval(inst, 1000);
+	inst();
+}
