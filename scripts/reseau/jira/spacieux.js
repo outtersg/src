@@ -107,6 +107,28 @@ var gira =
 	{
 		css.appendChild(document.createTextNode('.full-width { max-width: 512px; }'));
 	},
+	/* Le liant, c'est bien, mais le principe de l'hyperlien ça n'est pas d'être hyper alourdi par l'intégralité des infos de la page cible sur le lien */
+	allegeEnLipides: function()
+	{
+		if(!gira.allegeEnLipides.classesEtatConnues) gira.allegeEnLipides.classesEtatConnues = {};
+		
+		// On repère les libellés qu'on saurait représenter par un simple code couleur.
+		document.querySelectorAll('.smart-link-title-wrapper').forEach(function(titre)
+		{
+			if(!titre.innerText.includes(':')) return; // Déjà traité.
+			
+			titre.innerText = titre.innerText.replace(/:.*/, '');
+			var classeEtat = titre.closest('a').lastChild.classList[0]; // Le cartouche d'état est le dernier bloc contenu dans le lien.
+			if(!gira.allegeEnLipides.classesEtatConnues[classeEtat])
+			{
+				gira.allegeEnLipides.classesEtatConnues[classeEtat] = 1;
+				gira.style.innerText += '.'+classeEtat+' > span > span { font-size: 70%; line-height: 1.5em; }\n';
+			}
+			
+			/* À FAIRE?: transformer les Terminé par un trait rayant vert, Abandonné par un orange? */
+			/* À FAIRE?: transformer les anos en un lien rouge, les évols en un lien vert, les besoins en un lien bleu? */
+		});
+	},
 	/* Et pourquoi notre société considérerait-elle que les vieux sont sans intérêt et doivent être masqués?
 	 * (bon d'accord ce ne sont que de vieux *commentaires*) */
 	beguinage: function()
@@ -133,6 +155,8 @@ var gira =
 		gira.menudroite(gp);
 		gira.deroulantes(gira.style);
 		gira.tourner7fois();
+		// Récurrent nécessaire, car d'une les liens sont enrichis et stylés en asynchrone, de deux ils peuvent apparaître après "Voir les commentaires + anciens".
+		window.setInterval(gira.allegeEnLipides, 2000);
 		
 		/* Fonctionnalités */
 		
