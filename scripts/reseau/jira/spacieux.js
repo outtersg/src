@@ -59,7 +59,7 @@ var gira =
 			'.pouet { display: inline-block; position: absolute; right: 0; z-index: 256; width: auto; padding: 5px; border: 1px solid #DFDFDF; background: white; }\n'+
 			'.pouet #viewissuesidebar { display: none; max-height: 400px; }\n'+
 			'.pouet:hover #viewissuesidebar { display: block; }\n'+
-			'.pouet .zorro { position: relative; display: inline-block; width: 32px; height: 32px; right: 0; background: url('+document.querySelectorAll('#assignee-val img, [data-testid="issue.views.field.user.assignee"] img')[0].src+') no-repeat center center; background-size: contain; }\n'+
+			'.pouet .zorro { position: relative; display: inline-block; width: 32px; height: 32px; right: 0; background: url('+document.querySelectorAll('#assignee-val img, [data-testid="issue.views.field.user.assignee"] :is(img, svg)')[0].src+') no-repeat center center; background-size: contain; }\n'+
 			'.pouet:hover .zorro { position: absolute; }\n';
 	},
 	densifier: function()
