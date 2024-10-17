@@ -79,6 +79,7 @@ var gira =
 		}
 		document.body.style.setProperty('--ds-font-body', '9pt sans-serif'); // Celui-là est paramétrable par une simple pseudo-prop du corps, ouf!, qui passe avant tout le fatras qu'ils ont définir par défaut.
 		gira.style.innerHTML += '.code-block code[class*="language-"] { font-size: 9pt; line-height: 1; }\n';
+		gira.style.innerText += 'img.emoji { max-height: 1em; max-width: 1em; font-size: 100%; }\n';
 		
 		// Les émoticônes c'est un plus mais pas au point de devoir bouffer une ligne de texte.
 		
@@ -93,6 +94,32 @@ var gira =
 				'.'+uneReac.previousSibling.classList[0]+' { z-index: 1; }'+
 				'.'+uneReac.previousSibling.querySelector('h3').classList[0]+' { font-size: 80%; }';
 		}
+	},
+	coupDeBarres: function()
+	{
+		// Tout ce qui traîne en permanence.
+		
+		gira.style.innerText +=
+			'header[class^="css-"] { height: var(--topNavigationHeight); }\n'+
+			'body { --topNavigationHeight: 3em; }\n'+
+			'#jira-issue-header > div { min-height: unset; }\n';
+		
+		// Souci avec les --ds-space-100, -150, -200: ces abrutis le rendent configurable,
+		// sauf qu'il est utilisé à la fois en marge verticale autour des différents champs de détail du Jira (on n'en veut pas),
+		// et comme marge verticale entre titre et paragraphe, ou horizontale entre onglets (on veut en conserver un minimum).
+		// Donc au lieu de les mettre à 0, on va les réduire (ça aide le texte), mais pour les menus à réduire encore plus on devra charcuter chirurgicalement.
+		document.body.style.setProperty('--ds-space-300', '0.8em');
+		document.body.style.setProperty('--ds-space-200', '0.6em');
+		document.body.style.setProperty('--ds-space-150', '0.4em');
+		document.body.style.setProperty('--ds-space-100', '0.2em');
+		
+		// Entre un bloc (Description) et son paragraphe, il utilise --ds-space-100 qui est vraiment trop court.
+		// Là c'est l'élément qu'on corrige.
+		var db = document.querySelector('form[role="presentation"] > div').classList[0]; // Début de bloc.
+		gira.style.innerText +=
+			'.'+db+' { margin-block-start: 1em; }\n'+
+			'details .'+db+' { margin-block-start: 0; }\n';
+		gira.style.innerText += '[role="tab"] { padding-left: 0.5em !important; padding-right: 0.5em !important; }\n';
 	},
 	/* Qu'est-ce que c'est que cette incitation à commenter sans même avoir lu les commentaires de nos prédecesseurs? */
 	tourner7fois: function()
@@ -154,6 +181,7 @@ var gira =
 		gira.densifier();
 		gira.menudroite(gp);
 		gira.deroulantes(gira.style);
+		gira.coupDeBarres();
 		gira.tourner7fois();
 		// Récurrent nécessaire, car d'une les liens sont enrichis et stylés en asynchrone, de deux ils peuvent apparaître après "Voir les commentaires + anciens".
 		window.setInterval(gira.allegeEnLipides, 2000);
