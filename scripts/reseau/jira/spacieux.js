@@ -61,6 +61,38 @@ var gira =
 			'.pouet:hover #viewissuesidebar { display: block; }\n'+
 			'.pouet .zorro { position: relative; display: inline-block; width: 32px; height: 32px; right: 0; background: url('+document.querySelectorAll('#assignee-val img, [data-testid="issue.views.field.user.assignee"] :is(img, svg)')[0].src+') no-repeat center center; background-size: contain; }\n'+
 			'.pouet:hover .zorro { position: absolute; }\n';
+		
+		// Heu tout de même l'état du JIRA c'est important…
+		
+		if(gira.etatVisibleAvecOutils) gira.etatVisible = window.setInterval(gira.etatVisible, 1000);
+		else gira.etatVisible();
+	},
+	etatVisible: function()
+    {
+		//var bde = document.querySelector('[data-testid="issue.views.issue-base.context.status-and-approvals-wrapper.status-and-approval"]'); // Barre d'état. Bon en fait on laisse tomber car elle contient aussi les Actions (à quoi ça sert?) et quelques marges disgracieuses.
+		var bdt = document.querySelector // Barre de tâches.
+		(
+			gira.etatVisibleAvecOutils
+			? '[data-testid="issue.issue-view.views.issue-base.foundation.quick-add.quick-add-item.link-issue"],[data-testid="issue-view-foundation.quick-add.quick-add-items-compact.add-button-dropdown--trigger"]'
+			: '[data-testid="issue-view-layout-templates-default.ui.foundation-content.foundation-content-wrapper"]'
+		);
+		if(!bdt) return;
+		if(typeof gira.etatVisible == 'number') window.clearInterval(gira.etatVisible);
+		
+		if(gira.etatVisibleAvecOutils)
+		{
+			while(bdt.parentElement && bdt.parentElement.getAttribute('data-component-selector') != "jira.issue-view.issue-details.full-size-mode-column")
+				bdt = bdt.parentElement;
+			if(!bdt.parentElement) return;
+		}
+		document.querySelectorAll('[data-testid="issue.views.issue-base.foundation.status.resolution"],[data-testid="issue.views.issue-base.foundation.status.status-field-wrapper"]')
+		.forEach(function(bde)
+		{
+			if(gira.etatVisibleAvecOutils)
+				bdt.insertBefore(bde, bdt.childNodes[0]);
+			else
+				bdt.appendChild(bde);
+		});
 	},
 	densifier: function()
 	{
