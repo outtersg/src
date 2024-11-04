@@ -33,13 +33,16 @@ var gira =
 		req.open('GET', giraIncsUrl.replace(/@NUM/, num).replace(/@REFS/, refs));
 		req.send();
 	},
-	menudroite: function(gp /* grand-père */)
+	menudroite: function()
 	{
+		if(!gira.menudroite.n) gira.menudroite.n = 1;
+		else if(++gira.menudroite.n >= 100) { window.clearInterval(gira.menudroite.re); return; }
+		
+		var gp = document.querySelector('.issue-body-content, [data-testid="issue.views.issue-details.issue-layout.container-left"]'); // Grand-père.
 		var pepere = document.querySelector('[data-testid="issue.views.issue-details.issue-layout.container-right"]');
 		if(pepere) pepere.id = 'viewissuesidebar';
 		else pepere = document.getElementById('viewissuesidebar');
-		var menu = document.createElement('DIV');
-		var zorro = document.createElement('DIV');
+		var menu = document.getElementById('menuZorro');
 		var i;
 		
 		var agrandissement = document.querySelector('[data-component-selector="jira-issue-view-common-component-resize-handle"]');
@@ -48,6 +51,12 @@ var gira =
 				if(document.querySelectorAll('.'+agrandissement.classList[i]).length == 1)
 					gira.style.innerHTML += '.'+agrandissement.classList[i]+'[role="separator"] { display: none; }\n';
 		
+		if(!menu)
+		{
+			menu = document.createElement('DIV');
+			menu.id = 'menuZorro';
+			
+			var zorro = document.createElement('DIV');
 		menu.setAttribute('class', 'pouet');
 		zorro.setAttribute('class', 'zorro');
 		pepere.setAttribute('style', 'width: 400px; padding: 0;');
@@ -55,17 +64,22 @@ var gira =
 		menu.appendChild(pepere);
 		gp.insertBefore(menu, gp.childNodes[0]);
 		
+			var urlIcone = document.querySelector('#assignee-val img, [data-testid="issue.views.field.user.assignee"] :is(img, svg)');
+			if(urlIcone) urlIcone = urlIcone.src;
 		gira.style.innerHTML +=
 			'.pouet { display: inline-block; position: absolute; right: 0; z-index: 256; width: auto; padding: 5px; border: 1px solid #DFDFDF; background: white; }\n'+
 			'.pouet #viewissuesidebar { display: none; max-height: 400px; }\n'+
 			'.pouet:hover #viewissuesidebar { display: block; }\n'+
-			'.pouet .zorro { position: relative; display: inline-block; width: 32px; height: 32px; right: 0; background: url('+document.querySelectorAll('#assignee-val img, [data-testid="issue.views.field.user.assignee"] :is(img, svg)')[0].src+') no-repeat center center; background-size: contain; }\n'+
-			'.pouet:hover .zorro { position: absolute; }\n';
+				'.pouet .zorro { position: relative; display: inline-block; width: 32px; height: 32px; right: 0; background: url('+urlIcone+') no-repeat center center; background-size: contain; }\n'+
+				'.pouet:hover .zorro { position: absolute; top: 5px; right: 5px; }\n'; // top et right pour remplacer le padding du .pouet.
+		}
 		
 		// Heu tout de même l'état du JIRA c'est important…
 		
 		if(gira.etatVisibleAvecOutils) gira.etatVisible = window.setInterval(gira.etatVisible, 1000);
 		else gira.etatVisible();
+		
+		pepere.fait = 1;
 	},
 	etatVisible: function()
     {
@@ -211,7 +225,9 @@ var gira =
 		/* Présentation */
 		
 		gira.densifier();
-		gira.menudroite(gp);
+		// Eh merde, menudroite aussi doit être intervallé, car rechargé par Jira quand ça lui chante, dont une fois juste après le chargement de la page alors qu'on venait de le coller en menu à survol!
+		gira.menudroite.re = window.setInterval(function() { gira.menudroite(); }, 200);
+		gira.menudroite();
 		gira.deroulantes(gira.style);
 		gira.coupDeBarres();
 		gira.tourner7fois();
