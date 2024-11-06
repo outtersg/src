@@ -135,7 +135,7 @@ var gira =
 		{
 			uneReac = uneReac.parentNode;
 			gira.style.innerHTML +=
-				'.'+uneReac.classList[0]+' { position: absolute; bottom: 0; left: 0; opacity: 0.33; }\n'+
+				'.'+uneReac.classList[0]+'[data-testid$="footer"] { position: absolute; bottom: -1em; left: 0; opacity: 0.33; }\n'+
 				'.'+uneReac.classList[0]+':hover { z-index: 2; opacity: 1; background: var(--ds-surface, white); }\n'+
 				'.'+uneReac.previousSibling.classList[0]+' { z-index: 1; }'+
 				'.'+uneReac.previousSibling.querySelector('h3').classList[0]+' { font-size: 80%; }';
