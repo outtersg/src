@@ -37,7 +37,7 @@ hi def Gras term=bold cterm=bold ctermfg=Yellow gui=bold
 
 " Alias F comme Fini (prendre une tâche et la caler dans les Terminées, puis retour).
 
-:map F $/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>r+d'd/^+<CR>?^$<CR>p'e
+:map F $/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>:s/^\([*]\)\?/\1+/<CR>:s/^\([+*]\)./\1/<CR>d'd/^[+*]<CR>?^$<CR>p'e
 :map - $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr-
 :map = $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr=
 :map + $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr+
