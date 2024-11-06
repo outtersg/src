@@ -44,9 +44,12 @@ var gira =
 	justemenudroite: function()
 	{
 		var gp = document.querySelector('.issue-body-content, [data-testid="issue.views.issue-details.issue-layout.container-left"]'); // Grand-père.
-		var pepere = document.querySelector('[data-testid="issue.views.issue-details.issue-layout.container-right"]');
-		if(pepere) pepere.id = 'viewissuesidebar';
-		else pepere = document.getElementById('viewissuesidebar');
+		var pepere = document.getElementById('viewissuesidebar');
+		if(!pepere)
+		{
+			pepere = document.querySelector('[data-testid="issue.views.issue-details.issue-layout.container-right"]');
+			pepere.id = 'viewissuesidebar';
+		}
 		var menu = document.getElementById('menuZorro');
 		var i;
 		
@@ -230,9 +233,8 @@ var gira =
 		/* Présentation */
 		
 		gira.densifier();
-		// Eh merde, menudroite aussi doit être intervallé, car rechargé par Jira quand ça lui chante, dont une fois juste après le chargement de la page alors qu'on venait de le coller en menu à survol!
-		gira.menudroite.re = window.setInterval(function() { gira.menudroite(); }, 200);
-		gira.menudroite();
+		// Planquage d'éléments d'interface: à lancer en setTimeout, sans quoi combiné aux autres ajouts il redéclenche un chargement qui fait sauter nos modifs.
+		window.setTimeout(gira.menudroite, 0);
 		gira.deroulantes(gira.style);
 		gira.coupDeBarres();
 		// Récurrent nécessaire, car d'une les liens sont enrichis et stylés en asynchrone, de deux ils peuvent apparaître après "Voir les commentaires + anciens".
