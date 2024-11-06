@@ -38,6 +38,11 @@ var gira =
 		if(!gira.menudroite.n) gira.menudroite.n = 1;
 		else if(++gira.menudroite.n >= 100) { window.clearInterval(gira.menudroite.re); return; }
 		
+		gira.justemenudroite();
+		gira.tourner7fois();
+	},
+	justemenudroite: function()
+	{
 		var gp = document.querySelector('.issue-body-content, [data-testid="issue.views.issue-details.issue-layout.container-left"]'); // Grand-père.
 		var pepere = document.querySelector('[data-testid="issue.views.issue-details.issue-layout.container-right"]');
 		if(pepere) pepere.id = 'viewissuesidebar';
@@ -230,7 +235,6 @@ var gira =
 		gira.menudroite();
 		gira.deroulantes(gira.style);
 		gira.coupDeBarres();
-		gira.tourner7fois();
 		// Récurrent nécessaire, car d'une les liens sont enrichis et stylés en asynchrone, de deux ils peuvent apparaître après "Voir les commentaires + anciens".
 		window.setInterval(gira.allegeEnLipides, 2000);
 		
