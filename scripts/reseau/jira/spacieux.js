@@ -37,6 +37,12 @@ var gira =
 	{
 		if(!gira.menudroite.n) gira.menudroite.n = 1;
 		else if(++gira.menudroite.n >= 100) { window.clearInterval(gira.menudroite.re); return; }
+		// On pose un témoin sur l'élément le plus haut qu'on constate rechargé. Si le témoin disparaît, c'est qu'il a sauté.
+		var temoin = document.getElementById('barresÀMines'); // Parce que ces barres de menu ont une sale mine qu'on voudrait masquer.
+		if(temoin) return;
+		//temoin = document.querySelector('[data-testid="issue.views.issue-details.issue-layout.container-right"]').parentElement.parentElement.parentElement.parentElement.parentElement;
+		temoin = document.querySelector('[data-testid="issue.views.issue-details.issue-layout.issue-layout"]');
+		temoin.id = 'barresÀMines';
 		
 		gira.justemenudroite();
 		gira.tourner7fois();
@@ -233,8 +239,9 @@ var gira =
 		/* Présentation */
 		
 		gira.densifier();
-		// Planquage d'éléments d'interface: à lancer en setTimeout, sans quoi combiné aux autres ajouts il redéclenche un chargement qui fait sauter nos modifs.
-		window.setTimeout(gira.menudroite, 0);
+		// Eh merde, menudroite aussi doit être intervallé, car rechargé par Jira quand ça lui chante, dont une fois juste après le chargement de la page alors qu'on venait de le coller en menu à survol!
+		gira.menudroite.re = window.setInterval(gira.menudroite, 200);
+		gira.menudroite();
 		gira.deroulantes(gira.style);
 		gira.coupDeBarres();
 		// Récurrent nécessaire, car d'une les liens sont enrichis et stylés en asynchrone, de deux ils peuvent apparaître après "Voir les commentaires + anciens".
