@@ -1,3 +1,9 @@
 #!/bin/sh
 
-sed -e 's/^/|/' -e 's/$/|/' -e 's/	/|/g' -e 's/||/| |/g' -e 's/||/| |/g' -e '1s/|/||/g'
+# Version JIRA serveur
+#sed -e 's/^/|/' -e 's/$/|/' -e 's/	/|/g' -e 's/||/| |/g' -e 's/||/| |/g' -e '1s/|/||/g'
+# Version JIRA nuage
+sed -e 's/^/| /' -e 's/$/ |/' -e 's/	/ | /g' -e '1{
+p
+s/[^|]/-/g
+}'
