@@ -27,7 +27,10 @@ var gira =
 		var req = new XMLHttpRequest();
 		req.addEventListener('load', function()
 		{
-			var infos = document.querySelector('#details-module .mod-content'); // À FAIRE sous JiraNuage.
+			var infos = document.getElementById('issue-view-layout-templates-tabs-0-tab');
+			if(infos)
+				infos.insertAdjacentHTML('beforebegin', '<div class="value type-readonlyfield" style="border: 1px solid black; background: #FFFFDF; margin-top: 0.5em;">'+req.responseText+'</div>');
+			else if((infos = document.querySelector('#details-module .mod-content')))
 			infos.insertAdjacentHTML('beforeend', '<ul class="property-list"><li class="item"><div class="wrap"><strong class="name">Incidents:</strong><div class="value type-readonlyfield" style="border: 1px solid black; background: #FFFFDF">'+req.responseText+'</div></div></li></ul>');
 		});
 		req.open('GET', giraIncsUrl.replace(/@NUM/, num).replace(/@REFS/, refs));
