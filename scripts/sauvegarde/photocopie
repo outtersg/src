@@ -74,9 +74,18 @@ TERMINE
 	exit 1
 }
 
+normaliserSousAnMois()
+{
+	sed -E -e "s#($sep)([0-9]{4})([0-9]{2})#\\1\\2/\\3/\\2\\3#"
+}
+
 normaliser()
 {
-	local prefixe= dossier=.
+	local prefixe= dossier=. normaliserSous=cat
+	case "$structure" in AM)
+		normaliserSous=normaliserSousAnMois
+		;;
+	esac
 	while [ $# -gt 0 ]
 	do
 		case "$1" in
@@ -84,7 +93,7 @@ normaliser()
 		esac
 		shift
 	done
-	normaliserParNom | normaliserPar --si "command -v exiftool" npParDate dateParExiftool
+	normaliserParNom | normaliserPar --si "command -v exiftool" npParDate dateParExiftool | $normaliserSous
 }
 
 normaliserParNom()
@@ -186,7 +195,12 @@ faire()
 		IFS="$sep"
 		while read fs fd
 		do
-			ln "$s/$fs" "$d/$fd"
+			case "$fd" in */*)
+				sd="`dirname "$fd"`"
+				[ -d "$d/$sd" ] || mkdir -p "$d/$sd"
+				;;
+			esac
+			ln "$s/$fs" "$d/$fd" || continue
 			echo "$fs" >&3
 			trace "$fs -> $fd"
 		done 3>> "$s/.photocopie.deja"
@@ -205,6 +219,7 @@ faire()
 T=/tmp/temp.photocopie.$$
 prefixe=
 pousser=non
+structure=AM
 while [ $# -gt 0 ]
 do
 	case "$1" in
