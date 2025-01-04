@@ -238,7 +238,7 @@ semanifester()
 		do
 			echo
 			sleep $intervalle
-		done | adest sh -c "while read rien ; do [ ! -d .verrou/flute ] || touch .verrou.flute ; done" 2> /dev/null # Redirection: pour éviter entre autres le très disgracieux "Broken pipe" lorsque l'on tuera notre manifestant.
+		done | adest sh -c "while read rien ; do [ ! -d .verrou.flute ] || touch .verrou.flute ; done" 2> /dev/null # Redirection: pour éviter entre autres le très disgracieux "Broken pipe" lorsque l'on tuera notre manifestant.
 	done
 }
 
