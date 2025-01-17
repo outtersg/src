@@ -271,7 +271,7 @@ Etape * injecteEnEtapes(Etape * etape, Sortie * travail, int n)
 		
 		if(!etape->attente)
 		{
-			TRACE(stderr, "ETAPE %d\n", (int)etape->saisie);
+			TRACE(stderr, "ETAPE %p\n", etape->saisie);
 			etapeControle(etape);
 			etape = etape->suite;
 			continue;
@@ -516,7 +516,7 @@ void maitre(int fdm, int tube, Etape * etape)
 			if(pEtape->echo)
 			pEtape->echo = pseudoEcho;
 			pEtape->gobeEchanges = 0;
-			switch((int)pEtape->injecteur)
+			switch((intptr_t)pEtape->injecteur)
 			{
 				case I_STDIN: pEtape->injecteur = &maitre.sorties[0]; break;
 				case I_PTY: pEtape->injecteur = &maitre.sorties[tube == fdm ? 0 : 2]; break;
