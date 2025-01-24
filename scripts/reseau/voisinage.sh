@@ -42,17 +42,34 @@ rl_ipDiffu()
 		
 }
 
+rl_if()
+{
+	{
+		command -v ip 2> /dev/null >&2 && ip link | sed -e '/^[0-9]*: /!d' -e 's///'
+		command -v ifconfig 2> /dev/null >&2 && ifconfig
+	} | sed -E -e '/^[a-z]/!d' -e 's/:? .*//' -e '/^(lo|p2p|utun|gif|stf|awdl|rmnet|ip6|sit|umts)/d' | sort -u
+}
+
 rl_ping()
 {
+	local ipv=4 ; case "$1" in -6) ipv=6 ; shift ;; esac
+	local comm
+	local suffixe="%`echo "${1}%" | cut -d % -f 2`" ; case "$suffixe" in %) suffixe= ;; esac
+	case $ipv in 4) comm=ping ;; 6) comm=ping6 ;; esac
+	comm="$comm -c 4 -t 2"
 	case `uname` in
-		Linux) ping -b -c 4 -t 2 -w 3 "$@" ;;
-		*) ping -c 4 -t 2 "$@" ;;
-	esac | sed -e '/.* from /!d' -e 's///' -e 's/:.*//' | sort -u
+		Linux)
+			case $ipv in 4) comm="$comm -b" ;; esac
+			comm="$comm -w 3"
+			;;
+	esac
+	$comm "$@" | sed -e '/.* from /!d' -e 's///' -e 's/: .*//' -e "s/\$/$suffixe/" | sort -u
 }
 
 rl_voisins()
 {
 	local ip
+	rl_if | while read interf ; do rl_ping -6 "ff02::1%$interf" ; done
 	rl_ipDiffu | while read ip
 	do
 		rl_ping "$ip"
