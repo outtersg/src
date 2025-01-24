@@ -70,7 +70,7 @@ dests()
 			do
 				echo "/^Host $alias/{
 a\\
-HostName $ip
+HostName `echo "$ip" | sed -e 's/%/%%/g'`
 a\\
 HostKeyAlias $alias
 }"
