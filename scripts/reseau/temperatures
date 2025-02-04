@@ -105,8 +105,9 @@ END{ aff(1); }'
 }
 
 case "$1" in
-	-)
-		pourListe
+	"")
+		# Pour coller les températures en face de dates d'un LibreOffice:
+		pourListe | cut -d \  -f 2- | tr . ,
 		;;
 	*)
 recup "$@"
