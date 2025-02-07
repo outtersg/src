@@ -62,4 +62,25 @@ ajouter()
 	done
 }
 
+case "$1" in
+	"")
 lire | IFS=";" ajouter
+		;;
+	*)
+		# Pour afficher toute la liste en faisant ressortir le merdier:
+		grep "$1" < "$ref" | awk -F \; \
+'{
+	gsub(/,/, ".");
+	mi = 0+$2; ma = 0;
+	for(i = NF + 1; --i > 1;)
+	{
+		if($i > ma) ma=$i;
+		if($i < mi) mi=$i;
+	}
+	ma= 0.2 * mi + 0.8 * ma;
+	printf("%s", $1);
+	for(i = 1; ++i <= NF;)
+		printf(";\033[%sm%s\033[0m", ($i == mi ? "92;1": ($i <= mi + 1 ? 32 : ($i >= ma ? 31 : 0))), $i); print""
+}'
+		;;
+esac
