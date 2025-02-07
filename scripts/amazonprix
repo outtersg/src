@@ -78,7 +78,7 @@ lire | IFS=";" ajouter
 		if($i < mi) mi=$i;
 	}
 	ma= 0.2 * mi + 0.8 * ma;
-	printf("%s", $1);
+	printf("\033[35m%s\033[0m", $1);
 	for(i = 1; ++i <= NF;)
 		printf(";\033[%sm%s\033[0m", ($i == mi ? "92;1": ($i <= mi + 1 ? 32 : ($i >= ma ? 31 : 0))), $i); print""
 }'
