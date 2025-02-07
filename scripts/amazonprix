@@ -1,7 +1,7 @@
 #!/bin/sh
 # Consigne les prix Amazon à partir d'une "liste de changements de prix Amazon" (les machins qu'on a mis de côté dans notre panier et dont, lorsqu'on va sur le panier, Amazon nous dit "tel machin a baissé, tel machin a augmenté").
 
-for ref in "$1" "/Users/gui/Documents/ Partage/Liste promos Amazon.txt" "/home/jails/sauvegardes/home/sauvegardes/sauvegardes/partage/Liste promos Amazon.txt" /dev/null
+for ref in "$1" "/Users/gui/Documents/ Partage/Liste promos Amazon.txt" ~/sauvegardes/partage/Liste\ promos\ Amazon.txt ~/partage/Liste\ promos\ Amazon.txt "/home/jails/sauvegardes/home/sauvegardes/sauvegardes/partage/Liste promos Amazon.txt" /dev/null
 do
 	[ -e "$ref" ] && break
 done
