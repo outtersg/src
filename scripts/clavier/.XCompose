@@ -1,0 +1,14 @@
+# /usr/local/lib/X11/locale/compose.dir nous redirige vers en_US.UTF-8/Compose
+# En réalité l'include n'est même pas nécessaire du fait de https://discussion.fedoraproject.org/t/xcompose-how-to-disable-default-compose-sequences/102648
+include "%L"
+
+<dead_circumflex> <f> : "f̂"
+<dead_circumflex> <m> : "m̂"
+<dead_circumflex> <M> : "M̂"
+<dead_circumflex> <q> : "q̂"
+<dead_circumflex> <s> : "ŝ"
+<dead_circumflex> <t> : "ᵗ"
+<dead_circumflex> <dollar>      : "^$"
+<dead_circumflex> <bracketleft> : "^["
+<dead_circumflex> <parenleft>   : "^("
+<dead_circumflex> <equal>       : "^=" # Pour éviter le truc par défaut ⁼ (= surscrit) et laisser à la place vim pousser son truc.
