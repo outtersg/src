@@ -1,0 +1,75 @@
+#!/bin/sh
+# Copyright (c) 2025 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Économiseur d'énergie et d'écran pour terminal FreeBSD.
+
+analyserParametres()
+{
+	# À FAIRE: gérer le -h
+	# À FAIRE: avec ou sans ifdown
+	true
+}
+
+eco()
+{
+	sudo ifconfig wlan0 down
+	backlight 0
+	sudo /etc/rc.d/power_profile 0x00
+}
+
+oce()
+{
+	sudo ifconfig wlan0 up
+	backlight 40
+	# Pas de restauration du profil processeur: on est bien en mode éco.
+	# À FAIRE: carrément éteindre l'écran, et la carte réseau si on a coupé le réseau.
+}
+
+nomiseurdecran()
+{
+	#[ -z "$PS1" ] || PSx="$PS1" ; PS1= # Pour lancer la chose en inclusion d'un terminal interactif.
+	clear
+	while true ; do sleep 60 ; printf \  ; done &
+	# À FAIRE: Passer en mode brut (pour avoir les touches sans attendre le retour), envoyer le code terminal qui fait sauter le curseur
+	read x
+	clear
+}
+
+narcedruesimon()
+{
+	kill %1
+}
+
+demenage()
+{
+	narcedruesimon
+	oce
+}
+
+emmenage()
+{
+	trap demenage EXIT INT TERM
+	eco
+	nomiseurdecran
+}
+
+analyserParametres "$@"
+emmenage
