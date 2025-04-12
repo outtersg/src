@@ -10,7 +10,7 @@ while true
 do
 	touch /tmp/h
 	sleep 1
-	find "$source" -depth 1 -type f -name "$nom" ! -newer /tmp/h | while read f
+	find "$source" -mindepth 1 -maxdepth 1 -type f -name "$nom" \! -newer /tmp/h | while read f
 	do
 		n=0
 		f0="`date +%Y-%m-%d` `basename "$f"`"
@@ -27,6 +27,6 @@ do
 		temps="`expr $temps - 1`"
 	else
 		# Si on a tenu assez longtemps, et qu'il ne reste plus rien à traiter, on peut sortir.
-		find "$source" -depth 1 -type f -name "$nom" | grep -q . || break
+		find "$source" -mindepth 1 -maxdepth 1 -type f -name "$nom" | grep -q . || break
 	fi
 done
