@@ -13,7 +13,8 @@ do
 	find "$source" -mindepth 1 -maxdepth 1 -type f -name "$nom" \! -newer /tmp/h | while read f
 	do
 		n=0
-		f0="`date +%Y-%m-%d` `basename "$f"`"
+		# À FAIRE: récupérer la date du fichier, plutôt, en cas de rattrapage d'anciennetés.
+		f0="`date +%Y-%m-%d` `basename "$f" | sed -e 's/[0-9]*[.]/./'`"
 		f1="$f0"
 		while [ -e "$dest/$f1" ]
 		do
