@@ -144,7 +144,24 @@ do
 	initDest "$dest"
 done
 
-fswatch -e ".unison.*.unison.tmp" -e ".bak.*" "$source" | while read f
+suivreFswatch()
+{
+	# fswatch existe sous Linux, mais il requiert le -r, et avec, il croule sous la charge (commence par parcourir toute l'arbo en émettant des événements IsDir et PlatformSpecific) et ne remonte plus rien.
+	# Ce parcours peut être masqué en --event Created --event Updated --event Removed, mais il demeure extrêmement long et bloquant, comme s'il posait une sonde sur chaque fichier au lieu de chaque dossier.
+	fswatch -e ".unison.*.unison.tmp" -e ".bak.*" -e "._*" "$@"
+}
+
+suivreInotify()
+{
+	inotifywait -q -m -r -e create -e modify -e delete --format '%w%f' --exclude "^\\.unison.*.unison.tmp$" --exclude "^\\.bak\\." --exclude "^\\._" "$@"
+}
+
+case `uname` in
+	Linux) suivre=suivreInotify ;;
+	*) suivre=suivreFswatch ;;
+esac
+
+$suivre "$source" | while read f
 do
 	echo "CHANGEMENT $f"
 	faire
