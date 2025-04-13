@@ -25,6 +25,11 @@ case "`hostname`" in
 		dests="ssh://gui@zerozerosix.local/Documents/ Partage;ssh://gclo.fr/var/partage"
 		dests="ssh://gui@zerozerosix.local/Documents/ Partage"
 		;;
+	muxdemux*)
+		nom=muxdemux
+		source="$HOME/Documents/partage"
+		dests="ssh://gui@zerozerosix.local/Documents/ Partage;ssh://partage/sauvegardes/partage;ssh://b/Documents/partage"
+		;;
 esac
 
 PATH="/usr/local/bin:$PATH"
