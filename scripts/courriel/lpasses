@@ -5,7 +5,7 @@ n=12
 
 t=/tmp/temp.lpasses.$$
 
-ls -tr `for i in ../*/*/.Spam/cur/ ; do ls -tr "$i" | tail -$n | sed -e "s#^#$i#" ; done` | tail -$n > $t.fichiers
+ls -tr `for i in ../*/*/.Spam/cur/ ../*/*/.Poubelle/cur/ ; do ls -tr "$i" | tail -$n | sed -e "s#^#$i#" ; done` | tail -$n > $t.fichiers
 
 tr '\012' '\000' < $t.fichiers | xargs -0 rspamc | LC_ALL=C awk '/^Results for file:/{f=$4}/^Score:/{p=$2;print (p>=18.0?"\033[32m":(p>=15.0?"\033[33m":"\033[31m"))p"\033[0m\t"f}' > $t.resultats &
 
