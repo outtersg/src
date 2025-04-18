@@ -39,6 +39,9 @@ hi def Gras term=bold cterm=bold ctermfg=Yellow gui=bold
 
 :map F $/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>:s/^\([*]\)\?/\1+/<CR>:s/^\([+*]\)./\1/<CR>d'd/^[+*]<CR>?^$<CR>p'e
 :map - $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr-
+" À FAIRE: au lieu de requérir un --, se caler dans le - si on a déjà un - en début de ligne.
+" À FAIRE: -- pour ajouter une ligne -
+:map -- -A {}<ESC>"=strftime('%Y-%m-%d')<CR>P
 :map = $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr=
 :map + $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr+
 :map ++ +A []<ESC>"=strftime('%Y-%m-%d')<CR>P
