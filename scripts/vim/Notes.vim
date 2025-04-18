@@ -44,3 +44,5 @@ hi def Gras term=bold cterm=bold ctermfg=Yellow gui=bold
 :map ++ +A []<ESC>"=strftime('%Y-%m-%d')<CR>P
 :map +++ ++a<SPACE>
 :map * $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr*
+:map ** *A []<ESC>"=strftime('%Y-%m-%d')<CR>P
+:map *** **a<SPACE>
