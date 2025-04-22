@@ -1,0 +1,9 @@
+#!/bin/sh
+# À faire tourner dans un tmux.
+
+while true
+do
+	ssh mb -R 9898:localhost:22 -o ServerAliveInterval=79 \
+		'while true ; do date ; sleep 60 ; done'
+	sleep 60
+done
