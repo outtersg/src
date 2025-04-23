@@ -94,7 +94,7 @@ END{
 	# - si on attaque par le fils (avec un filtre, pour recherche par exemple tous les vim), la source n apparaîtra pas
 	# - mais si on attaque par la source (ex.: tmux) on verra bien tous ses fils
 	for(s in ss)
-		for(numf = nfs[s]; numf-- > 0;)
+		for(numf = nfs[s] + 1; --numf >= 0;)
 			ps[fs[s,numf]] = 0;
 	# Combien avait-on de paramètres? Si on n a rien trouvé mais qu on a cherché alors on n affiche rien.
 	if(!nTrouves && '"$#"' > 0)
