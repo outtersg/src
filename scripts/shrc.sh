@@ -82,7 +82,7 @@ NR==1{ posCommande = match($0, /COMMAND/) - 1; print; next; }
 {
 	ls[$2] = $0;
 	ps[$2] = $3;
-	if(match($0, /bin\/init|tmux: server|bin\/systemd|bin\/launchd|Terminal\.app|login -pf/)) ss[$2] = 1; # SourceS
+	if(match($0, /s?bin\/init|tmux: server|bin\/systemd|bin\/launchd|Terminal\.app|login -pf/)) ss[$2] = 1; # SourceS
 	if($2 != $3)
 		fs[$3,++nfs[$3]] = $2;
 	else
