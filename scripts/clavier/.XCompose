@@ -12,3 +12,5 @@ include "%L"
 <dead_circumflex> <bracketleft> : "^["
 <dead_circumflex> <parenleft>   : "^("
 <dead_circumflex> <equal>       : "^=" # Pour éviter le truc par défaut ⁼ (= surscrit) et laisser à la place vim pousser son truc.
+<dead_circumflex> <plus>        : "^+"
+<dead_circumflex> <minus>       : "^-"
