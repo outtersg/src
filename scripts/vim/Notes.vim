@@ -6,20 +6,21 @@ if exists("b:current_syntax")
  finish
 endif
 
-syn match notesEnCours '^	*[=] '
+syn match notesEnCours '^	*[=]\ze '
 syn match notesTitre '^==.*'
-syn match notesAFaire '^	*[-] '
+syn match notesAFaire '^	*[-]\ze '
 syn match notesTitre '^--.*'
-syn match notesFini   '^	*[+*] '
-syn match notesAbandon   '^	*[*] '
+syn match notesFini   '^	*[+*]\ze '
+syn match notesAbandon   '^	*[*]\ze '
 " À FAIRE: distinguer puces de titre: le titre est suivi et précédé d'une ligne vide (ou début de fichier), la puce non (autre puce, retour à la ligne ds la puce, retour à un para normal).
-syn match notesNum       '^	*\([a-zA-Z]\|[IVX0-9]\+\)[.] '
+syn match notesNum       '^	*\([a-zA-Z]\|[IVX0-9]\+\)[.]\ze '
 " À FAIRE: pas en erreur si déjà traité (+ ou *)
 syn match notesAlerte    '/!\\'
 syn match notesComm      '^#.*'
 " https://vi.stackexchange.com/a/22293 pour détecter sur une délimitation de mot autre que l'espace (qui était un peu facile: un espace jaune, ça ne se voyait pas trop).
 " dans la même veine, https://vi.stackexchange.com/a/29547 pourrait un jour servir.
 " https://stackoverflow.com/a/2462714/1346819
+" https://vi.stackexchange.com/a/19130/45395
 syn region notesImportant start="\(^\|[ '\]('\"]\)\*[^ ]"ms=e-1 end="\*\([ ,:;.?!\])\"']\|$\)"me=s oneline
 
 " Cf. les couleurs dans syntax/syncolor.vim (merci https://askubuntu.com/questions/24544/what-is-the-default-vim-colorscheme#comment31987_24548)
