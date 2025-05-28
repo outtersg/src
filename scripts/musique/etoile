@@ -147,6 +147,7 @@ do
 	case "$car" in
 		x|q) break ;;
 		[0-5]) rentrer "$car" ; afficher ;;
+			*) sleep .3 ;; # /!\ Pas en cas de chiffre: pour les ,5 on requiert deux saisies rapprochées de chiffres.
 	esac
 done
 }
