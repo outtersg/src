@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style type="text/css">
+			ul
+			{
+				margin: 0;
+			}
+			/* https://www.w3.org/Style/Examples/007/color-bullets.fr.html */
+			ul
+			{
+				list-style: none
+			}
+			li::before
+			{
+				content: "•";
+				display: inline-block; width: 1em;
+				margin-left: -1em;
+				margin-right: 0.2em;
+				text-align: center;
+			}
+			li.lim::before  { content: "-"; color: red; font-weight: bold; }
+			li.lip::before  { content: "+"; color: #007f00; font-weight: bold; }
+			li.lieg::before { content: "="; color: #bf9f00; font-weight: bold; }
+			li.liet::before { content: "*"; color: #009f9f; font-weight: bold; }
+		</style>
+	</head>
+	<body>
