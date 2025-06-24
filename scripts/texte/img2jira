@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+set -x
+
+cd /tmp/
+curl -O "$1"
+tesseract "`basename "$1"`" x -c preserve_interword_spaces=1 --psm 6
+vim -X x.txt
+sed -e 's/  */	/g' < x.txt | ~/src/scripts/texte/sql2jira | wl-copy
