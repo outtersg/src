@@ -1,7 +1,26 @@
 #!/bin/sh
 
+simple()
+{
 sed -E \
 	-e "s/ *	/', '/g" \
 	-e "s/^/	('/" \
 	-e "s/$/'),/" \
 	-e "s/'([0-9.]+)'/\\1/g"
+}
+
+attabler()
+{
+	sed -e "1{
+s/'//g
+s/^	*/create table $1 /
+s/,$/;/
+a\\
+insert into $1 values
+}"
+}
+
+case "$1" in
+	"") simple ;;
+	*) simple | attabler "$1" ;;
+esac
