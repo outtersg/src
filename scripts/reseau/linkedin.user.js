@@ -13,7 +13,7 @@
 		var marquer = function()
 		{
 			var trouve = 0;
-			document.querySelectorAll('.scaffold-layout__list-item:not([etat]):has(.job-card-container__footer-job-state)').forEach
+			document.querySelectorAll('.scaffold-layout__list-item:not([etat="Enregistré"]):has(.job-card-container__footer-job-state)').forEach
 			(
 				function(x)
 				{
