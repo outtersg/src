@@ -28,6 +28,9 @@ function ChezMoi()
 	inoremap <buffer> <C-M> <C-M>X<C-H>
 	nnoremap <buffer> o oX<C-H>
 	nnoremap <buffer> O OX<C-H>
+	" Si j'ai 1 tabulation et 4 espaces, je veux 1 tabulation et 4 espaces, pas
+	" 2 tabulations (https://vi.stackexchange.com/q/19567/):
+	set copyindent
 endfunction
 
 function ChezNous()
