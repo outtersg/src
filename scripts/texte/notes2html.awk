@@ -47,6 +47,7 @@ function affPrec(){
 	while(match($0, /[*][^*]*[*]/))
 		$0 = substr($0, 1, RSTART - 1)"<b>"substr($0, RSTART + 1, RLENGTH - 2)"</b>"substr($0, RSTART + RLENGTH);
 }
+/\/!\\/ { gsub(/\/!\\/, "<b>⚠</b>"); }
 # Façon LDAP, une ligne commençant par l'indentation mais sans tirets est la continuité du tiret.
 niv && /^\t*[^-+*=\t]/{
 	match($0, /^\t*/);
