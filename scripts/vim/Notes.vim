@@ -35,6 +35,7 @@ hi def link notesComm     Identifier
 hi def link notesImportant Gras
 
 hi def Gras term=bold cterm=bold ctermfg=Yellow gui=bold
+hi def Gris term=NONE cterm=NONE ctermfg=DarkGrey gui=NONE
 
 " Alias F comme Fini (prendre une tâche et la caler dans les Terminées, puis retour).
 
