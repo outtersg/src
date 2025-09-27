@@ -3,4 +3,4 @@
 touch /tmp/zebu
 rspamc "$@"
 mv /tmp/zebu /tmp/yebu
-vi /tmp/yebu
+vim -X /tmp/yebu
