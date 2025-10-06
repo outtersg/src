@@ -1,0 +1,19 @@
+#!/bin/sh
+
+h()
+{
+	hexdump -C -v > /tmp/temp.hexedit.$$.hex
+	vim /tmp/temp.hexedit.$$.hex < /dev/tty > /dev/tty 2>&1
+	sed -e 's/^[^ ]* *//' -e 's/ *|.*//' < /tmp/temp.hexedit.$$.hex | HexToAsc
+	rm /tmp/temp.hexedit.$$.hex
+}
+
+case "$1" in
+	"") h ;;
+	*)
+		for f in "$@"
+		do
+			h < "$f" > "$f.edit" && cat "$f.edit" > "$f" && rm "$f.edit"
+		done
+		;;
+esac
