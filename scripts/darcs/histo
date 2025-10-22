@@ -41,6 +41,8 @@ histo()
 	rm -f $t.* 2> /dev/null
 	for d in "$@"
 	do
+		case "$d" in *[^0-9]*) true ;; [1-9]*) N_MOIS="$d" ; continue ;; esac
+		
 		case "$n" in
 			96) n=32 ;;
 			36) n=90 ;;
