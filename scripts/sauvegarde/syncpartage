@@ -1,5 +1,10 @@
 #!/bin/sh
 
+GOGO_SCRIPTS="$HOME/src/projets/gogo"
+. "$GOGO_SCRIPTS/gogo.sh" # gogo >= 0.8
+
+tourner()
+{
 dests=
 for dest in \
 	ssh://p/partage \
@@ -17,7 +22,40 @@ do
 	dests="$dests$dest "
 done
 
-for dest in $dests
-do
+	gogo_dance
+}
+
+gogogo()
+{
+	local dest num=0
+	
+	Lance lancement: true # Une première tâche nommée "lancement" pour que celles lancées dans notre boucle puissent faire un Apres lancement~ sans message d'erreur "je suis la première de la lignée, donc il n'y en a aucune de ce nom".
+	
+	for dest in $dests
+	do
+		Lance joindreEtPlanifier $num "$dest"
+		num=$((num + 1))
+	done
+}
+
+joindreEtPlanifier()
+{
+	local num=$1 dest="$2" h="`echo "$2" | sed -e 's#.*://##' -e 's#/.*##'`"
+	local file joignable=$(ssh -o ConnectTimeout=5 "$h" sh -c 'ps auxww | grep "[u]nison" | wc -l' | tr -d ' \t')
+	case "$joignable" in
+		"") return 0 ;;
+		0) true ;;
+		*) sleep 1 ;; # Une façon de temporiser le lancement si un unison tourne déjà. En réalité on temporise l'empilement via Après, ce qui nous empilera après tous ceux déjà empilés sous ce nom (et la seconde supplémentaire laisse un peu plus de temps pour détecter d'autres qui peuvent être lancés immédiatement).
+	esac
+	echo "$h joignable, $joignable unison tournant déjà dessus"
+	Apres lancement~ lancement: faire "$h" "$dest"
+}
+
+faire()
+{
+	local dest="$2"
+	echo "Je fais $1"
 	lockf -t 10 $HOME/tmp/partage.verrou $HOME/local/bin/unison -batch -backups -maxbackups 3 $HOME/partage $dest
-done
+}
+
+tourner "$@"
