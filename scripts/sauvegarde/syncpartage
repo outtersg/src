@@ -2,12 +2,14 @@
 
 dests=
 for dest in \
+	ssh://p/partage \
 	ssh://b/Documents/partage \
 	ssh://mdm/Documents/partage \
 	ssh://partage/sauvegardes/partage
 do
 	hote=`hostname | tr A-Z a-z | cut -d . -f 1`
 	case "$hote:$dest" in
+		pasdfric:ssh://p/*) continue ;;
 		bonemine:ssh://b/*) continue ;;
 		muxdemux:ssh://mdm/*) continue ;;
 		sauvegardes:ssh://partage/*) continue ;;
