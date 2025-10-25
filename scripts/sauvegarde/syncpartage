@@ -6,6 +6,12 @@ for dest in \
 	ssh://mdm/Documents/partage \
 	ssh://partage/sauvegardes/partage
 do
+	hote=`hostname | tr A-Z a-z | cut -d . -f 1`
+	case "$hote:$dest" in
+		bonemine:ssh://b/*) continue ;;
+		muxdemux:ssh://mdm/*) continue ;;
+		sauvegardes:ssh://partage/*) continue ;;
+	esac
 	dests="$dests$dest "
 done
 
