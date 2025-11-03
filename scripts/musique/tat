@@ -27,6 +27,11 @@ aff()
 		}
 		{ print "[90m"$0"[0m"t; }
 		END {
+			if(r)
+			{
+				tout[++n] = r;
+				print tout[n] >> "'"$m"'.txt";
+			}
 			print "";
 			for(i = 0; ++i <= n;) print tout[i];
 		}
