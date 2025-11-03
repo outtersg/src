@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Transcrire l'Audio en Texte
+
+m=/tmp/tat.`date +%Y%m%d.%H%M%S`.mp3
+sox -t oss /dev/dsp1 $m || true
+whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French $m
