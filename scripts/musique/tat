@@ -3,9 +3,35 @@
 # Transcrire l'Audio en Texte
 
 m=/tmp/tat.`date +%Y%m%d.%H%M%S`
+
+aff()
+{
+	awk \
+	'
+		BEGIN { r = ""; n = 0; }
+		/^$/ { print; next; }
+		{ t = ""; }
+		/^\[/ {
+			match($0, /\] */);
+			t = substr($0, RSTART + RLENGTH);
+			$0 = substr($0, 1, RSTART + RLENGTH - 1);
+			
+			r = r""t;
+			while(match(r, /[.!?] */))
+			{
+				tout[++n] = substr(r, 1, RSTART);
+				print tout[n] >> "'"$m"'.txt";
+				r = substr(r, RSTART + RLENGTH);
+			}
+			if(r) r = r" ";
+		}
+		{ print "[90m"$0"[0m"t; }
+		END { print ""; for(i = 0; ++i <= n;) print tout[i]; }
+	'
+}
+
 sox -t oss /dev/dsp1 $m.mp3 || true
-whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French $m.mp3
+whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French $m.mp3 2>&1 | aff
+echo "($m.mp3, $m.txt)"
 
 # À FAIRE: trouver tout seul le modèle
-# À FAIRE: faire des lignes le long des .
-# À FAIRE: griser le merdier.
