@@ -5,3 +5,7 @@
 m=/tmp/tat.`date +%Y%m%d.%H%M%S`.mp3
 sox -t oss /dev/dsp1 $m || true
 whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French $m
+
+# À FAIRE: trouver tout seul le modèle
+# À FAIRE: faire des lignes le long des .
+# À FAIRE: griser le merdier.
