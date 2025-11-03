@@ -26,7 +26,10 @@ aff()
 			if(r) r = r" ";
 		}
 		{ print "[90m"$0"[0m"t; }
-		END { print ""; for(i = 0; ++i <= n;) print tout[i]; }
+		END {
+			print "";
+			for(i = 0; ++i <= n;) print tout[i];
+		}
 	'
 }
 
