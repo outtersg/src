@@ -39,7 +39,7 @@ aff()
 }
 
 sox -t oss /dev/dsp1 $m.mp3 || true
-whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French $m.mp3 2>&1 | aff
+whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French "$@" $m.mp3 2>&1 | aff
 echo "($m.mp3, $m.txt)"
 case "$WAYLAND_DISPLAY" in ?*)
 	wl-copy -p < $m.txt
