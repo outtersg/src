@@ -379,6 +379,18 @@ vi()
 
 #- Terminal --------------------------------------------------------------------
 
+# ls images
+li()
+{
+	local f
+	# À FAIRE: dans tmux, une séance d'échappement supplémentaire?
+	for f in "$@"
+	do
+		echo "$f"
+		magick "$f" -geometry 256 sixel:-
+	done
+}
+
 titrer()
 {
 	case "$TMUX_PANE" in
