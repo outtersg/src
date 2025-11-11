@@ -185,6 +185,13 @@ repapa0()
 	repapa='IFS=\; ; set -- $repapa_ ; unset IFS'
 }
 
+filtrer()
+{
+	fichier="$1"
+	shift
+	"$@" < "$fichier" > /tmp/temp.$$.filtrer && cat /tmp/temp.$$.filtrer > "$fichier"
+}
+
 # incruster [-c|-d] <incruste> <dans> <début> <fin>
 # incruster [-c|-d] <incruste> <dans> -b <bloc> <pos bloc 1> <pos bloc 2>…
 # incruster [-c|-d] <incruste> <dans> -b <bloc> / <n blocs> <largeur totale>
