@@ -1,0 +1,8 @@
+#!/bin/sh
+
+tt=`ps o tty= -p "$1"`
+# https://stackoverflow.com/a/55731472/1346819
+tmux list-panes -aF '#{pane_tty} #{pane_id}' | grep "$tt " | while read t f
+do
+	tmux select-window -t $f
+done
