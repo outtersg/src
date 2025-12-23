@@ -1,0 +1,68 @@
+#!/bin/sh
+
+Delicat() { local s2 ; while [ -h "$s" ] ; do s2="`readlink "$s"`" ; case "$s2" in [^/]*) s2="`dirname "$s"`/$s2" ;; esac ; s="$s2" ; done ; } ; SCRIPTS() { local s="`command -v "$0"`" ; [ -x "$s" -o ! -x "$0" ] || s="$0" ; case "$s" in */bin/*sh) case "`basename "$s"`" in *.*) true ;; *sh) s="$1" ;; esac ;; esac ; case "$s" in [^/]*) local d="`dirname "$s"`" ; s="`cd "$d" ; pwd`/`basename "$s"`" ;; esac ; Delicat ; s="`dirname "$s"`" ; Delicat ; SCRIPTS="$s" ; } ; SCRIPTS
+export PATH="$SCRIPTS:$PATH"
+
+cd "$HOME"
+
+# Préparation
+
+dest=
+options=
+ajouts=
+true > /tmp/temp.$$.ajouts
+chmod 700 /tmp/temp.$$.ajouts
+true > /tmp/temp.$$.ajouts
+
+# Destination
+
+case "$1" in
+	maison)
+		dest=mdm:/g/sauvegardes/pasdfric.
+		;;
+	k)
+		dest=partage:sauvegardes/pasdfric.
+		;;
+	*)
+		echo "# Utilisation: machin <config à lancer>" >&2
+		exit 1
+		;;
+esac
+
+# Sélection
+
+case "$1" in
+	maison)
+		#ajouts='- /mp3/;- /perso/Photos/'
+		ajouts=
+		;;
+	k)
+		#ajouts='- /mp3/;- /perso/Photos/'
+		ajouts='- /mp3/'
+		options="--sans-acl -r recycler"
+		;;
+esac
+
+shift
+
+# Boulot
+
+(
+	cat <<TERMINE
+- /.cache/
+- /Downloads/
+- /Téléchargements/
+- /mp3/-[Classement]-
+- /local/avirer/
+- /partage/
+- /src/projets/*/app/build
+- /src/projets/*/build
+- /src/projets/ovh.docs
++ /tmp/stackoverflow*
+- /tmp/*
+TERMINE
+	cat /tmp/temp.$$.ajouts | tr \; '\012'
+	echo "$ajouts" | tr \; '\012'
+) | ouf -r recycler $options -v "$dest" "$@"
+
+rm /tmp/temp.$$.ajouts
