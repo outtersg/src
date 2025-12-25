@@ -48,6 +48,7 @@ shift
 (
 	cat <<TERMINE
 - /.cache/
+- /.local/state/cabal/store
 - /Downloads/
 - /Téléchargements/
 - /mp3/-[Classement]-
