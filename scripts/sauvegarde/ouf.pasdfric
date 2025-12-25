@@ -37,9 +37,7 @@ case "$1" in
 		ajouts=
 		;;
 	k)
-		#ajouts='- /mp3/;- /perso/Photos/'
-		ajouts='- /mp3/'
-		options="--sans-acl -r recycler"
+		ajouts='- /mp3/;- /local/'
 		;;
 esac
 
