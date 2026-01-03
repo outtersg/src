@@ -12,6 +12,8 @@
 # Lancer la totale ainsi:
 #   $HOME/src/scripts/musique/etoile -d & cmus
 
+TUBE=/tmp/temp.etoile
+
 convertisseur=cat
 case `uname` in
 	Darwin)
