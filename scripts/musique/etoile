@@ -135,6 +135,8 @@ boucler &
 	then
 		stty -echo raw
 	else
+		# Si le tuyau existe mais qu'aucune autre étoile que nous ne tourne, on le purge.
+		[ ! -e "$TUBE" ] || ps axo pid,ppid,command | grep -v "$$ .*[e]toile" | grep -q "^[0-9]* [0-9]* [^ ][e]toile" || rm "$TUBE"
 		if ! mkfifo /tmp/temp.etoile
 		then
 			echo "# Impossible de créer /tmp/temp.etoile. Une autre instance tourne probablement." >&2
