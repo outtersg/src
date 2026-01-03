@@ -9,7 +9,8 @@
 #   bind common 3 shell $HOME/src/scripts/musique/etoile 3
 #   bind common 4 shell $HOME/src/scripts/musique/etoile 4
 #   bind common 5 shell $HOME/src/scripts/musique/etoile 5
-# Lancer la totale ainsi:
+# Lancer la totale ainsi (mixer pour forcer la prise casque sous FreeBSD):
+#   mixer -d 2 &&
 #   $HOME/src/scripts/musique/etoile -d & cmus
 
 TUBE=/tmp/temp.etoile
