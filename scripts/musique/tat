@@ -6,6 +6,10 @@ contexte="Guillaume Outters a bossé chez Bouygues Télécom Entreprises, comme 
 
 analyserParametres()
 {
+	case "$1" in
+		*.mp3) m="`echo "$1" | sed -e 's#\.mp3$##'`" ;;
+	esac
+	
 	case "$m" in "")
 m=/tmp/tat.`date +%Y%m%d.%H%M%S`
 	;; esac
@@ -46,6 +50,7 @@ aff()
 }
 
 analyserParametres "$@"
+[ -f "$m.mp3" ] ||
 sox -t oss /dev/dsp1 $m.mp3 || true
 whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French --prompt "$contexte" "$@" $m.mp3 2>&1 | aff
 echo "($m.mp3, $m.txt)"
