@@ -2,6 +2,7 @@
 
 # Transcrire l'Audio en Texte
 
+contexte="Guillaume Outters a bossé chez Bouygues Télécom Entreprises, comme SN3 Transverse, sur les IMEI, les MSISDN, avec la MOE."
 m=/tmp/tat.`date +%Y%m%d.%H%M%S`
 
 aff()
@@ -39,7 +40,7 @@ aff()
 }
 
 sox -t oss /dev/dsp1 $m.mp3 || true
-whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French "$@" $m.mp3 2>&1 | aff
+whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French --prompt "$contexte" "$@" $m.mp3 2>&1 | aff
 echo "($m.mp3, $m.txt)"
 case "$WAYLAND_DISPLAY" in ?*)
 	wl-copy -p < $m.txt
