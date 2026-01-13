@@ -26,6 +26,7 @@ aff()
 			match($0, /\] */);
 			t = substr($0, RSTART + RLENGTH);
 			$0 = substr($0, 1, RSTART + RLENGTH - 1);
+			gsub(/\.\.\./, "…", t);
 			
 			r = r""t;
 			while(match(r, /[.!?] */))
