@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Bascule le réseau sur ue0 (Ethernet over USB), FreeBSD 15 se montrant incapable de se connecter dans des environnements saturés (ex.: chez ACTE, perdu entre tous les WiFi, il se montre incapable d'en accrocher aucun, pas même mon partage de connexion téléphone lorsqu'elle est active).
+
+# À FAIRE: arret()
+# À FAIRE: le lancer en auto quand on détecte une interface ue0, l'arrêter quand elle disparaît
+
+marche()
+{
+	sudo service wpa_supplicant stop wlan0
+	sudo route delete default
+	sudo service dhclient start ue0
+}
+
+marche
