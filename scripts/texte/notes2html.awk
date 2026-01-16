@@ -1,8 +1,18 @@
 BEGIN{
+	entete = 1;
+	for(i = 0; ++i < ARGC;)
+	{
+		if(ARGV[i] == "nu")
+		{
+			entete = 0;
+			delete ARGV[i];
+		}
+	}
 	niv = 0;
 	prochniv = 0;
 	lignevide = 0;
 	para = 0;
+	if(entete)
 	while(getline <"/home/gui/src/scripts/texte/notes2html.html")
 		print;
 	puces["-"] = "lim";
@@ -79,6 +89,9 @@ niv && /^\t*[^-+*=\t]/{
 { prec = prec$0; }
 END{
 	affPrec();
+	if(entete)
+	{
 	print "	</body>";
 	print "</html>";
+	}
 }
