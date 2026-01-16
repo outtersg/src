@@ -19,6 +19,7 @@ BEGIN{
 	puces["+"] = "lip";
 	puces["="] = "lieg";
 	puces["*"] = "liet";
+	puces["⋅"] = "";
 }
 function affPrec(){
 	if(!match($0, /./))
@@ -59,7 +60,7 @@ function affPrec(){
 }
 /\/!\\/ { gsub(/\/!\\/, "<b>⚠</b>"); }
 # Façon LDAP, une ligne commençant par l'indentation mais sans tirets est la continuité du tiret.
-niv && /^\t*[^-+*=\t]/{
+niv && /^\t*[^-+*=⋅\t]/{
 	match($0, /^\t*/);
 	if(RLENGTH >= niv - 1)
 	{
@@ -67,7 +68,7 @@ niv && /^\t*[^-+*=\t]/{
 		next;
 	}
 }
-/^\t*[-+*=] /{
+/^\t*[-+*=⋅] /{
 	match($0, /^\t*[^\t]/);
 	puce = substr($0, RLENGTH, 1);
 	prochniv = RLENGTH;
