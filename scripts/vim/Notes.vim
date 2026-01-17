@@ -45,7 +45,7 @@ hi def Gris term=NONE cterm=NONE ctermfg=DarkGrey gui=NONE
 " Transcription en syntaxe nmap: $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr (suivi du nouvel état).
 function! Etat(etat)
 	normal! $
-	call search('^	*[-+=*] ', 'b')
+	call search('^	*[-+=*⋅] ', 'b')
 	call search(' ')
 	exec 'normal hr' . a:etat
 endfunction
@@ -64,3 +64,4 @@ endfunction
 :map * $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr*
 :map ** *A []<ESC>"=strftime('%Y-%m-%d')<CR>P
 :map *** **a<SPACE>
+:map ⋅ :call Etat("⋅")<CR>
