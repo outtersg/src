@@ -39,6 +39,17 @@ hi def link notesUrl      Gris
 hi def Gras term=bold cterm=bold ctermfg=Yellow gui=bold
 hi def Gris term=NONE cterm=NONE ctermfg=DarkGrey gui=NONE
 
+" Le changement d'état d'une tâche est géré dans une fonction:
+" 1. On mutualise
+" 2. On évite de polluer l'historique de recherche par nos recherches techniques (cf. https://stackoverflow.com/a/1385213/1346819).
+" Transcription en syntaxe nmap: $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr (suivi du nouvel état).
+function! Etat(etat)
+	normal! $
+	call search('^	*[-+=*] ', 'b')
+	call search(' ')
+	exec 'normal hr' . a:etat
+endfunction
+
 " Alias F comme Fini (prendre une tâche et la caler dans les Terminées, puis retour).
 
 :map F $/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>:s/^\([*]\)\?/\1+/<CR>:s/^\([+*]\)./\1/<CR>d'd/^[+*]<CR>?^$<CR>p'e
