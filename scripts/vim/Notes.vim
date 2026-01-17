@@ -52,7 +52,7 @@ endfunction
 
 " Alias F comme Fini (prendre une tâche et la caler dans les Terminées, puis retour).
 
-:map F $/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>:s/^\([*]\)\?/\1+/<CR>:s/^\([+*]\)./\1/<CR>d'd/^[+*]<CR>?^$<CR>p'e
+:map F :let rech=@/<CR>$/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>:s/^\([*]\)\?/\1+/<CR>:s/^\([+*]\)./\1/<CR>d'd/^[+*]<CR>?^$<CR>:let @/=rech<CR>p'e
 :map - :call Etat("-")<CR>
 " À FAIRE: au lieu de requérir un --, se caler dans le - si on a déjà un - en début de ligne.
 " À FAIRE: -- pour ajouter une ligne -
