@@ -56,6 +56,7 @@ endfunction
 :map - $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr-
 " À FAIRE: au lieu de requérir un --, se caler dans le - si on a déjà un - en début de ligne.
 " À FAIRE: -- pour ajouter une ligne -
+" À FAIRE?: dater systématiquement les nouvelles lignes?
 :map -- -A {}<ESC>"=strftime('%Y-%m-%d')<CR>P
 :map = $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr=
 :map + $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr+
@@ -65,3 +66,5 @@ endfunction
 :map ** *A []<ESC>"=strftime('%Y-%m-%d')<CR>P
 :map *** **a<SPACE>
 :map ⋅ :call Etat("⋅")<CR>
+
+" À FAIRE: ancres [#hips] auxquelles on peut référer via cf. #hips ou après #hips
