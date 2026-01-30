@@ -24,3 +24,5 @@ done
 
 # Pour ensuite repérer les blocs d'IP:
 # pfctl -t pourriture -T show | awk -F . 'function si(){if(n>4)print"=== "n" ===\n"bloc}{pici=$1"."$2"."$3;if(pici!=pavant){si();n=0;bloc=$0;pavant=pici}else{bloc=bloc"\n"$0;++n}}END{si()}'
+# Une fois ajouté tout un sous-réseau, on peut retirer les IP individuelles en enchaînant la commande ci-dessus avec:
+# | grep <lepréfixedusous-réseau> | grep -v / | while read ip ; do pfctl -t pourriture -T delete $ip ; done
