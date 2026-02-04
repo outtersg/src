@@ -3,4 +3,9 @@
 # À FAIRE: utiliser les caractères Unicode 2581 à 2588
 # À FAIRE: utiliser Pango Markup (<span foreground="red">)
 printf "🔋 "
-acpiconf -i 0 | egrep mW\|emain | sed -E -e '/time/s/([0-9]+):([0-9]+)/(\1 h \2)/' -e 's/[^:]*:[ 	]*//' -e '/mW/s/.*\(|\)//g' | tr '\012' ' '
+acpiconf -i 0 | egrep mW\|emain | sed -E -e \
+'
+	/time/s/([0-9]+):([0-9]+)/(\1 h \2)/
+	s/[^:]*:[ 	]*//
+	/mW/s/.*\(|\)//g
+' | tr '\012' ' '
