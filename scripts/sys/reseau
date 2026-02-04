@@ -1,0 +1,27 @@
+#!/bin/sh
+
+# À FAIRE: comment avoir la puissance du signal? txpower ne semble pas varier, sysctl net.wlan ne renvoie rien d'intéressant.
+ifconfig | awk '
+function aff() {
+	if(!interf || interf ~ /^lo/) return;
+	printf("%s <span foreground=\"%s\">%s</span> %s %s", (interf ~ "^wlan" ? "🛜" : "🖧"), (etat == "associated" ? "green" : "red"), interf, reseau, puiss);
+}
+/^[^\t]/{
+	aff();
+	interf = $1;
+	sub(/:/, "", interf);
+	sub(/^[^:]*: /, "\t");
+	puiss = etat = reseau = "";
+}
+{
+	for(i = 0; ++i <= NF;)
+		if($i == "ssid")
+			reseau = $++i;
+		else if($i == "status:")
+			etat = $++i;
+		else if($i == "txpower")
+			puiss = $++i;
+}
+END{ aff(); }
+'
+
