@@ -58,4 +58,14 @@ faire()
 	lockf -t 10 $HOME/tmp/partage.verrou $HOME/local/bin/unison -batch -backups -maxbackups 3 $HOME/partage $dest
 }
 
+case `uname` in
+	Linux)
+		lockf()
+		{
+			case "$1" in -t) shift ; set -- -w "$@" ;; esac
+			flock "$@"
+		}
+		;;
+esac
+
 tourner "$@"
