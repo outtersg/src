@@ -5,6 +5,7 @@ GOGO_SCRIPTS="$HOME/src/projets/gogo"
 
 tourner()
 {
+	source=
 dests=
 	hote=`hostname | tr A-Z a-z | cut -d . -f 1`
 for dest in \
@@ -14,13 +15,21 @@ for dest in \
 	ssh://partage/sauvegardes/partage
 do
 	case "$hote:$dest" in
-		pasdfric:ssh://p/*) continue ;;
-		bonemine:ssh://b/*) continue ;;
-		muxdemux:ssh://mdm/*) continue ;;
-		sauvegardes:ssh://partage/*) continue ;;
-	esac
+			pasdfric:ssh://p/*) true ;;
+			bonemine:ssh://b/*) true ;;
+			muxdemux:ssh://mdm/*) true ;;
+			sauvegardes:ssh://partage/*) true ;;
+			*)
 	dests="$dests$dest "
+				continue
+				;;
+		esac
+		source="$HOME/`echo "$dest" | cut -d / -f 4-`"
 done
+	case "$source" in "")
+		echo "[31m# Impossible de déterminer qui je suis parmi la liste préprogrammée.[0m" >&2
+		exit 1
+	;; esac
 
 	gogo_dance
 }
@@ -55,7 +64,7 @@ faire()
 {
 	local dest="$2"
 	echo "Je fais $1"
-	lockf -t 10 $HOME/tmp/partage.verrou $HOME/local/bin/unison -batch -backups -maxbackups 3 $HOME/partage $dest
+	lockf -t 10 $HOME/tmp/partage.verrou $HOME/local/bin/unison -batch -backups -maxbackups 3 $source $dest
 }
 
 case `uname` in
