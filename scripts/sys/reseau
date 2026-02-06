@@ -14,6 +14,7 @@ function aff() {
 	sub(/:/, "", interf);
 	sub(/^[^:]*: /, "\t");
 	puiss = etat = reseau = "";
+	if($0 ~ /<UP,/) etat = "associated"; # Une interface filaire UP c est comme un sans fil associated.
 }
 {
 	for(i = 0; ++i <= NF;)
