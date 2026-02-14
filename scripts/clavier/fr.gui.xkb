@@ -1,0 +1,15 @@
+// https://lars.ingebrigtsen.no/2024/04/28/the-simplest-thing-in-the-world-modifing-keymaps-in-wayland/
+// Placer ce fichier en ~/.config/xkb/symbols/fr
+// et modifier ~/.config/wayfire.ini en:
+//   xkb_layout = fr
+//   xkb_model = é
+//   xkb_options = 
+//   xkb_rules = evdev
+//   xkb_variant = moi
+// Partir des touches fr(oss) définies dans /usr/local/share/X11/xkb/symbols/fr (section "oss").
+
+partial alphanumeric_keys modifier_keys
+xkb_symbols "moi" {
+    name[Group1]= "FR OSS + moi";
+    include "fr(oss)"
+};
