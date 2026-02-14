@@ -12,4 +12,5 @@ partial alphanumeric_keys modifier_keys
 xkb_symbols "moi" {
     name[Group1]= "FR OSS + moi";
     include "fr(oss)"
+    key <AB08>  { [        semicolon,           period,             multiply,             0x1002022 ] }; // ; . × • au lieu de ⋅
 };
