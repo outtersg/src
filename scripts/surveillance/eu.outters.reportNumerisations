@@ -9,6 +9,7 @@ esac
 
 source="$1"
 dest="$2"
+	case "$dest" in "") dest="$source" ;; esac
 nom="num*.jpg"
 
 while true
