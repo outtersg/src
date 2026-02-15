@@ -1,5 +1,14 @@
 #!/bin/sh
 
+trouverSuffixe()
+{
+	unset IFS
+	for suffixe in "$@"
+	do
+		true
+	done
+}
+
 tourner()
 {
 temps=10 # Pour que LaunchAgents ne nous trouve pas trop farouches, il faut que nous tenions au moins 10 s à chaque lancement.
@@ -11,6 +20,8 @@ source="$1"
 dest="$2"
 	case "$dest" in "") dest="$source" ;; esac
 nom="num*.jpg"
+	
+	local f0 f1 n suffixe
 
 while true
 do
@@ -20,12 +31,14 @@ do
 	do
 		n=0
 		# À FAIRE: récupérer la date du fichier, plutôt, en cas de rattrapage d'anciennetés.
-		f0="`date +%Y-%m-%d` `basename "$f" | sed -e 's/[0-9]*[.]/./'`"
-		f1="$f0"
+			f0="`date +%Y-%m-%d` `basename "$f" | sed -e 's/[0-9]*[.][^.]*$/./'`"
+			IFS=.
+			trouverSuffixe $f
+			f1="$f0$suffixe"
 		while [ -e "$dest/$f1" ]
 		do
 			n=`expr $n + 1`
-			f1="`echo "$f0" | sed -e "s/\\([^.]*\\)$/$n.\\1/"`"
+				f1="$f0$n.$suffixe"
 		done
 			mv -i "$f" "$dest/$f1"
 	done
