@@ -1,0 +1,13 @@
+# https://unix.stackexchange.com/a/732125/452410
+# sudo cp eu.outters.surveillancePartages.path  eu.outters.surveillancePartages.service /etc/systemd/system/
+# sudo systemctl enable eu.outters.surveillancePartages.path
+# sudo systemctl start eu.outters.surveillancePartages.path
+
+[Unit]
+Description=Surveillance du dossier Partage
+
+[Path]
+PathChanged=/g/partage/Administratif
+
+[Install]
+WantedBy=multi-user.target
