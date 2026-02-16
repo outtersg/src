@@ -2,6 +2,8 @@
 
 set -e
 
+verifEnv()
+{
 case `uname` in
 FreeBSD)
 findNmin()
@@ -18,6 +20,7 @@ findNmin()
 }
 ;;
 esac
+}
 
 trouverCombiOuRecent()
 {
@@ -63,6 +66,8 @@ trouverSuffixe()
 
 tourner()
 {
+	verifEnv
+	
 temps=10 # Pour que LaunchAgents ne nous trouve pas trop farouches, il faut que nous tenions au moins 10 s à chaque lancement.
 case "$1" in
 	--a-poil) temps=0 ; shift ;; # Sans sleep.
