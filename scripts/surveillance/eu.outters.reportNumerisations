@@ -9,6 +9,12 @@ verifEnv()
 	export PATH="$HOME/src/scripts/imagerie:$HOME/bin:$HOME/local/bin:$PATH"
 	export LD_LIBRARY_PATH="$HOME/local/lib"
 
+	local prog
+	for prog in reduirepdf tiffenpdf magick
+	do
+		command -v "$prog"
+	done > /dev/null || { echo "# Impossible de dénicher les utilitaires nécessaires." >&2 ; exit 1 ; }
+
 case `uname` in
 FreeBSD)
 findNmin()
