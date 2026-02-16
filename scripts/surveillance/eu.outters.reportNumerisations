@@ -2,6 +2,56 @@
 
 set -e
 
+case `uname` in
+FreeBSD)
+findNmin()
+{
+	local nmin="$1" ; shift
+	find "$@" -mtime ${nmin}m
+}
+;;
+*)
+findNmin()
+{
+	local nmin="$1" ; shift
+	find "$@" -mmin $nmin
+}
+;;
+esac
+
+trouverCombiOuRecent()
+{
+	findNmin -20 "$dest" -maxdepth 1 -name "$1*combi.pdf"
+	findNmin -20 "$dest" -maxdepth 1 -name "$1*"
+}
+
+combiner1()
+{
+	# À FAIRE: trouver reduirepdf en relatif via un Delictueux(), cf. les GuiLI.
+	"$HOME/src/scripts/imagerie/reduirepdf" .combi.pdf "$1" >&2
+	echo "$1" | sed -e 's#[^.]*$#combi.pdf#'
+}
+
+combiner()
+{
+	local nouveau="$1" combi="`trouverCombiOuRecent "$2" | head -1`"
+	case "$combi" in
+		# Pas d'autre page numérisée dans les x minutes précédentes?
+		"") return ;;
+		# Un fichier combiné? Tout bon, on peut continuer.
+		*.combi.pdf) true ;;
+		# Mais si nous ne sommes que la 2ème page, et que notre candidat combiné n'est qu'une première page, nous devons au préalable initialiser un combiné à partir de cette première page.
+		*)
+			combi="`combiner1 "$combi"`"
+			;;
+	esac
+	
+	# À FAIRE: caler la recherche non sur l'heure courante, mais sur l'heure de modif de $1, des fois que ce script tourne rétroactivement.
+	
+	nouveau="`combiner1 "$nouveau"`"
+	pdfunite "$combi" "$nouveau" "$combi.nouveau.pdf" && mv "$combi.nouveau.pdf" "$combi" && rm "$nouveau"
+}
+
 trouverSuffixe()
 {
 	unset IFS
@@ -42,6 +92,7 @@ do
 			n=`expr $n + 1`
 				f1="$f0$n.$suffixe"
 		done
+			combiner "$f" "$f0"
 			mv -i "$f" "$dest/$f1"
 	done
 	if [ $temps -gt 0 ]
