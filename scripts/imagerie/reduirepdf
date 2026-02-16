@@ -30,7 +30,7 @@ do
 	do
 		n=`expr $n + 1`
 		printf "%d " $n
-		convert "$i" -resize 25%x -density 150 -quality 100 "$i.reduite.jpg"
+		magick "$i" -resize 25%x -density 150 -quality 100 "$i.reduite.jpg"
 		tiffenpdf "$i.reduite.jpg" -o "$i.pdf"
 	done
 	if [ "$n" -gt 1 ]
