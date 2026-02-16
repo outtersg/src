@@ -3,6 +3,7 @@
 set -e
 
 TMP=/tmp/temp.$$.reduirepdf
+SUFFIXE=.p.pdf
 
 rm -Rf "$TMP"
 mkdir "$TMP"
@@ -10,7 +11,10 @@ mkdir "$TMP"
 export PATH="$HOME/src/projets/adochants:$PATH"
 for p in "$@"
 do
-	dest="`echo "$p" | sed -e 's#\(\.[^.]*\)$#.p.pdf#'`"
+	# Tout argument commençant par . est le suffixe à adjoindre au fichier.
+	case "$p" in .*) SUFFIXE="$p" ; continue ;; esac
+	
+	dest="`echo "$p" | sed -e 's#\(\.[^.]*\)$'"#$SUFFIXE#"`"
 	printf "%s… " "$dest"
 	case "$p" in
 		*.pdf|*.PDF)
