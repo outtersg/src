@@ -4,6 +4,11 @@ set -e
 
 verifEnv()
 {
+	# Besoin de reduirepdf, tiffenpdf, magick
+	# L'environnement depuis un systemd est similaire à cron: à nous de tout redéfinir.
+	export PATH="$HOME/src/scripts/imagerie:$HOME/bin:$HOME/local/bin:$PATH"
+	export LD_LIBRARY_PATH="$HOME/local/lib"
+
 case `uname` in
 FreeBSD)
 findNmin()
@@ -31,7 +36,7 @@ trouverCombiOuRecent()
 combiner1()
 {
 	# À FAIRE: trouver reduirepdf en relatif via un Delictueux(), cf. les GuiLI.
-	"$HOME/src/scripts/imagerie/reduirepdf" .combi.pdf "$1" >&2
+	reduirepdf .combi.pdf "$1" >&2
 	echo "$1" | sed -e 's#[^.]*$#combi.pdf#'
 }
 
