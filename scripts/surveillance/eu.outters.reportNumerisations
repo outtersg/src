@@ -10,7 +10,9 @@ verifEnv()
 	export LD_LIBRARY_PATH="$HOME/local/lib"
 
 	local prog
-	for prog in reduirepdf tiffenpdf magick
+	# À FAIRE: syncpartage et agrégation uniquement si les outils sont dénichés. Sinon lever une simple alerte et ne rien faire d'autre que le déplacement.
+	# À FAIRE: permettre (via une option) de ne pas appeler syncpartage et l'agrégation.
+	for prog in reduirepdf tiffenpdf magick syncpartage
 	do
 		command -v "$prog"
 	done > /dev/null || { echo "# Impossible de dénicher les utilitaires nécessaires." >&2 ; exit 1 ; }
@@ -109,7 +111,12 @@ do
 				f1="$f0$n.$suffixe"
 		done
 			combiner "$f" "$f0"
+			# À FAIRE: pouvoir renommer et syncpartager immédiatement. Mais combiner risque alors de nous prendre pour la cible de combinaison. Un grep -v?
+			# À FAIRE: la fusion étant longue (ImageMagick sur un pauvre Raspberry Pi 3 B), le faire en asynchrone.
+			#          avoir une file d'attente (gogo?) pour que si la dernière page, blanche, est rapide à miniaturiser, elle ne passe pas devant l'avant-dernière toujours en cours.
+			#          avoir un wait pour ne pas quitter tant que la file n'est pas terminée.
 			mv -i "$f" "$dest/$f1"
+			syncpartage
 	done
 	if [ $temps -gt 0 ]
 	then
