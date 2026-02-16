@@ -61,8 +61,8 @@ function affPrec(){
 /\/!\\/ { gsub(/\/!\\/, "<b>⚠</b>"); }
 # Façon LDAP, une ligne commençant par l'indentation mais sans tirets est la continuité du tiret.
 niv && /^\t*[^-+*=•\t]/{
-	match($0, /^\t*/);
-	if(RLENGTH >= niv - 1)
+	match($0, /^\t* */);
+	if(RLENGTH >= niv)
 	{
 		prec = prec"<br/>"substr($0, niv);
 		next;
