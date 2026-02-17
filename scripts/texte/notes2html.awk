@@ -68,6 +68,7 @@ niv && /^\t*[^-+*=•\t]/{
 		next;
 	}
 }
+# À FAIRE: ne doit-on pas traiter les < > & */
 /^\t*[-+*=•] /{
 	match($0, /^\t*[^\t]/);
 	puce = substr($0, RLENGTH, 1);
