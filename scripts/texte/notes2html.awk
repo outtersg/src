@@ -92,7 +92,13 @@ niv && /^\t*[^-+*=•\t]/{
 { affPrec(); }
 /^$/{ ++lignevide; }
 /./ { lignevide = 0; }
-{ prec = prec$0; }
+{
+	### Retravail ###
+	
+	### Agrégation ###
+	
+	prec = prec$0;
+}
 END{
 	affPrec();
 	if(entete)
