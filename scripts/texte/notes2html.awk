@@ -95,6 +95,38 @@ niv && /^\t*[^-+*=•\t]/{
 {
 	### Retravail ###
 	
+	# URL sèches:
+	# Expression de reconnaissance des URL: à synchroniser avec Notes.vim.
+	gsub(/https*:\/\/[^ ),;]*/, "<a href=\"&\">&</a>");
+	# URL téléphone:
+	gsub(/0[1-9]( [0-9][0-9]){4}/, "<a href=\"tel:+33&\">&</a>");
+	while(match($0, /<a href="tel:\+330[1-9 .-]*"/))
+	{
+		url0 = substr($0, RSTART + 14, RLENGTH - 15);
+		gsub(/[^0-9]/, ".", url0);
+		url1 = url0;
+		gsub(/\./, "", url1);
+		sub(/^330/, "33", url1);
+		url0 = "\\+"url0"\"";
+		url1 = "+"url1"\"";
+		gsub(url0, url1);
+	}
+	# URL MarkDown:
+	while(match($0, /\[[^\[\]]*(\[[^\]]*\][^\[\]]*)*\]\([^)]*\)/))
+	{
+		lien = substr($0, (p = RSTART) + 1, (n = RLENGTH) - 2);
+		match(lien, /\]\(/);
+		libelle = substr(lien, 1, RSTART - 1);
+		if(substr(lien, RSTART + 2, 9) == "<a href=\"")
+		{
+			lien = substr(lien, RSTART + 2);
+			sub(/>[^<]*<\/a>$/, ">"libelle"</a>", lien);
+		}
+		else
+			lien = "<a href=\""substr(lien, RSTART + 2)"\">"libelle"</a>";
+		$0 = substr($0, 1, p - 1)lien""substr($0, p + n);
+	}
+	
 	### Agrégation ###
 	
 	prec = prec$0;
