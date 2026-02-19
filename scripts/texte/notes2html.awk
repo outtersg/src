@@ -58,6 +58,16 @@ function affPrec(fin){
 	while(match($0, /[*][^*]*[*]/))
 		$0 = substr($0, 1, RSTART - 1)"<b>"substr($0, RSTART + 1, RLENGTH - 2)"</b>"substr($0, RSTART + RLENGTH);
 }
+/_/{
+	# [:alnum:] ne reconnaît pas les accents; on utilise donc [^[:punct:][:space:]]
+	while(match($0, /(^|[[:space:]])_[^[:punct:][:space:]][^_]*[^[:punct:][:space:]]_([[:punct:][:space:]]|$)/))
+	{
+		# A-t-on un signe de ponctuation ou espace à préserver avant et après les _ (ou bien est-on en début / fin de ligne, auquel cas on attaque directement avec le _)?
+		if(substr($0, RSTART, 1) != "_") { ++RSTART; --RLENGTH; }
+		if(substr($0, RSTART + RLENGTH - 1, 1) != "_") --RLENGTH;
+		$0 = substr($0, 1, RSTART - 1)"<em>"substr($0, RSTART + 1, RLENGTH - 2)"</em>"substr($0, RSTART + RLENGTH);
+	}
+}
 /\/!\\/ { gsub(/\/!\\/, "<b>⚠</b>"); }
 # Façon LDAP, une ligne commençant par l'indentation mais sans tirets est la continuité du tiret.
 niv && /^\t*[^-+*=•\t]/{
