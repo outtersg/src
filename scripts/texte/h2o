@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# H2O
+# HTML depuis mon Organiseur
+# Prend un contenu formaté Notes.vim, et génère dans le presse-papier le HTML correspondant.
+# Utilisation classique: depuis vim, passer en visuel, puis :'<,'>w !h2o
+# Ou en raccourci h depuis le mode visuel vim: :vmap h :w !h2o<CR><CR>
+
+cop()
+{
+	wl-copy "$@"
+}
+
+awk -f $HOME/src/scripts/texte/notes2html.awk | cop -t text/html
