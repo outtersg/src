@@ -67,4 +67,8 @@ endfunction
 :map *** **a<SPACE>
 :map • :call Etat("•")<CR>
 
+" Pour convertir une section en HTML, passer en visuel (v), sélectionner la section, et taper h
+" N.B.: en visuel, les : ajoutent automatiquement '<,'> donc on n'a plus qu'à ajouter la commande w vers un processus (h2o dans notre cas, qui doit être dans le chemin, cf. ../texte/h2o).
+:vmap h :w !h2o<CR><CR>
+
 " À FAIRE: ancres [#hips] auxquelles on peut référer via cf. #hips ou après #hips
