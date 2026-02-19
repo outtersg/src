@@ -21,8 +21,8 @@ BEGIN{
 	puces["*"] = "liet";
 	puces["•"] = "";
 }
-function affPrec(){
-	if(!match($0, /./))
+function affPrec(fin){
+	if(!match($0, /./) && !fin)
 	{
 		++lignevide;
 		return;
@@ -30,7 +30,7 @@ function affPrec(){
 	
 	if(niv > 0)
 		prec = prec"</li>";
-	else if(!para)
+	else if(!para && !fin)
 		# À FAIRE?: les <p>? Mais ils me font chier avec leurs marges entre <p> et <ul> et compagnie.
 		prec = prec""(lignevide ? "<br/>" : "")"<br/>";
 	for(i = niv; --i >= prochniv;)
@@ -133,7 +133,7 @@ niv && /^\t*[^-+*=•\t]/{
 	prec = prec$0;
 }
 END{
-	affPrec();
+	affPrec(1);
 	if(entete)
 	{
 	print "	</body>";
