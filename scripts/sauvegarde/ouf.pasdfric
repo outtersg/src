@@ -5,6 +5,10 @@ export PATH="$SCRIPTS:$PATH"
 
 cd "$HOME"
 
+# Ménage
+
+find ~/.mozilla/ -name cache | while read d ; do find "$d" -mtime -90d | grep -q . || rm -Rf "$d" ; done
+
 # Préparation
 
 dest=
@@ -49,6 +53,7 @@ shift
 	cat <<TERMINE
 - /.cache/
 - /.local/state/cabal/store
+- /.config/chromium/**/CacheStorage/
 - /Downloads/
 - /Téléchargements/
 - /mp3/-[Classement]-
@@ -59,6 +64,8 @@ shift
 - /src/projets/ovh.docs
 + /tmp/stackoverflow*
 - /tmp/*
+- **/*.core
+- **/ktrace.out
 TERMINE
 	cat /tmp/temp.$$.ajouts | tr \; '\012'
 	echo "$ajouts" | tr \; '\012'
