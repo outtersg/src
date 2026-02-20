@@ -61,6 +61,7 @@ shift
 - /partage/
 - /src/projets/*/app/build
 - /src/projets/*/build
+- /src/projets/dedie/n/mfsbsd
 - /src/projets/ovh.docs
 + /tmp/stackoverflow*
 - /tmp/*
