@@ -193,8 +193,23 @@ verrouiller()
 		
 		[ ! -d .verrou.flute ] && mkdir .verrou.flute && exit 0
 		
+		# FIND en Unités Secondes.
+		findus()
+		{
+			local ns=\$1 ; shift
+			case \`uname\` in
+				*BSD) find \"\$@\" -mtime -\${ns}s ;;
+				*)
+					# https://superuser.com/questions/300246/linux-command-to-find-files-changed-in-the-last-n-seconds
+					# Soit avec -newermt <description de durée>
+					# Soit avec -mmin <fraction de minute>
+					find \"\$@\" -newermt \"\$ns seconds ago\"
+					;;
+			esac
+		}
+		
 		# Si le verrou existe, est-il récent (en cours de création, donc potentiellement sans deverrouiller mais pourtant à ne pas supprimer)?
-		if find .verrou.flute -maxdepth 0 -mtime -${VERROU_VIF}s | grep -q .
+		if findus $VERROU_VIF .verrou.flute -maxdepth 0 | grep -q .
 		then
 			[ -z \"$libelle\" ] || info \"($libelle: verrou posé par une tâche concurrente encore active il y a peu)\" >&2
 			exit 1
