@@ -482,6 +482,7 @@ tourner()
 	fi
 }
 
+command -v uuencode > /dev/null 2>&1 || { echo "# Veuillez installer uuencode." >&2 ; exit 1 ; }
 analyserParametres "$@"
 IFS="$sep"
 tifs tourner $aFaire
