@@ -109,6 +109,8 @@ niv && /^\t*[^-+*=•\t]/{
 	# URL sèches:
 	# Expression de reconnaissance des URL: à synchroniser avec Notes.vim.
 	gsub(/https*:\/\/[^ ),;]*/, "<a href=\"&\">&</a>");
+	# URL adrél:
+	gsub(/[-_a-z0-9]{2,64}@[-_a-z0-9]{2,64}\.[-_a-z0-9]{2,10}/, "<a href=\"mailto:&\">&</a>");
 	# URL téléphone:
 	gsub(/0[1-9]( [0-9][0-9]){4}/, "<a href=\"tel:+33&\">&</a>");
 	while(match($0, /<a href="tel:\+330[1-9 .-]*"/))
