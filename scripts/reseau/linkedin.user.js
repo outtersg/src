@@ -33,8 +33,20 @@ var AttentisteUrl =
 			console.log('Embellificateur: ID '+urlId);
 			AttentisteUrl.attenteH2.dernierId = urlId;
 			AttentisteUrl.attenteH2.compteur = 0;
+			var d = new Date().toISOString().substr(0, 10);
 			if(!localStorage.getItem('vu/'+urlId))
 				localStorage.setItem('vu/'+urlId, new Date().toISOString().substr(0, 10));
+			// On pousse vers le presse-papier une ligne de résumé de l'offre, au format de mes Notes:
+			navigator.clipboard.writeText
+			(
+				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name').innerText
+				+' '+bloc.querySelector('h1').innerText
+				+' https://www.linkedin.com/comm/jobs/view/'+urlId
+				+' {'+d+'}'
+			);
+			/* À FAIRE: indicateur montrant que le presse-papier a été modifié */
+			/* À FAIRE: utiliser le presse-papier secondaire (Maj-Insert)? */
+			/* À FAIRE: virer les mentions inutiles (genre H/F, X/F/H, etc.) */
 		}
 		if(--AttentisteUrl.attenteH2.compteur < 0)
 		{
