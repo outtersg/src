@@ -40,13 +40,12 @@ var AttentisteUrl =
 			navigator.clipboard.writeText
 			(
 				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name').innerText
-				+' '+bloc.querySelector('h1').innerText
-				+' https://www.linkedin.com/comm/jobs/view/'+urlId
+				+' '+bloc.querySelector('h1').innerText.replaceAll(/[\s-(]*(?:[HMF][-\/.][HMF])\)?/g, '')
+				+' https://www.linkedin.com/jobs/view/'+urlId
 				+' {'+d+'}'
 			);
 			/* À FAIRE: indicateur montrant que le presse-papier a été modifié */
 			/* À FAIRE: utiliser le presse-papier secondaire (Maj-Insert)? */
-			/* À FAIRE: virer les mentions inutiles (genre H/F, X/F/H, etc.) */
 		}
 		if(--AttentisteUrl.attenteH2.compteur < 0)
 		{
