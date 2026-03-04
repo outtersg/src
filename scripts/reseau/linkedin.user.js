@@ -40,7 +40,7 @@ var AttentisteUrl =
 			navigator.clipboard.writeText
 			(
 				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name').innerText
-				+' '+bloc.querySelector('h1').innerText.replaceAll(/[\s-(]*(?:[HMF][-\/.][HMF])\)?/g, '')
+				+' '+bloc.querySelector('h1').innerText.replaceAll(/[\s-(]*(?:[HMFX](?:[-\/.][HMFX]){1,2})\)?/g, '')
 				+' https://www.linkedin.com/jobs/view/'+urlId
 				+' {'+d+'}'
 			);
