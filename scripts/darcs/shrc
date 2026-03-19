@@ -58,6 +58,7 @@ histo_darcs()
 '
 BEGIN{ format = "'"$format"'"; }
 /<patch/{
+	match($0, / hash=["'\''][^"'\'']*/); hachage = substr($0, RSTART + 7, RLENGTH - 7);
 	match($0, / date=["'\''][^"'\'']*/); dateIso = substr($0, RSTART + 7, RLENGTH - 7);
 	match($0, / local_date=["'\''][^"'\'']*/); dateLocale = substr($0, RSTART + 13, RLENGTH - 13);
 }
@@ -73,6 +74,7 @@ BEGIN{ format = "'"$format"'"; }
 }
 /<\/patch>/{
 	sortie = format;
+	gsub("%h", hachage, sortie);
 	gsub("%d", dateIso, sortie);
 	gsub("%D", dateLocale, sortie);
 	gsub("%t", titre, sortie);
