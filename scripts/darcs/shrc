@@ -44,9 +44,23 @@ DANSPROJET_TESTI_DARCS=
 
 histo_darcs()
 {
+	local format='%d %D # %t'
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			+*) format="`echo "$1" | cut -c 2-`" ;;
+			*) break ;;
+		esac
+		shift
+	done
+	
 	darcs log --xml-output "$@" | awk \
 '
-/<patch/{ sub(/.* date=["'\'']/, ""); sub(/["'\''].* local_date=["'\'']/, " "); sub(/["'\''].*/, ""); dates = $0; }
+BEGIN{ format = "'"$format"'"; }
+/<patch/{
+	match($0, / date=["'\''][^"'\'']*/); dateIso = substr($0, RSTART + 7, RLENGTH - 7);
+	match($0, / local_date=["'\''][^"'\'']*/); dateLocale = substr($0, RSTART + 13, RLENGTH - 13);
+}
 /<name>/{
 	sub(/.*<name>/, "");
 	sub(/<\/name>.*/, "");
@@ -58,7 +72,11 @@ histo_darcs()
 	titre = $0;
 }
 /<\/patch>/{
-	print dates" # "titre;
+	sortie = format;
+	gsub("%d", dateIso, sortie);
+	gsub("%D", dateLocale, sortie);
+	gsub("%t", titre, sortie);
+	print sortie;
 }
 '
 }
