@@ -55,7 +55,10 @@ histo_darcs()
 	gsub(/&gt;/, ">");
 	gsub(/&lt;/, "<");
 	gsub(/&quot;/, "\"");
-	print dates" # "$0;
+	titre = $0;
+}
+/<\/patch>/{
+	print dates" # "titre;
 }
 '
 }
