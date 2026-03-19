@@ -10,22 +10,10 @@ filtreAuteurs()
 	egrep -i "$AUTEURS"
 }
 
-histo_darcs()
+histo_darcs_n_mois()
 {
-	darcs log --xml-output --match 'date "last '$N_MOIS' months"' | awk \
-'
-/<patch/{ sub(/.* date=["'\'']/, ""); sub(/["'\''].* local_date=["'\'']/, " "); sub(/["'\''].*/, ""); dates = $0; }
-/<name>/{
-	sub(/.*<name>/, "");
-	sub(/<\/name>.*/, "");
-	gsub(/&amp;/, "\\&");
-	gsub(/&apos;/, "'\''");
-	gsub(/&gt;/, ">");
-	gsub(/&lt;/, "<");
-	gsub(/&quot;/, "\"");
-	print dates" # "$0;
-}
-'
+	local n=$1 ; shift
+	histo_darcs --match 'date "last '$n' months"' "$@"
 }
 
 histo_git()
@@ -53,7 +41,7 @@ histo()
 		esac
 		{
 		chemin="`echo "$d" | sed -e 's/.*\(..............\)$/@\1/' -e 's/$/                /' -e 's/^\(...............\).*/\1/' -e 's/^@/…/'`"
-		if [ -d "$d/_darcs" ] ; then histo=histo_darcs
+		if [ -d "$d/_darcs" ] ; then histo="histo_darcs_n_mois $N_MOIS"
 		elif [ -d "$d/.git" ] ; then histo=histo_git
 		else
 			echo "[31m# $d n'est pas un dossier darcs.[0m" >&2
