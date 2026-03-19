@@ -41,3 +41,21 @@ DANSPROJET_TESTI="$DANSPROJET_TESTI testi_darcs"
 DANSPROJET_TESTI_DARCS=
 
 #- Bas-niveau ------------------------------------------------------------------
+
+histo_darcs()
+{
+	darcs log --xml-output "$@" | awk \
+'
+/<patch/{ sub(/.* date=["'\'']/, ""); sub(/["'\''].* local_date=["'\'']/, " "); sub(/["'\''].*/, ""); dates = $0; }
+/<name>/{
+	sub(/.*<name>/, "");
+	sub(/<\/name>.*/, "");
+	gsub(/&amp;/, "\\&");
+	gsub(/&apos;/, "'\''");
+	gsub(/&gt;/, ">");
+	gsub(/&lt;/, "<");
+	gsub(/&quot;/, "\"");
+	print dates" # "$0;
+}
+'
+}
