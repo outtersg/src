@@ -39,3 +39,5 @@ testi_darcs()
 
 DANSPROJET_TESTI="$DANSPROJET_TESTI testi_darcs"
 DANSPROJET_TESTI_DARCS=
+
+#- Bas-niveau ------------------------------------------------------------------
