@@ -369,9 +369,12 @@ titrer()
 {
 	case "$TMUX_PANE" in
 		"")
+			case "$1" in "") printf '\033[23;0t' > /dev/tty ; return ;; esac
+			printf '\033[22;0t' > /dev/tty # Mémorisation du titre.
 			printf %s "]2;$1" > /dev/tty
 			;;
 		*)
+			case "$1" in "") tmux setw automatic-rename ; return ;; esac
 			tmux rename-window -t "$TMUX_PANE" "$1"
 			;;
 	esac
