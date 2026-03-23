@@ -364,3 +364,15 @@ curly()
 }
 
 #- Terminal --------------------------------------------------------------------
+
+titrer()
+{
+	case "$TMUX_PANE" in
+		"")
+			printf %s "]2;$1" > /dev/tty
+			;;
+		*)
+			tmux rename-window -t "$TMUX_PANE" "$1"
+			;;
+	esac
+}
