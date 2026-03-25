@@ -75,6 +75,8 @@ BEGIN{ format = "'"$format"'"; }
 /<\/patch>/{
 	sortie = format;
 	gsub("%h", hachage, sortie);
+	while(match(sortie, /%[0-9]+h/))
+		sub(/%[0-9]+h/, substr(hachage, 1, substr(sortie, RSTART + 1, RLENGTH - 2)), sortie);
 	gsub("%d", dateIso, sortie);
 	gsub("%D", dateLocale, sortie);
 	gsub("%t", titre, sortie);
