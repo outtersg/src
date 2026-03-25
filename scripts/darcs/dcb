@@ -1,0 +1,73 @@
+#!/bin/sh
+# Copyright (c) 2026 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# Darcs Compare Branches
+
+Delictueux() { local s2 ; while [ -h "$s" ] ; do s2="`readlink "$s"`" ; case "$s2" in [^/]*) s2="`dirname "$s"`/$s2" ;; esac ; s="$s2" ; done ; } ; SCRIPTS() { local s="`command -v "$0"`" ; [ -x "$s" -o ! -x "$0" ] || s="$0" ; case "$s" in */bin/*sh) case "`basename "$s"`" in *.*) true ;; *sh) s="$1" ;; esac ;; esac ; case "$s" in [^/]*) local d="`dirname "$s"`" ; s="`cd "$d" ; pwd`/`basename "$s"`" ;; esac ; Delictueux ; s="`dirname "$s"`" ; Delictueux ; SCRIPTS="$s" ; } ; SCRIPTS
+. "$SCRIPTS/shrc"
+
+auSecours()
+{
+	cat <<TERMINE
+# `basename "$0"`
+# Darcs Compare Branches
+# Utilisation: `basename "$0"` <silo0> <silo1>
+TERMINE
+}
+
+analyserParametres()
+{
+	while [ $# -gt 0 ]
+	do
+		case "$1" in
+			*)
+				case "$silo0;$silo1" in
+					";") silo0="$1" ;;
+					*";") silo1="$1" ;;
+					*) auSecours >&2 ; exit 1 ;;
+				esac
+				;;
+		esac
+		shift
+	done
+	case "$silo1" in "") auSecours >&2 ; exit 1 ;; esac
+}
+
+histo()
+{
+	( cd "$1" && histo_darcs +"%d %9h %t" | sort ) # sort plutôt que --reverse: si des rustines anciennes ont été rapatriées sur le tard, au moins elles apparaîtront à leur date d'insertion et non de rapatriement.
+}
+
+tourner()
+{
+	local silo0 silo1
+	
+	analyserParametres "$@"
+	
+	local T=/tmp/temp.dcb.$$
+	histo "$silo0" | tee $T.0 | cut -d ' ' -f 3- > $T.0.titres
+	histo "$silo1" | tee $T.1 | cut -d ' ' -f 3- > $T.1.titres
+	# À FAIRE?: sur une série ---+++ de diff -u, voir si les - ne s'intercalent pas entre les + (diff -u va forcément préférer regrouper les - ensemble et les + ensemble, alors que nous avons la date qui nous fournit une info d'ordre supplémentaire).
+	diff -uw $T.0.titres $T.1.titres | awk -f "$SCRIPTS/dcb.awk" - $T.0 $T.1
+	case "$T" in /tmp/?*) rm $T.* ;; esac
+}
+
+tourner "$@"
