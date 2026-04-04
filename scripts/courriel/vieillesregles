@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# À FAIRE: sauf les règles définissant des symboles, ou à valeur négative, puisqu'elles sont destinées à éviter le corbeillage des méls (et donc il est logique qu'on ne les détecte pas à la corbeille).
+# Sous vim:
+# %s/^#20[-0-9]* - \([^^I]\+^I[^1-9]\)/\1/ # ^I = tabulation
+
 REGLES=/usr/local/_rspamd+paf-1.9.4/etc/rspamd.0/local.d/paf.regles
 
 # Repère les règles de paf.regles inusitées (et donc ralentissant inutilement l'analyse.
