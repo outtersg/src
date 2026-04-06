@@ -2,7 +2,7 @@
 Description=Déclenchement des opérations sur changement dans Partage
 
 [Service]
-Type=oneshot
+#Type=oneshot # Non, sinon il se considère encore debout (et donc à ne plus relancer) une fois une première exécution terminée.
 User=pi
 Group=pi
 ExecStart=/home/pi/src/scripts/surveillance/eu.outters.reportNumerisations /g/partage/Administratif
