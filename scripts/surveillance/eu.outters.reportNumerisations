@@ -108,7 +108,7 @@ do
 		while [ -e "$dest/$f1" ]
 		do
 			n=`expr $n + 1`
-				f1="$f0$n.$suffixe"
+				f1="`printf %s%02d.%s "$f0" $n "$suffixe"`"
 		done
 			combiner "$f" "$f0"
 			# À FAIRE: pouvoir renommer et syncpartager immédiatement. Mais combiner risque alors de nous prendre pour la cible de combinaison. Un grep -v?
