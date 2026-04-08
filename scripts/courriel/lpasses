@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# À FAIRE: passer par gogo pour ne pas atomiser rspamd (pas + de 5 à la fois), sinon il expire je ne sais quel délai et ne renvoie aucun résultat pour les derniers.
 n=12
 [ -z "$1" ] || n="$1"
 
