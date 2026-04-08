@@ -1,13 +1,13 @@
 #!/bin/sh
 
 n=40
-[ -z "$1" ] || n="$1"
+case "$1" in *[^0-9]*) true ;; [1-9]*) n=$1 ; shift ;; esac
 
 t=/tmp/temp.lchopes.$$
 
 ls -tr | egrep -v 'bz2$|gz$' | tail -$n > $t.fichiers
 
-tr '\012' '\000' < $t.fichiers | xargs -0 -n 10 rspamc | LC_ALL=C stdbuf -oL awk '/^Results for file:/{f=$4}/^Score:/{p=$2;printf("%s%.2f%s %s\n", (p>=18.0?"\033[32m":(p>=15.0?"\033[33m":"\033[31m")), p, "\033[0m\t", f)}' > $t.resultats &
+tr '\012' '\000' < $t.fichiers | xargs -0 -n 10 rspamc "$@" | LC_ALL=C stdbuf -oL awk '/^Results for file:/{f=$4}/^Score:/{p=$2;printf("%s%.2f%s %s\n", (p>=18.0?"\033[32m":(p>=15.0?"\033[33m":"\033[31m")), p, "\033[0m\t", f)}' > $t.resultats &
 
 att=30
 while read f
