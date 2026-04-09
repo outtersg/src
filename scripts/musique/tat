@@ -9,11 +9,14 @@ tourner()
 	# Analyse des paramètres.
 	
 	case "$1" in
-		*.mp3) m="`echo "$1" | sed -e 's#\....$##'`" ; shift ;;
+		*.mp3|*.wav) son="$1" ; m="`echo "$1" | sed -e 's#\....$##'`" ; shift ;;
 	esac
 	
 	case "$m" in "")
 m=/tmp/tat.`date +%Y%m%d.%H%M%S`
+	;; esac
+	case "$son" in "")
+		son="$m.mp3"
 	;; esac
 	
 	# C'est parti!
@@ -58,10 +61,10 @@ aff()
 
 faire()
 {
-[ -f "$m.mp3" ] ||
-sox -t oss /dev/dsp1 $m.mp3 || true
-whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French --prompt "$contexte" "$@" $m.mp3 2>&1 | aff
-echo "($m.mp3, $m.txt)"
+	[ -f "$son" ] ||
+	sox -t oss /dev/dsp1 $son || true
+	whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French --prompt "$contexte" "$@" $son 2>&1 | aff
+	echo "($son, $m.txt)"
 case "$WAYLAND_DISPLAY" in ?*)
 	wl-copy -p < $m.txt
 esac
