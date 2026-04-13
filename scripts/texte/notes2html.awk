@@ -53,6 +53,7 @@ function affPrec(fin){
 	lignevide = 0;
 	if(para) --para;
 }
+{ gsub(/&/, "\\&amp;"); gsub(/</, "\\&lt;"); gsub(/>/, "\\&gt;"); }
 # À FAIRE: ne pas oublier l'indentation à 3 espaces ou plus après un 123.
 /[*][^*]*[*]/{
 	while(match($0, /[*][^*]*[*]/))
@@ -78,7 +79,6 @@ niv && /^\t*[^-+*=•\t]/{
 		next;
 	}
 }
-# À FAIRE: ne doit-on pas traiter les < > & */
 /^\t*[-+*=•] /{
 	match($0, /^\t*[^\t]/);
 	puce = substr($0, RLENGTH, 1);
@@ -133,6 +133,7 @@ niv && /^\t*[^-+*=•\t]/{
 		if(substr(lien, RSTART + 2, 9) == "<a href=\"")
 		{
 			lien = substr(lien, RSTART + 2);
+			gsub("&", "\\\\&", libelle); # Le & a une signification particulière dans le remplacement, donc "Totor & Cie" doit devenir "Totor \& Cie" s'il sert de chaîne de remplacement.
 			sub(/>[^<]*<\/a>$/, ">"libelle"</a>", lien);
 		}
 		else
