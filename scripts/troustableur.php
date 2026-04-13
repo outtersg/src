@@ -22,8 +22,8 @@ function colEnAbcisse($col)
 
 function abcisseEnCol($x)
 {
-	for($r = ''; $x > 0; $x = floor($x / 26)) // intdiv en PHP 7
-		$r = chr(ord('A') + ($x % 26) - 1).$r;
+	for($r = ''; $x > 0; $x = floor(($x - 1) / 26)) // intdiv en PHP 7
+		$r = chr(ord('A') + (($x - 1) % 26)).$r;
 	return $r;
 }
 
