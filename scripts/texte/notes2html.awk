@@ -130,7 +130,7 @@ function retravail() {
 	gsub(/[-_a-z0-9]{2,64}@[-_a-z0-9]{2,64}\.[-_a-z0-9]{2,10}/, "<a href=\"mailto:&\">&</a>");
 	# URL téléphone:
 	gsub(/0[1-9]( [0-9][0-9]){4}/, "<a href=\"tel:+33&\">&</a>");
-	while(match($0, /<a href="tel:\+330[1-9 .-]*"/))
+	while(match($0, /<a href="tel:\+330[0-9 .-]*"/))
 	{
 		url0 = substr($0, RSTART + 14, RLENGTH - 15);
 		gsub(/[^0-9]/, ".", url0);
