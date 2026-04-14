@@ -41,10 +41,19 @@ function affPrec(fin){
 	
 	if(prochniv > 0)
 	{
+		prepuce = "";
+		if(puce ~ /^[0-9]+\.$/ && !puces[puce]) # Puces numériques.
+		{
+			pupuce = puce;
+			sub(/\.$/, "", pupuce);
+			prepuce = "<style type=\"text/css\">li.li"pupuce"::before { content: \""puce"\"; }</style>";
+			puces[puce] = "li"pupuce;
+		}
 		if((puce = puces[puce]))
 			puce = " class=\""puce"\"";
-		prec = "<li"puce">"prec;
+		prec = prepuce"<li"puce">"prec;
 	}
+	# À FAIRE?: utiliser de l'<ol> plutôt que de l'<ul> pour les listes ordonnées?
 	if(prochniv > niv)
 		prec = "<ul>"prec;
 	
@@ -54,7 +63,6 @@ function affPrec(fin){
 	if(para) --para;
 }
 { gsub(/&/, "\\&amp;"); gsub(/</, "\\&lt;"); gsub(/>/, "\\&gt;"); }
-# À FAIRE: ne pas oublier l'indentation à 3 espaces ou plus après un 123.
 /[*][^*]*[*]/{
 	while(match($0, /[*][^*]*[*]/))
 		$0 = substr($0, 1, RSTART - 1)"<b>"substr($0, RSTART + 1, RLENGTH - 2)"</b>"substr($0, RSTART + RLENGTH);
@@ -72,18 +80,26 @@ function affPrec(fin){
 /\/!\\/ { gsub(/\/!\\/, "<b>⚠</b>"); }
 # Façon LDAP, une ligne commençant par l'indentation mais sans tirets est la continuité du tiret.
 niv && /^\t*[^-+*=•\t]/{
-	match($0, /^\t* */);
-	if(RLENGTH >= niv)
+	# Le départ doit être constitué d'au moins autant de tabulations que l'indentation structurelle.
+	# Tolérance à une tabulation utilisée comme premier niveau d'indentation visuelle.
+	# Le cas échéant les tabulations sont préservées telles quelles (on considère que c'est du code indenté qui y est collé), avec une indentvis donc ramenée à 0.
+	# À FAIRE?: signaler une erreur d'indentation, par exemple une tabulation supplémentaire alors que la micro-indentation de proximité était en espaces?
+	if(substr($0, 1, niv - 1) ~ /^\t*$/ && (substr($0, niv, indentvis = length(nivvis)) == nivvis || (nivvis ~ /^  / && substr($0, niv, 1) == "\t" && !(indentvis = 0))))
 	{
-		prec = prec"<br/>"substr($0, niv);
+		prec = prec"<br/>"substr($0, niv + indentvis);
 		next;
 	}
 }
-/^\t*[-+*=•] /{
-	match($0, /^\t*[^\t]/);
-	puce = substr($0, RLENGTH, 1);
-	prochniv = RLENGTH;
-	$0 = substr($0, RLENGTH + 2);
+/^\t*([-+*=•]|[1-9][0-9]*\.) /{
+	match($0, /^\t*/);
+	prochniv = RLENGTH + 1;
+	$0 = substr($0, prochniv);
+	match($0, " ");
+	puce = substr($0, 1, RSTART - 1);
+	nivvis = substr($0, 1, RSTART); # Niveau visuel: les espaces supplémentaires qui permettent d'aligner la suite avec l'après-puce.
+	gsub(/[^\t ]/, " ", nivvis); # Les puces se transposeront à partir de la ligne suivante en micro-indentation à espaces.
+	# À FAIRE: un prochniv adaptable, lorsque par exemple sous un "1. " (3 caractères) on n'indente que de "  " (2 caractères), pour coller à un alignement type "• ". En ce cas la première ligne sous la puce devrait avoir une tolérance en "2 ou 3" (voire 1?), mais les suivantes s'alignent sous cette dernière et pour elles tout espace en plus est de l'indentation graphique (à restituer).
+	$0 = substr($0, RSTART + 1);
 }
 /^=== /{
 	sub(/^=== /, "<h3>");
