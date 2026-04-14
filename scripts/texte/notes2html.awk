@@ -78,6 +78,7 @@ function affPrec(fin){
 	}
 }
 /\/!\\/ { gsub(/\/!\\/, "<b>⚠</b>"); }
+{ retravail(); }
 # Façon LDAP, une ligne commençant par l'indentation mais sans tirets est la continuité du tiret.
 niv && /^\t*[^-+*=•\t]/{
 	# Le départ doit être constitué d'au moins autant de tabulations que l'indentation structurelle.
@@ -119,7 +120,7 @@ niv && /^\t*[^-+*=•\t]/{
 { affPrec(); }
 /^$/{ ++lignevide; }
 /./ { lignevide = 0; }
-{
+function retravail() {
 	### Retravail ###
 	
 	# URL sèches:
@@ -156,7 +157,8 @@ niv && /^\t*[^-+*=•\t]/{
 			lien = "<a href=\""substr(lien, RSTART + 2)"\">"libelle"</a>";
 		$0 = substr($0, 1, p - 1)lien""substr($0, p + n);
 	}
-	
+}
+{
 	### Agrégation ###
 	
 	prec = prec$0;
