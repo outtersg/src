@@ -1,3 +1,6 @@
+# GUIDON: mon patois de prise de notes / listes de tâches
+# Gabarit Unifié pour l'Immortalisation Dépouillée et Organisée de Notes
+# (et si je m'étais appelé Mark ç'aurait sans doute été MARKDON, mais je ne suis pas Mark)
 BEGIN{
 	entete = 1;
 	for(i = 0; ++i < ARGC;)

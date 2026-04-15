@@ -1,3 +1,7 @@
+" GUIDON: mon patois de prise de notes / listes de tâches
+" Gabarit Unifié pour l'Immortalisation Dépouillée et Organisée de Notes
+" (et si je m'étais appelé Mark ç'aurait sans doute été MARKDON, mais je ne suis pas Mark)
+
 " ln -s ~/src/scripts/vim/Notes.vim ~/.vim/syntax/
 " /!\ Au préalable des règles pour les Notes.sql, Notes.sh
 " echo 'au BufRead,BufNewFile Notes* set syntax=Notes' >> ~/.vimrc
