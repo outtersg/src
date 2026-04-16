@@ -23,6 +23,7 @@ BEGIN{
 	puces["="] = "lieg";
 	puces["*"] = "liet";
 	puces["•"] = "";
+	puces["?"] = "liq";
 }
 function affPrec(fin){
 	if(!match($0, /./) && !fin)
@@ -83,7 +84,7 @@ function affPrec(fin){
 /\/!\\/ { gsub(/\/!\\/, "<b>⚠</b>"); }
 { retravail(); }
 # Façon LDAP, une ligne commençant par l'indentation mais sans tirets est la continuité du tiret.
-niv && /^\t*[^-+*=•\t]/{
+niv && /^\t*[^-+*=•?\t]/{
 	# Le départ doit être constitué d'au moins autant de tabulations que l'indentation structurelle.
 	# Tolérance à une tabulation utilisée comme premier niveau d'indentation visuelle.
 	# Le cas échéant les tabulations sont préservées telles quelles (on considère que c'est du code indenté qui y est collé), avec une indentvis donc ramenée à 0.
@@ -94,7 +95,7 @@ niv && /^\t*[^-+*=•\t]/{
 		next;
 	}
 }
-/^\t*([-+*=•]|[1-9][0-9]*\.) /{
+/^\t*([-+*=•?]|[1-9][0-9]*\.) /{
 	match($0, /^\t*/);
 	prochniv = RLENGTH + 1;
 	$0 = substr($0, prochniv);

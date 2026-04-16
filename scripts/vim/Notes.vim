@@ -10,7 +10,7 @@ if exists("b:current_syntax")
  finish
 endif
 
-syn match notesEnCours '^	*[=]\ze '
+syn match notesEnCours '^	*[=?]\ze '
 syn match notesTitre '^==.*'
 syn match notesAFaire '^	*[-]\ze '
 syn match notesTitre '^--.*'
@@ -49,14 +49,14 @@ hi def Gris term=NONE cterm=NONE ctermfg=DarkGrey gui=NONE
 " Transcription en syntaxe nmap: $?^<C-V><TAB>*[-+=*]<SPACE><CR>/<SPACE><CR>hr (suivi du nouvel état).
 function! Etat(etat)
 	normal! $
-	call search('^	*[-+=*•] ', 'b')
+	call search('^	*[-+=*•?] ', 'b')
 	call search(' ')
 	exec 'normal hr' . a:etat
 endfunction
 
 " Alias F comme Fini (prendre une tâche et la caler dans les Terminées, puis retour).
 
-:map F :let rech=@/<CR>$/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>:s/^\([*]\)\?/\1+/<CR>:s/^\([+*]\)./\1/<CR>d'd/^[+*]<CR>?^$<CR>:let @/=rech<CR>p'e
+:map F :let rech=@/<CR>$/^[^<C-V><TAB> ]<CR>mek$md?^[^<C-V><TAB> ]<CR>:s/^\([*]\)\?/\1+/<CR>:s/^\([+*?]\)./\1/<CR>d'd/^[+*]<CR>?^$<CR>:let @/=rech<CR>p'e
 :map - :call Etat("-")<CR>
 " À FAIRE: au lieu de requérir un --, se caler dans le - si on a déjà un - en début de ligne.
 " À FAIRE: -- pour ajouter une ligne -
@@ -70,6 +70,8 @@ endfunction
 :map ** *A []<ESC>"=strftime('%Y-%m-%d')<CR>P
 :map *** **a<SPACE>
 :map • :call Etat("•")<CR>
+:map ?? :call Etat("?")<CR>A []<ESC>"=strftime('%Y-%m-%d')<CR>P
+:map ??? ??a<SPACE>
 
 " Pour convertir une section en HTML, passer en visuel (v), sélectionner la section, et taper h
 " N.B.: en visuel, les : ajoutent automatiquement '<,'> donc on n'a plus qu'à ajouter la commande w vers un processus (h2o dans notre cas, qui doit être dans le chemin, cf. ../texte/h2o).
