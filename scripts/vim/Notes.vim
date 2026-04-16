@@ -21,7 +21,7 @@ syn match notesNum       '^	*\([a-zA-Z]\|[IVX0-9]\+\)[.]\ze '
 " À FAIRE: pas en erreur si déjà traité (+ ou *)
 syn match notesAlerte    '/!\\'
 syn match notesComm      '^#.*'
-syn match notesUrl       'https*://[^ ),;:]*'
+syn match notesUrl       'https*://\([^ ),;:]\+\|:[^ ]\)\+'
 " https://vi.stackexchange.com/a/22293 pour détecter sur une délimitation de mot autre que l'espace (qui était un peu facile: un espace jaune, ça ne se voyait pas trop).
 " dans la même veine, https://vi.stackexchange.com/a/29547 pourrait un jour servir.
 " https://stackoverflow.com/a/2462714/1346819

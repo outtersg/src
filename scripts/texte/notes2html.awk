@@ -128,7 +128,7 @@ function retravail() {
 	
 	# URL sèches:
 	# Expression de reconnaissance des URL: à synchroniser avec Notes.vim.
-	gsub(/https*:\/\/[^ ),;:]*/, "<a href=\"&\">&</a>");
+	gsub(/https*:\/\/([^ ),;:]+|:[^ ])+/, "<a href=\"&\">&</a>");
 	# URL adrél:
 	gsub(/[-_a-z0-9]{2,64}@[-_a-z0-9]{2,64}\.[-_a-z0-9]{2,10}/, "<a href=\"mailto:&\">&</a>");
 	# URL téléphone:
