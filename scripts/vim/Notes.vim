@@ -76,5 +76,10 @@ endfunction
 " Pour convertir une section en HTML, passer en visuel (v), sélectionner la section, et taper h
 " N.B.: en visuel, les : ajoutent automatiquement '<,'> donc on n'a plus qu'à ajouter la commande w vers un processus (h2o dans notre cas, qui doit être dans le chemin, cf. ../texte/h2o).
 :vmap h :w !h2o<CR><CR>
+" bh: Bloc vers Html (comme h, mais pas besoin de passer en mode visuel, il va chercher automatiquement les bornes délimitant l'autour du curseur):
+" https://www.reddit.com/r/vim/comments/nl0hgn/comment/gzgj9ys/
+" À FAIRE: restaurer le curseur.
+" À FAIRE: sur le dernier bloc, éviter le disgracieux message 'recherche poursuivie en haut de fichier'
+:noremap bh :?^---\\|^===?/./;/^---\\|^===/?.?w! !h2o<CR><CR>
 
 " À FAIRE: ancres [#hips] auxquelles on peut référer via cf. #hips ou après #hips
