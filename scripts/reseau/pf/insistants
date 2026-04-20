@@ -5,6 +5,8 @@ poubelle()
 	pfctl -t pourriture -T add "$@"
 }
 
+derniers()
+{
 njours=11
 j=`date +%s`
 jn=`date -r $((j-njours*24*3600)) +%Y-%m-%d`
@@ -20,8 +22,19 @@ sed -e "1,/^$jn/d" < /home/jails/mel/usr/local/var/spool/exim/log/mainlog \
 do
 	poubelle "$ip" 2>&1 | grep -q "1/1 addresses" && echo "=== $ip: $n ===" # On n'affiche pas si le gugusse était déjà poubellisé d'une précédente passe (auquel cas "0/1 addresses added").
 done
+}
 
 # Pour ensuite repérer les blocs d'IP:
-# pfctl -t pourriture -T show | awk -F . 'function si(){if(n>4)print"=== "n" ===\n"bloc}{pici=$1"."$2"."$3;if(pici!=pavant){si();n=0;bloc=$0;pavant=pici}else{bloc=bloc"\n"$0;++n}}END{si()}'
+blocs()
+{
+	local n=4
+	case "$1" in ""|*[^0-9]*) true ;; *) n="$1" ; shift ;; esac
+	pfctl -t pourriture -T show | awk -F . 'function si(){if(n>'$n')print"=== "n" ===\n"bloc}{pici=$1"."$2"."$3;if(pici!=pavant){si();n=0;bloc=$0;pavant=pici}else{bloc=bloc"\n"$0;++n}}END{si()}'
 # Une fois ajouté tout un sous-réseau, on peut retirer les IP individuelles en enchaînant la commande ci-dessus avec:
 # | grep <lepréfixedusous-réseau> | grep -v / | while read ip ; do pfctl -t pourriture -T delete $ip ; done
+}
+
+case "$1" in
+	?*) blocs "$@" ;;
+	"") derniers ;;
+esac
