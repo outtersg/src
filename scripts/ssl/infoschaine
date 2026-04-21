@@ -4,10 +4,10 @@ fais()
 {
 	awk \
 '
-/^-----BEGIN.*CERTIFICATE-----$/{ dedans = 1; accu = ""; }
+/^-----BEGIN.*CERTIFICATE-----?$/{ dedans = 1; accu = ""; }
 dedans{ accu = accu$0"\n"; }
 !dedans{ print; }
-/^-----END.*CERTIFICATE-----$/{
+/^-----END.*CERTIFICATE-----?$/{
 	s = "openssl x509 -subject -issuer -enddate";
 	print accu|s;
 	close(s);
