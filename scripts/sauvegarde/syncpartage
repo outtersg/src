@@ -77,4 +77,26 @@ case `uname` in
 		;;
 esac
 
+lockf_logiciel()
+{
+	local attente=
+	case "$1" in -t) shift ; attente="$1" ; shift ;; esac
+	local verrou="$1" ; shift
+	while [ -f "$verrou" ]
+	do
+		case "$attente" in
+			0) echo "lockf: $verrou: already locked" >&2 ; return 75 ;; # Erreur calquée sur celle d'un FreeBSD 15.
+			"") true ;;
+			*[^0-9]*) echo "# Le temps d'attente du verrou doit être un nombre ($attente)." >&2 ; return 1 ;;
+			[0-9]*) attente=$((attente - 1)) ;;
+		esac
+		sleep 1
+	done
+	menage_lockf_logiciel() { rm -f "$verrou" ; }
+	trap menage_lockf_logiciel EXIT
+	touch "$verrou"
+	"$@"
+	menage_lockf_logiciel
+}
+
 tourner "$@"
