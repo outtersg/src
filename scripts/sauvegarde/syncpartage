@@ -1,6 +1,13 @@
 #!/bin/sh
 
+DOSSIER_VERROU="$HOME/tmp"
+[ -d "$DOSSIER_VERROU" ] || DOSSIER_VERROU="$HOME/Downloads"
+UNISON="`command -v unison`"
+case "$UNISON" in "") UNISON="$HOME/local/bin/unison" ;; esac
+
 GOGO_SCRIPTS="$HOME/src/projets/gogo"
+[ -e "$GOGO_SCRIPTS" ] || GOGO_SCRIPTS="/Users/gui/src/projets/gogo"
+LANG=fr_FR.UTF-8
 . "$GOGO_SCRIPTS/gogo.sh" # gogo >= 0.8
 
 tourner()
@@ -64,7 +71,7 @@ faire()
 {
 	local dest="$2"
 	echo "Je fais $1"
-	lockf -t 10 $HOME/tmp/partage.verrou $HOME/local/bin/unison -batch -backups -maxbackups 3 $source $dest
+	lockf -t 10 "$DOSSIER_VERROU/partage.verrou" "$UNISON" -batch -backups -maxbackups 3 $source $dest
 }
 
 case `uname` in
