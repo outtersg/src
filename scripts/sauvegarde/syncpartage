@@ -75,6 +75,10 @@ case `uname` in
 			flock "$@"
 		}
 		;;
+	Darwin)
+		# À FAIRE: si on a un truc compilé dans les parages, l'utiliser.
+		lockf() { lockf_logiciel "$@" ; }
+		;;
 esac
 
 lockf_logiciel()
