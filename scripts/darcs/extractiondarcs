@@ -16,6 +16,9 @@ Delibere() { local s2 ; while [ -h "$s" ] ; do s2="`readlink "$s"`" ; case "$s2"
 # Utilisation: extractiondarcs <destination> <fichier>*
 # N.B.: si un des fichiers à reprendre a eu un autre nom, il faut le spécifier sous son ancien et son nouveau nom.
 
+# On peut ensuite supprimer du silo d'origine toute trace du fichier:
+# DARCS_ALWAYS_COLOR=0 darcs log scripts/sauvegarde/lnertotal.c scripts/sauvegarde/crc32.c | grep '^patch ' | while read p id ; do darcs obli -a -h $id ; done
+
 T=/tmp/temp.$$
 mkdir $T
 
