@@ -65,7 +65,14 @@ dedans==2{ dedans = 0; }
 
 	( cd "$ici/$descente" && darcs log "$@" ) | grep -n '^patch ' | sort -nr | while read blabla id
 do
+		IFS=,
+		id0=
+		for id in $id
+		do
+			unset IFS
+			case "$id0" in "") id0="$id" ;; esac
 		echo a | darcs push -h "$id" $T/src
+		done
 	mv $T/src/_darcs $T/src_darcs
 	mv $T/dst/_darcs $T/dst_darcs
 	rm -R $T/dst
@@ -74,7 +81,7 @@ do
 	mv $T/dst_darcs $T/dst/_darcs
 	mv $T/src_darcs $T/src/_darcs
 		( cd $T/dst && for f in "$@" ; do [ ! -e "$f" ] || darcs add -r "$f" ; done ) || true
-		( cd $T/src && dcp --last=1 ) | ( cd $T/dst && darcs record -a --pipe )
+		( cd $T/src && dcp -h "$id0" ) | ( cd $T/dst && darcs record -a --pipe )
 done
 
 rm -Rf "$dest" # Euh est-ce une bonne idée? Ne devrait-on pas demander un -f pour ce faire?
