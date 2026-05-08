@@ -5,6 +5,7 @@ set -x
 # À FAIRE: gestion des dépendances entre incréments.
 
 # À FAIRE: gérer les renommages de fichiers, voire leur déplacement s'ils étaient initialement dans un dossier au-dessus (donc non pris en compte par le tar). Peut-être par introduction d'une phase manuelle qui permettrait de prendre la main sur le processus automatique, par exemple en darcs addant le fichier (non vu par l'auto) dans son nommage originale, puis court-circuitant le darcs add auto du fichier dans son nommage définitif par un darcs mv manuel.
+#   Note 2026: l'ajout de --look-for-moves mitige-t-il?
 
 # À FAIRE: de temps en temps ça plante, une modif n'est pas appliquée et donc l'enregistrement plante en "No changes!". En relançant ça passe (un silo de 180 rustines a planté à deux endroits différents avant de pouvoir se dérouler une troisième fois jusqu'au bout).
 
@@ -85,7 +86,7 @@ do
 			*)
 		( cd $T/dst && for f in "$@" ; do [ ! -e "$f" ] || darcs add -r "$f" ; done ) || true
 		esac
-		( cd $T/src && dcp -h "$id0" ) | ( cd $T/dst && darcs record -a --pipe )
+		( cd $T/src && dcp -h "$id0" ) | ( cd $T/dst && darcs record --look-for-moves -a --pipe )
 done
 
 rm -Rf "$dest" # Euh est-ce une bonne idée? Ne devrait-on pas demander un -f pour ce faire?
