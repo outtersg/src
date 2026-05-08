@@ -6,6 +6,8 @@ set -x
 
 # À FAIRE: gérer les renommages de fichiers, voire leur déplacement s'ils étaient initialement dans un dossier au-dessus (donc non pris en compte par le tar). Peut-être par introduction d'une phase manuelle qui permettrait de prendre la main sur le processus automatique, par exemple en darcs addant le fichier (non vu par l'auto) dans son nommage originale, puis court-circuitant le darcs add auto du fichier dans son nommage définitif par un darcs mv manuel.
 
+# À FAIRE: de temps en temps ça plante, une modif n'est pas appliquée et donc l'enregistrement plante en "No changes!". En relançant ça passe (un silo de 180 rustines a planté à deux endroits différents avant de pouvoir se dérouler une troisième fois jusqu'au bout).
+
 # Utilisation: extractiondarcs <destination> <fichier>*
 # N.B.: si un des fichiers à reprendre a eu un autre nom, il faut le spécifier sous son ancien et son nouveau nom.
 
