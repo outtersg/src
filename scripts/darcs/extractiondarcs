@@ -19,6 +19,8 @@ Delibere() { local s2 ; while [ -h "$s" ] ; do s2="`readlink "$s"`" ; case "$s2"
 # On peut ensuite supprimer du silo d'origine toute trace du fichier:
 # DARCS_ALWAYS_COLOR=0 darcs log scripts/sauvegarde/lnertotal.c scripts/sauvegarde/crc32.c | grep '^patch ' | while read p id ; do darcs obli -a -h $id ; done
 
+# À FAIRE: déjà vu: une rustine de 06:06:57 poussée après celle de 06:07:17 échoue à passer, cards darcs whatsnew ne voit rien; dès qu'on touch le fichier en fait modifié, oh miracle il voit la modif.
+
 T=/tmp/temp.$$
 mkdir $T
 
