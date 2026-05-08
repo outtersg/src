@@ -22,6 +22,7 @@ Delibere() { local s2 ; while [ -h "$s" ] ; do s2="`readlink "$s"`" ; case "$s2"
 T=/tmp/temp.$$
 mkdir $T
 
+	case "$1" in -i) interactif=1 ; shift ;; esac
 dest="$1"
 shift
 
@@ -71,7 +72,40 @@ dedans==2{ dedans = 0; }
 	| php -r 'echo trim(html_entity_decode(stream_get_contents(STDIN), ENT_QUOTES|ENT_HTML5));'
 }
 
-	( cd "$ici/$descente" && DARCS_ALWAYS_COLOR=0 darcs log "$@" ) | grep -n '^patch ' | sort -nr | while read blabla id
+pretravail()
+{
+	case "$interactif" in
+		1)
+			. "$SCRIPTS/shrc"
+			( cd "$ici/$descente" && histo_darcs +"p %d %9h %t" --reverse "$@" ) > $T/boulot
+			case "$EDITOR" in "") EDITOR=vi ;; esac
+			$EDITOR $T/boulot
+			cp $T/boulot /tmp/boulot.extractiondarcs
+			;;
+	esac
+}
+
+travail()
+{
+	case "$interactif" in
+		1)
+			awk < $T/boulot \
+			'
+				function aff() { if(l) print l; }
+				/^p / { aff(); $1 = ""; l = $0; next; }
+				/^f / { ajout = $3; $0 = l; $2 = $2","ajout; l = $0; next; }
+				{ print NR": ligne non reconnue: "$0 > "/dev/stderr"; exit 1; }
+				END { aff(); }
+			'
+			;;
+		*)
+			( cd "$ici/$descente" && DARCS_ALWAYS_COLOR=0 darcs log "$@" ) | grep -n '^patch ' | sort -nr
+			;;
+	esac
+}
+
+	pretravail
+	travail | while read blabla id blibli
 do
 		IFS=,
 		id0=
