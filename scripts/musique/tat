@@ -9,7 +9,7 @@ tourner()
 	# Analyse des paramètres.
 	
 	case "$1" in
-		*.mp3|*.wav) son="$1" ; m="`echo "$1" | sed -e 's#\....$##'`" ; shift ;;
+		*.mp3|*.opus|*.wav) son="$1" ; m="`echo "$1" | sed -E -e 's#\.[^.]{3,4}$##'`" ; shift ;;
 	esac
 	
 	case "$m" in "")
@@ -63,6 +63,10 @@ faire()
 {
 	[ -f "$son" ] ||
 	sox -t oss /dev/dsp1 $son || true
+	case "$son" in
+		*.mp3|*.wav) true ;;
+		*) ffmpeg -i "$son" "$son.wav" ; son="$son.wav" ;;
+	esac
 	whisper-cli -m ~/local/share/whisper/models/ggml-small.bin --language French --prompt "$contexte" "$@" $son 2>&1 | aff
 	echo "($son, $m.txt)"
 case "$WAYLAND_DISPLAY" in ?*)
