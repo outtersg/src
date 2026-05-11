@@ -3,6 +3,8 @@
 
 while true
 do
+	# On commence par faire le ménage de ceux restés orphelins d'une précédente exécution coupée.
+	ssh mb 'LC_ALL=C ps axwwo pid,ppid,command | awk '\''/sleep 60/&&$2==1{print$1}'\'' | xargs kill'
 	ssh mb -R 9898:localhost:22 -o ServerAliveInterval=79 \
 		'while true ; do date ; sleep 60 ; done'
 	sleep 60
