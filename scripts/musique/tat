@@ -8,6 +8,8 @@ tourner()
 {
 	# Analyse des paramètres.
 	
+	while [ $# -gt 0 ]
+	do
 	case "$1" in
 			*.flac|*.mp3|*.opus|*.wav)
 				son="$1"
@@ -16,6 +18,7 @@ tourner()
 			*) break ;;
 	esac
 		shift
+	done
 	
 	case "$m" in "")
 m=/tmp/tat.`date +%Y%m%d.%H%M%S`
