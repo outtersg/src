@@ -9,8 +9,13 @@ tourner()
 	# Analyse des paramètres.
 	
 	case "$1" in
-		*.flac|*.mp3|*.opus|*.wav) son="$1" ; m="`echo "$1" | sed -E -e 's#\.[^.]{3,4}$##'`" ; shift ;;
+			*.flac|*.mp3|*.opus|*.wav)
+				son="$1"
+				m="`echo "$1" | sed -E -e 's#\.[^.]{3,4}$##'`"
+				;;
+			*) break ;;
 	esac
+		shift
 	
 	case "$m" in "")
 m=/tmp/tat.`date +%Y%m%d.%H%M%S`
