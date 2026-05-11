@@ -11,6 +11,7 @@ tourner()
 	while [ $# -gt 0 ]
 	do
 	case "$1" in
+			-c) contexte="$2" ; shift ;;
 			*.flac|*.mp3|*.opus|*.wav)
 				son="$1"
 				m="`echo "$1" | sed -E -e 's#\.[^.]{3,4}$##'`"
