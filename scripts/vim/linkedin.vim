@@ -6,7 +6,7 @@ function! OffreLinkedIn()
 	let id = substitute(substitute(li, '.*http[^ ]*[/=]', '', ''), '[^0-9].*', '', '')
 	let rech = id
 	let suffixe = ''
-	while len(id) > 3
+	while len(id) >= 3
 		let chiffre = id % 10 - 1
 		let id = id / 10
 		if chiffre >= 0
