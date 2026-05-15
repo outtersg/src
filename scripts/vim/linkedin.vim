@@ -17,9 +17,10 @@ function! OffreLinkedIn()
 	0
 	call search('^. LinkedIn')
 	call search(rech)
+	let li = substitute(li, "\n", "\n\t  ? ", 'g')
 	" https://vi.stackexchange.com/questions/12445/how-can-i-append-text-to-the-current-line
-	call append(line('.') - 1, "\t".li)
-	exe ':normal! O  '
+	call append(line('.') - 1, split("\t".li, "\n"))
+	exe ':normal! O   '
 endfunction
 
 :map <C-B> :call OffreLinkedIn()<CR>a
