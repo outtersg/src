@@ -37,12 +37,16 @@ var AttentisteUrl =
 			if(!localStorage.getItem('vu/'+urlId))
 				localStorage.setItem('vu/'+urlId, new Date().toISOString().substr(0, 10));
 			// On pousse vers le presse-papier une ligne de résumé de l'offre, au format de mes Notes:
+			var salaire = '';
+			document.querySelectorAll('.job-details-fit-level-preferences button').forEach(function(x) { x = x.innerText.trim(); if(x.match(/€/)) salaire = "\n"+x; });
 			navigator.clipboard.writeText
 			(
 				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name').innerText
 				+' '+bloc.querySelector('h1').innerText.replaceAll(/[\s-(]*(?:[HMFX](?:[-\/.][HMFX]){1,2})\)?/g, '')
 				+' https://www.linkedin.com/jobs/view/'+urlId
 				+' {'+d+'}'
+				+"\n"+bloc.querySelector('.job-details-jobs-unified-top-card__primary-description-container .tvm__text').innerText.replace(/,.*/, '') // La ville est dans le premier bloc de blabla.
+				+salaire
 			);
 			/* À FAIRE: indicateur montrant que le presse-papier a été modifié */
 			/* À FAIRE: utiliser le presse-papier secondaire (Maj-Insert)? */
