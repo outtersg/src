@@ -2,6 +2,7 @@
 // @name      Embellificateur de LinkedIn
 // @namespace http://outters.eu/
 // @include   https://www.linkedin.com/jobs/*
+// @include   https://www.linkedin.com/comm/jobs/*
 // @grant     none
 // ==/UserScript==
 
