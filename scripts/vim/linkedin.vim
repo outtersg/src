@@ -15,7 +15,11 @@ function! OffreLinkedIn()
 		let suffixe = suffixe.'[0-9]'
 	endwhile
 	0
+	if li =~ "linkedin"
 	call search('^. LinkedIn')
+	elseif li =~ "hellowork"
+		call search('^. HelloWork')
+	endif
 	call search('[/=]\('.rech.'\)\|^$\|^[-=+]')
 	let li = substitute(li, "\n", "\n\t  ? ", 'g')
 	" https://vi.stackexchange.com/questions/12445/how-can-i-append-text-to-the-current-line
