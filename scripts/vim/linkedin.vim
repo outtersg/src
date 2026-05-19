@@ -23,5 +23,5 @@ function! OffreLinkedIn()
 	exe ':normal! O   '
 endfunction
 
-:map <C-B> :call OffreLinkedIn()<CR>a
-:imap <C-B> <ESC>:call OffreLinkedIn()<CR>a
+:map <C-C><C-B> :call OffreLinkedIn()<CR>a
+:imap <C-C><C-B> <ESC>:call OffreLinkedIn()<CR>a
