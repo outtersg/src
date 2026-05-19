@@ -22,6 +22,7 @@ function! OffreLinkedIn()
 	endif
 	call search('[/=]\('.rech.'\)\|^$\|^[-=+]')
 	let li = substitute(li, "\n", "\n\t  ? ", 'g')
+	let li = substitute(li, '\v[?] (Verrières|Massy|Antony|Sceaux|Bagneux|Montrouge|Clamart|Arcueil|Vanves|Malakoff|Issy|Paris|Vélizy|Meudon|Versailles)', '+ \1', '')
 	" https://vi.stackexchange.com/questions/12445/how-can-i-append-text-to-the-current-line
 	call append(line('.') - 1, split("\t".li, "\n"))
 	exe ':normal! O   '
