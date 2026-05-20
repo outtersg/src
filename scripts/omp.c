@@ -42,6 +42,9 @@
  *   cc -o ~/bin/omp omp.c
  * Avec un clang trop récent (14), en plus du -I système, on doit désactiver quelques alertes que les vieilles inclusions système enfreignent:
  *   clang -Wno-nullability-completeness -Wno-expansion-to-defined -I`xcrun --show-sdk-path`/usr/include -o ~/bin/omp omp.c
+ * Notons que la variable magique SDKROOT fait tout ça à la fois (est-ce une façon d'aller chercher les infos codées en dur par Apple?):
+ *   export SDKROOT=`xcrun --show-sdk-path`
+ *   clang -o ~/bin/omp omp.c # Et même avec l'option -v, pas trace d'invocation du clang système.
  * Les macros suivantes à définir pour éviter de se taper des erreurs dans <sys/signal.h>:
  */
 #define _DARWIN_C_SOURCE
