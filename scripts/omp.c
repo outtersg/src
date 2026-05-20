@@ -36,6 +36,18 @@
 #ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE
 #endif
+#ifdef __APPLE__
+/*
+ * Sur un vieux Mac, utiliser le compilo système:
+ *   cc -o ~/bin/omp omp.c
+ * Avec un clang trop récent (14), en plus du -I système, on doit désactiver quelques alertes que les vieilles inclusions système enfreignent:
+ *   clang -Wno-nullability-completeness -Wno-expansion-to-defined -I`xcrun --show-sdk-path`/usr/include -o ~/bin/omp omp.c
+ * Les macros suivantes à définir pour éviter de se taper des erreurs dans <sys/signal.h>:
+ */
+#define _DARWIN_C_SOURCE
+#undef _ANSI_SOURCE
+#define TARGET_OS_EMBEDDED 0
+#endif
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
