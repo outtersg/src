@@ -19,6 +19,46 @@ var AttentisteUrl =
 			console.log('Embellificateur: attente ID (nouvelle URL: '+document.URL+')');
 		}
 	},
+	niemeBlocApres: function(depart, filtre, n)
+	{
+		var suivant, candidats;
+		if(typeof(n) == 'undefined')
+			n = 1;
+		while(n > 0 && depart)
+		{
+			if((suivant = depart.nextElementSibling))
+			{
+				if(suivant.matches(filtre))
+					if(!--n)
+						return suivant;
+				if((candidats = suivant.querySelectorAll(filtre)).length >= n)
+					return candidats[n - 1];
+				n -= candidats.length;
+				depart = suivant;
+			}
+			else
+				depart = depart.parentElement;
+		}
+	},
+	selBoutonsRonds: function(depart)
+	{
+		/* Peut-être suivre https://stackoverflow.com/questions/2952667/find-all-css-rules-that-apply-to-an-element?
+		 * Bon en tout cas cette technique bourrin peut marcher. */
+		var liste, i, faits = {}, res = '';
+		while(depart && (liste = depart.querySelectorAll('a > span')).length < 5) // On cherche un bloc contenant au moins 5 boutons: inutile de remonter trop haut, mais dès qu'on a un bel échantillon c'est qu'on doit avoir le cartouche résumé de l'offre.
+			depart = depart.parentElement;
+		for(i = liste.length; --i >= 0;)
+			if(!faits[liste[i].getAttribute('class')])
+			{
+				faits[liste[i].getAttribute('class')] = true;
+				if(window.getComputedStyle(liste[i])['border-radius'].match(/[1-9][0-9]*px/))
+				{
+					if(res) res += ',';
+					res += 'a > span[class="'+liste[i].getAttribute('class')+'"]';
+				}
+			}
+		AttentisteUrl.selBoutonsRonds = res;
+	},
 	attenteH2: function()
 	{
 		var urlId, bloc = document.querySelector('[data-view-name="job-detail-page"], .jobs-details');
