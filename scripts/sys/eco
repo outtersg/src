@@ -28,6 +28,16 @@ analyserParametres()
 	true
 }
 
+butor()
+{
+	killall -STOP firefox || true
+}
+
+rotub()
+{
+	killall -CONT firefox || true
+}
+
 eco()
 {
 	sudo ifconfig wlan0 down
@@ -62,11 +72,13 @@ demenage()
 {
 	narcedruesimon
 	oce
+	rotub
 }
 
 emmenage()
 {
 	trap demenage EXIT INT TERM
+	butor
 	eco
 	nomiseurdecran
 }
