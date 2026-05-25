@@ -51,6 +51,7 @@ oce()
 	backlight 40
 	# Pas de restauration du profil processeur: on est bien en mode éco.
 	# À FAIRE: carrément éteindre l'écran, et la carte réseau si on a coupé le réseau.
+	# À FAIRE: ( sleep 20 && sudo service avahi-daemon restart ) &
 }
 
 nomiseurdecran()
