@@ -61,13 +61,13 @@ var AttentisteUrl =
 	},
 	attenteH2: function()
 	{
-		var urlId, bloc = document.querySelector('[data-view-name="job-detail-page"], .jobs-details');
+		var premier, urlId, bloc = document.querySelector('[data-view-name="job-detail-page"], .jobs-details, [data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.SemanticJobDetails"]');
 		if
 		(
 			bloc
-			&& bloc.querySelector('h2')
-			&& (urlId = bloc.querySelector('a[href^="/jobs/view/"], a[href*="JobId="]'))
-			&& (urlId = urlId.href.match(/(?:\/jobs\/view\/|JobId=)([0-9]{8,})/))
+			//&& bloc.querySelector('h2') // Plus possible depuis la minification CSS du 23 mai 2026.
+			&& (premier = bloc.querySelector('a[href*="/jobs/view/"], a[href*="JobId="]'))
+			&& (urlId = premier.href.match(/(?:\/jobs\/view\/|JobId=)([0-9]{8,})/))
 			&& (urlId = urlId[1]) != AttentisteUrl.attenteH2.dernierId
 		)
 		{
@@ -79,14 +79,24 @@ var AttentisteUrl =
 				localStorage.setItem('vu/'+urlId, new Date().toISOString().substr(0, 10));
 			// On pousse vers le presse-papier une ligne de résumé de l'offre, au format de mes Notes:
 			var salaire = '';
-			document.querySelectorAll('.job-details-fit-level-preferences button').forEach(function(x) { x = x.innerText.trim(); if(x.match(/€/)) salaire = "\n"+x; });
+			if(bloc.querySelector('h1')) premier = bloc.querySelector('h1');
+			var ville = bloc.querySelector('.job-details-jobs-unified-top-card__primary-description-container .tvm__text');
+			if(!ville)
+				ville = AttentisteUrl.niemeBlocApres(premier, 'p').querySelector('span');
+			var boutonsRonds = document.querySelectorAll('.job-details-fit-level-preferences button');
+			if(!boutonsRonds.length)
+			{
+				if(typeof(AttentisteUrl.selBoutonsRonds) == 'function') AttentisteUrl.selBoutonsRonds(premier);
+				boutonsRonds = document.querySelectorAll(AttentisteUrl.selBoutonsRonds);
+			}
+			boutonsRonds.forEach(function(x) { x = x.innerText.trim(); if(x.match(/€/)) salaire = "\n"+x; });
 			navigator.clipboard.writeText
 			(
-				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name').innerText
-				+' '+bloc.querySelector('h1').innerText.replaceAll(/[\s-(]*(?:[HMFX](?:[-\/.][HMFX]){1,2})\)?/g, '')
+				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name, a[href*="/company/"]').innerText
+				+' '+premier.innerText.replaceAll(/[\s-(]*(?:[HMFX](?:[-\/.][HMFX]){1,2})\)?/g, '')
 				+' https://www.linkedin.com/jobs/view/'+urlId
 				+' {'+d+'}'
-				+"\n"+bloc.querySelector('.job-details-jobs-unified-top-card__primary-description-container .tvm__text').innerText.replace(/,.*/, '') // La ville est dans le premier bloc de blabla.
+				+"\n"+ville.innerText.replace(/,.*/, '') // La ville est dans le premier bloc de blabla.
 				+salaire
 			);
 			/* À FAIRE: indicateur montrant que le presse-papier a été modifié */
