@@ -13,7 +13,7 @@ if(!chdir(dirname(__FILE__))) throw new Exception('Zut, impossible d\'afficher l
 
 $fs = glob('*');
 sort($fs);
-$spéciaux = array('.', 'index.php');
+$spéciaux = array('.', '..', 'index.php');
 foreach($fs as $f)
 	if(!in_array($f, $spéciaux) && !preg_match('/.mini.jpg$/', $f))
 	{
