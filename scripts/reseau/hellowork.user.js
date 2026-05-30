@@ -20,6 +20,12 @@ var copierHelloWork = function()
 		+salaire
 	;
 	navigator.clipboard.writeText(resume);
+	
+	// Un petit cartouche pour indiquer la bonne prise en compte.
+	resume = resume.replace("\n", '<br/>'); // À FAIRE: < & >
+	document.body.insertAdjacentHTML('beforeend', '<div id="copie" style="position: absolute; top: 5px; right: 5px; border: 1px solid #003f00; padding: 10px; background: #bfffbf;"><div>'+resume+'</div><div>(copié)</div></div>');
+	var copie = document.getElementById('copie');
+	window.setTimeout(function() { copie.remove(); }, 5000);
 };
 
 (
