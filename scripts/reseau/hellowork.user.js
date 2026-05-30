@@ -11,7 +11,7 @@ var copierHelloWork = function()
 	var titre = document.querySelector('h1');
 	var poste = titre.querySelector('[data-cy="jobTitle"]').innerText;
 	var boite = titre.querySelector('a[href*="/entreprises/"]').innerText;
-	var ville = document.querySelector('.tw-tag-secondary-s').innerText; // La ville est le premier cartouche d'infos.
+	var ville = document.querySelector('ul.flex-wrap li').innerText; // La ville est le premier cartouche d'infos.
 	var salaire = document.querySelector('[data-input-checker-input-value="#salaryModalInformation"] > span').innerText;
 	poste = poste.replaceAll(/[\s-(]*(?:[HMFX](?:[-\/.][HMFX]){1,2})\)?/g, '');
 	var resume =
