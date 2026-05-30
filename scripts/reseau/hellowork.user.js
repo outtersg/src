@@ -15,7 +15,7 @@ var copierHelloWork = function()
 	var salaire = document.querySelector('[data-input-checker-input-value="#salaryModalInformation"] > span').innerText;
 	poste = poste.replaceAll(/[\s-(]*(?:[HMFX](?:[-\/.][HMFX]){1,2})\)?/g, '');
 	var resume =
-		'- ['+boite+'] '+poste+' '+document.URL+' {'+d+'}'+"\n"
+		'- ['+boite+'] '+poste+' '+document.URL.replace(/[?].*/, '')+' {'+d+'}'+"\n"
 		+ville+"\n"
 		+salaire
 	;
