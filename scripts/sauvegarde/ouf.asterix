@@ -71,8 +71,10 @@ cat <<TERMINE
 - /.Trash/
 - /.android
 - /.cabal/
+- /.cabal-*/
 - /.cargo/registry/
 - /.darcs/cache/
+- /.ghcup
 - /.gradle
 - /.spring/
 - /.thumbnails/
@@ -80,6 +82,7 @@ cat <<TERMINE
 - /Documents/Partagés/
 - /Downloads/
 - /Library/Android
+- /Library/Application Support/Google/Android File Transfer/*.app
 - /Library/Application Support/CrashReporter/
 - /Library/Application Support/Freeciv/
 - /Library/Application Support/Firefox/
@@ -89,6 +92,8 @@ cat <<TERMINE
 - /Library/Application Support/Freeware Update
 - /Library/Caches/
 - /Library/Containers/com.apple.mail/Data/Library/Mail Downloads/
+- /Library/Containers/com.apple.appstore/Data/Library/Caches
+- /Library/Developer/CoreSimulator
 - /Library/Logs/
 - /Library/Mail/Envelope Index
 - /Library/Mail/EWS-guillout@mail.bt0d0000.w2k.bouyguestelecom.fr/
