@@ -125,6 +125,10 @@ cat <<TERMINE
 # MySQL binaire (donc complète chaque jour: 100 Mo), utilisée seulement par Roundcube.
 - /home/jails/bdd/usr/home/bdd/var/db/mysql
 - /home/jails/mel/usr/home/mel/var/mail/*/*/.Trash
+# 1 Go de "PHP Deprecated:  Non-static method PEAR::isError() should not be called statically"
+- /home/jails/web/usr/home/web/sites/*/logs
+# 100 Mo / nuit
+#- /home/jails/web/usr/monlocal/_nginx*/logs
 - /home/jails/*/usr/home/*/sauvegardes
 # Pijul crée ses pristine comme un méga fichier virtuel (taille visible: 4 To).
 - **/.pijul/pristine
