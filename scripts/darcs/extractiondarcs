@@ -19,8 +19,6 @@ Delibere() { local s2 ; while [ -h "$s" ] ; do s2="`readlink "$s"`" ; case "$s2"
 # On peut ensuite supprimer du silo d'origine toute trace du fichier:
 # DARCS_ALWAYS_COLOR=0 darcs log scripts/sauvegarde/lnertotal.c scripts/sauvegarde/crc32.c | grep '^patch ' | while read p id ; do darcs obli -a -h $id ; done
 
-# À FAIRE: déjà vu: une rustine de 06:06:57 poussée après celle de 06:07:17 échoue à passer, cards darcs whatsnew ne voit rien; dès qu'on touch le fichier en fait modifié, oh miracle il voit la modif.
-
 T=/tmp/temp.$$
 mkdir $T
 
@@ -106,6 +104,9 @@ travail()
 	esac
 }
 
+dadd() { darcs add --ignore-times -r "$@" ; }
+drec() { darcs record --ignore-times --look-for-moves -a "$@" ; }
+
 	pretravail
 	travail | while read blabla id blibli
 do
@@ -125,11 +126,11 @@ do
 	mv $T/dst_darcs $T/dst/_darcs
 	mv $T/src_darcs $T/src/_darcs
 		case "$*" in
-			"") ( cd $T/dst && darcs add -r . ) || true ;;
+			"") ( cd $T/dst && dadd . ) || true ;;
 			*)
-		( cd $T/dst && for f in "$@" ; do [ ! -e "$f" ] || darcs add -r "$f" ; done ) || true
+		( cd $T/dst && for f in "$@" ; do [ ! -e "$f" ] || dadd "$f" ; done ) || true
 		esac
-		( cd $T/src && dcp -h "$id0" ) | ( cd $T/dst && darcs record --look-for-moves -a --pipe )
+		( cd $T/src && dcp -h "$id0" ) | ( cd $T/dst && drec --pipe )
 done
 
 rm -Rf "$dest" # Euh est-ce une bonne idée? Ne devrait-on pas demander un -f pour ce faire?
