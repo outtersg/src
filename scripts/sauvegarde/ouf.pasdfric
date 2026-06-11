@@ -54,6 +54,9 @@ shift
 - /.cache/
 - /.local/state/cabal/store
 - /.config/chromium/**/CacheStorage/
+- /go/pkg/mod/
+- /.mozilla/firefox/*/storage/default/https+++outlook.live.com/
+- /.vcpkg/root/
 - /Downloads/
 - /Téléchargements/
 - /mp3/-[Classement]-
