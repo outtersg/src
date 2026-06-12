@@ -11,13 +11,15 @@ error_reporting(-1);
 
 if(!chdir(dirname(__FILE__))) throw new Exception('Zut, impossible d\'afficher le contenu du dossier');
 
+$imagettes = 1;
+
 $fs = glob('*');
 sort($fs);
 $spéciaux = array('.', '..', 'index.php');
 foreach($fs as $f)
 	if(!in_array($f, $spéciaux) && !preg_match('/.mini.jpg$/', $f))
 	{
-		if(($mini = preg_replace('/\.(jpg)$/', '.mini.jpg', $f)) == $f)
+		if(!$imagettes || ($mini = preg_replace('/\.(jpg)$/', '.mini.jpg', $f)) == $f)
 			$mini = null;
 		else
 			if(!file_exists($mini))
