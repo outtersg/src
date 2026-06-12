@@ -11,7 +11,20 @@ error_reporting(-1);
 
 if(!chdir(dirname(__FILE__))) throw new Exception('Zut, impossible d\'afficher le contenu du dossier');
 
-$imagettes = 1;
+$mode = 1; // 0: liste texte; 1: liste HTML.
+$imagettes = !$mode;
+
+function trans($ancien, $nouveau)
+{
+	for($premierDiff = 0; isset($ancien[$premierDiff]) && isset($nouveau[$premierDiff]) && $ancien[$premierDiff] === $nouveau[$premierDiff]; ++$premierDiff) {}
+	
+	for($pos = count($ancien); --$pos > $premierDiff - ($premierDiff >= count($nouveau) ? 1 : 0);)
+		echo '</li>'."\n".'</ul>'."\n";
+	if(isset($ancien[$premierDiff]) && isset($nouveau[$premierDiff]))
+		echo '</li>'."\n".'<li>';
+	while(++$pos < count($nouveau))
+		echo "\n".'<ul>'."\n".'<li>';
+}
 
 function vercmp($a, $b)
 {
@@ -34,6 +47,7 @@ $fs = glob('*');
 usort($fs, 'vercmp');
 //$fs = ['4.truc', '4.1.u', '5.k', '5.1.l', '5.2.m' ]; // Pour tester l'arborescence.
 $spéciaux = [ '.', '..', 'index.php', 'Makefile' ];
+$pinde = []; // Pile des INDEntations.
 foreach($fs as $f)
 	if(!in_array($f, $spéciaux) && !preg_match('/\.(mini\.jpg|ninja|sh)$/', $f))
 	{
@@ -50,8 +64,27 @@ foreach($fs as $f)
 				imagecopyresampled($i2, $i, 0, 0, 0, 0, $nl, $nh, $l, $h);
 				imagejpeg($i2, $mini);
 			}
-		echo '<a href="'.rawurlencode($f).'">'.($mini ? '<img src="'.rawurlencode($mini).'"/>' : '').htmlspecialchars($f).'</a><br/>'."\n";
+		if($mode)
+		{
+			$der = $pinde;
+			preg_match('/^([0-9]+\.)*/', $f, $pinde);
+			$pinde = explode('.', trim($pinde[0], '.'));
+			trans($der, $pinde);
+		}
+		$prés = stat($f); $prés = !$prés || !$prés['size'];
+		$dstyle = $fstyle = '';
+		if(preg_match('/\.(?:zip)$/', $f)) { $dstyle = '<strong>'; $fstyle = '</strong>'; }
+		if(!$prés) echo '<a href="'.rawurlencode($f).'">';
+		if($mini) echo '<img src="'.rawurlencode($mini).'"/>';
+		$f = htmlspecialchars($f);
+		$f = preg_replace('/^((?:[0-9]+\.)+)/', '<span style="font-size: 80%;">\1 </span>', $f);
+		echo $dstyle.$f.$fstyle;
+		if(!$prés) echo '</a>';
+		if(!$mode)
+			echo '<br/>'."\n";
 	}
+if($mode)
+	trans($pinde, []);
 
 ?>
 	</body>
