@@ -15,9 +15,9 @@ $imagettes = 1;
 
 $fs = glob('*');
 sort($fs);
-$spéciaux = array('.', '..', 'index.php');
+$spéciaux = [ '.', '..', 'index.php', 'Makefile' ];
 foreach($fs as $f)
-	if(!in_array($f, $spéciaux) && !preg_match('/.mini.jpg$/', $f))
+	if(!in_array($f, $spéciaux) && !preg_match('/\.(mini\.jpg|ninja|sh)$/', $f))
 	{
 		if(!$imagettes || ($mini = preg_replace('/\.(jpg)$/', '.mini.jpg', $f)) == $f)
 			$mini = null;
