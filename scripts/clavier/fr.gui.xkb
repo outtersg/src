@@ -13,6 +13,10 @@ xkb_symbols "moi" {
     name[Group1]= "FR OSS + moi";
     include "fr(oss)"
     key <AB08>  { [        semicolon,           period,             multiply,             0x1002022 ] }; // ; . × • au lieu de ⋅
+    // Conversation.
+    key <AC07>  { [                j,                J,                 "« "                        ] };
+    key <AC08>  { [                k,                K,                 "– ",                  " –" ] };
+    key <AC09>  { [                l,                L,                 " »"                        ] };
     // La virgule, pour taper du nombre sous tableur français. Normalement je ne me sers pas des opérateurs du pavé numérique, on verra à l'usage quelle touche garder.
     key <KPEN>  { [            comma                                                                ] };
     key <KPAD>  { [            comma                                                                ] };
