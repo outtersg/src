@@ -1,7 +1,8 @@
 #!/bin/sh
 
 URL="https://www.infoclimat.fr/climatologie-mensuelle/07147/@mois@/@an@/villacoublay-velizy.html"
-URL="https://www.infoclimat.fr/climatologie-mensuelle/ME113/@mois@/@an@/-mae-lycee-parc-de-vilgenis-massy.html"
+# N.B.: depuis mai 2026, infoclimat a installé une protection anti-robots. S'agissant d'une protection par IP, il faut préalablement à l'appel de ce script être allé via un navigateur sur le site consulter une page.
+URL="https://www.infoclimat.fr/climatologie-mensuelle/ME113/@mois@/@an@/-mae-lycee-parc-de-vilgenis-massy.html#!"
 
 recup()
 {
@@ -23,7 +24,14 @@ recup()
 		12) moisA=decembre ;;
 	esac
 	local url="`echo "$URL" | sed -e "s/@mois@/$moisA/g" -e "s/@an@/$an/g"`"
-	curl -s "$url" | awk '
+	# À FAIRE: ne pas utiliser le fichier s'il est antérieur à la dernière date demandée (ex.: on a récupéré le mois en cours le 9 juillet, on est maintenant le 14: le fichier du 9 juillet est incomplet).
+	if [ -f /tmp/$moisA-$an.html ]
+	then
+		cat /tmp/$moisA-$an.html
+	else
+		curl -s "$url" | tee /tmp/$moisA-$an.html
+	fi \
+	| awk '
 function n(){
 	sub(/^[^>]*>/, "");
 	sub(/<.*/, "");
