@@ -7,7 +7,9 @@
 
 marche()
 {
+	case $# in 0) # Si on nous appelle avec un --essaie-quand-même-d-accrocher-un-réseau, on laisse tourner le wpa_supplicant en tâche de fond.
 	sudo service wpa_supplicant stop wlan0
+	;; esac
 	sudo route delete default
 	sudo service dhclient start ue0
 }
@@ -20,7 +22,7 @@ arret()
 
 if ifconfig ue0 > /dev/null 2>&1
 then
-marche
+	marche "$@"
 else
 	arret
 fi
