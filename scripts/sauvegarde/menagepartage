@@ -1,0 +1,21 @@
+#!/bin/sh
+
+D="$HOME/partage"
+
+dude "$D"
+find "$D" -type f -path "*/.bak.*" -exec stat -f %i\ %N {} \; | while read i f
+do
+	find "$D" -inum "$i" -not -path "*.bak.*" | while read fref
+	do
+		echo "$fref <- $f"
+		rm "$f"
+		break
+	done
+done
+# On supprime les dossiers de sauvegarde vides.
+find "$D" -type d -path "*/.bak.*" | while read d
+do
+	find "$d" -type f | grep -q . && continue
+	echo "Vide: $d"
+	rm -R "$d"
+done
