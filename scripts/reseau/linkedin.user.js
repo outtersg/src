@@ -118,9 +118,11 @@ var AttentisteUrl =
 				boutonsRonds = document.querySelectorAll(AttentisteUrl.selBoutonsRonds);
 			}
 			boutonsRonds.forEach(function(x) { x = x.innerText.trim(); if(x.match(/[1-9][0-9].*€/)) salaire = "\n"+x; }); // "Essayer Premium pour 0 €" n'est pas un salaire.
+			let boite;
+			bloc.querySelectorAll('.job-details-jobs-unified-top-card__company-name, a[href*="/company/"]').forEach(function(x) { if(x.innerText && !boite) boite = x.innerText; }); // Parfois le premier bloc "boîte" n'est que l'icône SVG, sans contenu textuel; il faut attendre le second pour tomber sur la boîte (et ne pas aller plus loin, sinon on récupère "Voir plus" comme nom de boîte).
 			navigator.clipboard.writeText
 			(
-				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name, a[href*="/company/"]').innerText
+				'- '+boite
 				+' '+premier.innerText.replaceAll(/[\s-(]*(?:[HMFX](?:[-\/.][HMFX]){1,2})\)?/g, '')
 				+' https://www.linkedin.com/jobs/view/'+urlId
 				+' {'+d+'}'
