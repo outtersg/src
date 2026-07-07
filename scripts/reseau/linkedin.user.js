@@ -59,6 +59,34 @@ var AttentisteUrl =
 			}
 		AttentisteUrl.selBoutonsRonds = res;
 	},
+  /* Chope le cartouche porteur de l'état d'une offre (Consulté, Enregistré, etc.) */
+	etatiste: function(el)
+	{
+		let classe;
+		switch(1)
+		{
+			case 1:
+			if((classe = AttentisteUrl.classeEtat)) break;
+			if(el.querySelector(classe = '.job-card-container__footer-job-state')) break; // Avant mai 2026, tout était simple.
+			/* Après mai 2026, ça devient compliqué.
+			 * On peut se raccrocher au fait que l'état est le premier de plusieurs cartouches: Consulté - il y a x jours - Candidature simplifiée
+			 * Le "il y a est (quasi?) toujours présent. De plus, pour l'accessibilité (pour expliciter ce qu'il s'est passé il y a x jours), il est décliné en deux versions: <span aria-hidden="true">il y a x jours</span><span>Publié il y a x jours</span>
+			 */
+			let cartouchier, etatiste;
+			el.querySelectorAll('span[aria-hidden="true"]').forEach(function(x) { if(x.innerText.match(/^il y a/)) cartouchier = x.closest('div'); });
+			if(cartouchier && (etatiste = cartouchier.querySelector('p')) && etatiste.innerText.match(/^(Consulté|Enregistré)/))
+				classe = '.'+etatiste.getAttribute('class').replaceAll(' ', '.'); // Foutoir à la je ne sais quelle biblio de ponte utilise LinkedIn; on prend tout, a priori ça sera toujours les mêmes, pas la peine de chercher "la classe CSS qui distingue des autres cartouches".
+		}
+		if(classe) AttentisteUrl.classeEtat = classe;
+		if(AttentisteUrl.classeEtat) return el.querySelector(AttentisteUrl.classeEtat);
+	},
+	/* Renvoie l'identifiant d'annonce LinkedIn. */
+	id: function(el)
+	{
+		let id, id2;
+		if(el.dataset.jobId) return el.dataset.jobId;
+		if((id = el.getAttribute('componentkey')) && (id2 = id.replace(/^job-card-component-ref-/, '')) != id) return id2;
+	},
 	attenteH2: function()
 	{
 		var premier, urlId, bloc = document.querySelector('[data-view-name="job-detail-page"], .jobs-details, [data-sdui-screen="com.linkedin.sdui.flagshipnav.jobs.SemanticJobDetails"]');
@@ -137,18 +165,19 @@ return replaceState.apply(history, arguments);
 		var marquer = function()
 		{
 			var trouve = 0;
-			document.querySelectorAll('[data-job-id]:not([etat])').forEach
+			// document.querySelectorAll('[componentkey="SearchResultsMainContent"] > [data-display-contents="true"]')
+			document.querySelectorAll('[data-job-id]:not([etat]), [componentkey^="job-card-component-ref-"][role="button"]:not([etat])').forEach
 			(
 				function(x)
 				{
 					trouve = 1;
-					let etatAff = x.querySelector('.job-card-container__footer-job-state');
-					let consult = localStorage.getItem('vu/'+x.dataset.jobId);
+					let etatAff = AttentisteUrl.etatiste(x);
+					let consult = localStorage.getItem('vu/'+AttentisteUrl.id(x));
 					if(etatAff) etatAff = etatAff.innerText;
 					else if(consult) etatAff = 'Consulté';
 					if(etatAff)
 					{
-						console.log('Embellificateur: '+x.dataset.jobId+' '+etatAff);
+						console.log('Embellificateur: '+AttentisteUrl.id(x)+' '+etatAff);
 						x.setAttribute('etat', etatAff);
 						/* À FAIRE: consult contient la date de première consultation. L'afficher. */
 					}
