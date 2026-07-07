@@ -117,7 +117,7 @@ var AttentisteUrl =
 				if(typeof(AttentisteUrl.selBoutonsRonds) == 'function') AttentisteUrl.selBoutonsRonds(premier);
 				boutonsRonds = document.querySelectorAll(AttentisteUrl.selBoutonsRonds);
 			}
-			boutonsRonds.forEach(function(x) { x = x.innerText.trim(); if(x.match(/€/)) salaire = "\n"+x; });
+			boutonsRonds.forEach(function(x) { x = x.innerText.trim(); if(x.match(/[1-9][0-9].*€/)) salaire = "\n"+x; }); // "Essayer Premium pour 0 €" n'est pas un salaire.
 			navigator.clipboard.writeText
 			(
 				'- '+bloc.querySelector('.job-details-jobs-unified-top-card__company-name, a[href*="/company/"]').innerText
