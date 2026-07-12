@@ -1,0 +1,108 @@
+#!/bin/sh
+
+# PDF Page À Page pour les Images
+# Dans certains PDF (ex.: Fiche Sanitaire de Liaison SUF 2026),
+# les images sont rattachées non à la page qui les utilise, mais au gabarit de page.
+# Inconvénient: quand on veut séparer les pages, chaque page hérite de l'intégralité des images!
+# Cf. https://github.com/qpdf/qpdf/issues/174 (qui est d'ailleurs le point de départ de ce script).
+
+# NOTE: repérage image ou pas image
+# Bon par contre pdfimages sait que seules les utilisées sont à extraire:
+#   sur la FSL incluant un carnet de vaccination (4,3 Mo), une carte vitale (135 Ko), et une fiche à tiques (19 Ko),
+#   /tmp/5.pdf (la page "tiques") fait 4,9 Mo (incluant la grosse image),
+#   mais pdfimages -all /tmp/5.pdf ne sort bien que l'image à 19 Ko.
+# Côté qpdf: --show-pages --with-images ne voit que l'image à 4,2 Mo, quelle que soit la page.
+# Pourtant toutes semblent référencées de la même manière (ex.: déclarée en 14 0 obj, nommée XObject << /I1 14 0 R >>)
+# Espérons que les secondes apparaîtront quand même dans leur page.
+# À FAIRE: réussir à faire sauter les images restantes (ces fameuses 135 Ko et 19 Ko).
+
+set -e
+
+faire()
+{
+	local f="$1" dest="$2" fp
+	
+	case "$dest" in
+		*%d*) true ;;
+		*) echo "[31m# La destination doit inclure un %d pour le numéro de page." >&2 ; return 1 ;;
+	esac
+	
+	local T=/tmp/temp.papi.$$
+	case "$T" in /tmp/temp.*) rm -Rf "$T" ;; esac
+	mkdir "$T"
+	
+	# Comme préconisé par l'auteur de qpdf, il vaut mieux travailler sur une copie du PDF normalisée QPDF, plutôt que sur l'original: la structure du PDF est plus prédictible.
+	echo "Séparation…"
+	pdfseparate "$f" $T/p%d.pdf
+	for fp in $T/p*.pdf
+	do
+		echo "[36m$fp[0m…"
+		qpdf "$fp" $fp.pdf
+		qpdf --show-pages --with-images $fp.pdf | awk '
+			BEGIN { expi = ""; }
+			/^  [^ ]*:/ { section = $1; }
+			section == "images:" && /^    / {
+				i = $0;
+				id = $1;
+				sub(/:/, "", id);
+				gsub(/^[^:]*: |, .*/, "", i);
+				images[id] = i;
+				if(expi) expi = expi"|";
+				expi = expi""id" ";
+			}
+			section == "content:" && /^    / { contenu = $0; sub(/^ */, "", contenu); }
+			END {
+				sub(/ /, ",", contenu); sub(/ .*/, "", contenu);
+				inspection = "qpdf '$fp.pdf' --show-object="contenu" --filtered-stream-data";
+				while(inspection | getline l)
+					for(i in images)
+						if(l ~ i" ")
+						{
+							print "= Utilisé:   [32m"i" "images[i]"[0m";
+							delete images[i];
+						}
+				# Les images restantes sont les inutilisées.
+				restantes = "";
+				for(i in images)
+				{
+					print "= Inutilisé: [31m"i" "images[i]"[0m";
+					rempl = images[i];
+					gsub(/./, " ", rempl); # Le remplacement doit avoir la même longueur pour ne surtout pas casser la structure qui repose sur des tailles codées en dur.
+					sub(/    /, "null", rempl);
+					restantes = restantes";s#"i" "images[i]"#"i" "rempl"#g";
+				}
+				if(restantes)
+					print "- "substr(restantes, 2);
+			}
+		' |
+		while read debut fin
+		do
+			case "$debut" in
+				-)
+					sed -E -e "$fin" < $fp.pdf > $fp.corrige.pdf && qpdf $fp.corrige.pdf $fp
+					;;
+				*)
+					echo "$fin"
+					;;
+			esac
+		done
+	done
+	
+	local p=1 d
+	while [ -f $T/p$p.pdf ]
+	do
+		d="`printf "$dest" $p`"
+		echo "$d"
+		mv $T/p$p.pdf "$d"
+		p=$((p + 1))
+	done
+	
+	case "$T" in /tmp/temp.*) rm -R "$T" ;; esac
+}
+
+tourner()
+{
+	faire "$1" "$2"
+}
+
+tourner "$@"
