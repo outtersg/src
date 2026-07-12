@@ -6,6 +6,14 @@
 # Inconvénient: quand on veut séparer les pages, chaque page hérite de l'intégralité des images!
 # Cf. https://github.com/qpdf/qpdf/issues/174 (qui est d'ailleurs le point de départ de ce script).
 
+# NOTE: totalement inutile!
+# Dans https://github.com/qpdf/qpdf/issues/203 on s'aperçoit que la fonctionnalité censée être en place "depuis la 8.2", que je n'arrivais pas à faire marcher en simple traduction PDF → QPDF,
+# n'était en fait activé qu'en cas de split-pages.
+# Donc l'équivalent de pdfpapi x.pdf /tmp/x%d.pdf
+# est tout simplement  qpdf x.pdf --split-pages /tmp/x%d.pdf # Seulement différence: si plus de 9 pages, les 1ères sont numérotées x01.pdf au lieu de x1.pdf).
+# et en plus elle gère bien mieux les images fugitives (cf. 1er À FAIRE plus bas).
+# Mais bon ç'aura été l'occasion d'apprendre.
+
 # NOTE: repérage image ou pas image
 # Bon par contre pdfimages sait que seules les utilisées sont à extraire:
 #   sur la FSL incluant un carnet de vaccination (4,3 Mo), une carte vitale (135 Ko), et une fiche à tiques (19 Ko),
@@ -15,6 +23,7 @@
 # Pourtant toutes semblent référencées de la même manière (ex.: déclarée en 14 0 obj, nommée XObject << /I1 14 0 R >>)
 # Espérons que les secondes apparaîtront quand même dans leur page.
 # À FAIRE: réussir à faire sauter les images restantes (ces fameuses 135 Ko et 19 Ko).
+# À FAIRE: ne marche pas très bien. Sur Pauline oui, mais sur les deux autres les images étaient en invisibles (donc répliquées).
 
 set -e
 
