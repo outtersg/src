@@ -412,3 +412,15 @@ titrer()
 			;;
 	esac
 }
+
+# tmux a
+# Utilisation:
+#   tm 22 # Rejoint la session 22
+#   tm    # Liste les sessions
+#   tmux  # Crée une nouvelle session (pas de raccourci pour ça)
+tm()
+{
+	case "$1" in [1-9]*) tmux a -t "$@" ; return ;; esac
+
+	tmux list-sessions | sort -n
+}
