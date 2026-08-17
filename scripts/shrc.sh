@@ -420,7 +420,7 @@ titrer()
 #   tmux  # Crée une nouvelle session (pas de raccourci pour ça)
 tm()
 {
-	case "$1" in [1-9]*) tmux a -t "$@" ; return ;; esac
+	case "$1" in 0|[1-9]*) tmux a -t "$@" ; return ;; esac
 
 	tmux list-sessions | sort -n
 }
