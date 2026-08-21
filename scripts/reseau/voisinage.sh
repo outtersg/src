@@ -81,6 +81,7 @@ rl_voisinsSsh()
 	local ip
 	# À FAIRE: si ssh-keyscan est présent, s'en servir.
 	rl_voisins > "$TMP"/temp.reseaulocal.$$.voisins
+	echo 192.168.1.128 >> "$TMP"/temp.reseaulocal.$$.voisins # muxdemux codée en dur: contourne la difficulté de deux sous-réseaux cohabitant, mais hermétiques aux ping -b, à la maison.
 	while read ip
 	do
 		( ssh -q -n -o ConnectTimeout=2 -o BatchMode=true -o UserKnownHostsFile="$TMP"/temp.reseaulocal.$$.kh.$ip -o StrictHostKeyChecking=no personne@$ip true < /dev/null > /dev/null 2>&1 ) &
