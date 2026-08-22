@@ -1,0 +1,94 @@
+#!/bin/sh
+# Copyright (c) 2026 Guillaume Outters
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+# dmarcquer | less -R -X
+
+D="$HOME/var/mail/outters.eu/guillaume/.Admin/cur"
+SCRIPTS="$HOME/src/scripts/texte"
+
+set -e
+
+. "$SCRIPTS/util.rfc822.sh"
+
+tourner()
+{
+	(
+		cd "$D"
+		ls | grep -v S |
+		while read f
+		do
+			# Outlook ne peut pas s'empêcher de base64er le Subject, grrr…
+			grep -H ^Subject: "$f" | head -1
+		done | "$SCRIPTS/derfc822" | grep 'Report [dD]omain' | sed -e 's/:Subject:.*//' |
+		while read f
+		do
+			faire "$f"
+		done
+	)
+}
+
+faire()
+{
+	local f="$1"
+	echo "[36m=== $f ===[0m"
+	#extraire "$f" | awk 1
+	extraire "$f" | awk \
+	'
+		/source_ip/ { couleur = 31; }
+		/<source_ip>151.80.43.100<\/source_ip>/ { couleur = ""; }
+		/(<dkim>|<spf>|<result>).*<\// { couleur = 31; }
+		/(<dkim>|<spf>|<result>)pass</ { couleur = 32; }
+		couleur { $0 = "["couleur"m"$0"[0m"; couleur = ""; }
+		{ gsub("\r", ""); print; }
+	'
+	# On marque comme lu pour ne pas repasser éternellement dessus.
+	mv "$f" "${f}S"
+}
+
+extraire()
+{
+	local f="$1"
+	
+	rm -f /tmp/f.gz /tmp/f.zip /tmp/t.gz
+	"$SCRIPTS/derfc822" < "$f" | rfc822_pjs \
+	'
+		if(enTetes["Content-Type"] ~ /^application\/gzip(;|$)/)
+			dest = "/tmp/f.gz";
+		else if(enTetes["Content-Type"] ~ /^application\/zip(;|$)/)
+			dest = "/tmp/f.zip";
+		else if(enTetes["Content-Type"] ~ /^application\/tlsrpt\+gzip(;|$)/)
+			dest = "/tmp/t.gz";
+	'
+	if [ -f /tmp/f.gz ] ; then gunzip < /tmp/f.gz ; fi
+	if [ -f /tmp/f.zip ] ; then deziper /tmp/f.zip ; fi
+	if [ -f /tmp/t.gz ] ; then gunzip < /tmp/t.gz ; fi
+}
+
+# À FAIRE?: mutualiser avec $GUILI/util.util.obtenir.sh (listeZip etc.)?
+deziper()
+{
+	local TMP=/tmp/temp.dmarcquer.$$ f="$1"
+	rm -Rf $TMP
+	mkdir -p $TMP
+	( cd $TMP && unzip "$f" > /dev/null ; cat * )
+}
+
+tourner "$@"
