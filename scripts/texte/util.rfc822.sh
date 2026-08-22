@@ -49,10 +49,17 @@ rfc822_pjs()
 			else
 				print x > dest;
 		}
+		function finirEnTete() {
+			if(!accuEnTete) return;
+			match(accuEnTete, /: /);
+			enTetes[substr(accuEnTete, 1, RSTART - 1)] = substr(accuEnTete, RSTART + 2);
+			accuEnTete = "";
+		}
 		/^--/ && etat <= 1 { etat = 2; } # À FAIRE: il peut y avoir des -- qui ne correspondent pas au délimiteur annoncé au départ, à considérer comme du texte brut sans changement d état.
 		/^$/ {
 			if(etat == 3)
 			{
+				finirEnTete();
 				etat = 0;
 				dest = "";
 				'"$test"'
@@ -77,8 +84,19 @@ rfc822_pjs()
 			pousser($0);
 		}
 		etat > 0 && etat < 2 { cumul = cumul$0"\n"; }
-		etat == 2 && /: / { ++etat; delete enTetes; fermer(); }
-		etat == 3 && /: / { match($0, /: /); enTetes[substr($0, 1, RSTART - 1)] = substr($0, RSTART + 2); }
+		etat == 2 && /: / { ++etat; delete enTetes; fermer(); accuEnTete = ""; }
+		etat == 3 {
+			if($0 ~ /^[^ 	][^:]*: /)
+			{
+				finirEnTete();
+				accuEnTete = $0;
+			}
+			else
+			{
+				sub(/^	/, " "); sub(/^ 	/, "		"); # Uniformisation: une tabulation = espace (mais plusieurs tabulations sont préservées).
+				accuEnTete = accuEnTete$0;
+			}
+		}
 		END { if(dest) fermer(); }
 	'
 }
