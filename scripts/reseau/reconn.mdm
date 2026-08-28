@@ -3,6 +3,8 @@
 
 while true
 do
+	# Tuons la tâche ménage si le SSH patine (entre ma connexion 5G hésitante et une ProxyCommand SSH, les chances de péter sont bien réelles; 1 fois par jour durant l'été 2026, donc maison injoignable…).
+	{ sleep 20 ; ps axwwo pid,ppid,command | grep 'ssh.*sleep.*xargs.*[k]ill' | while read pid ppid commande ; do kill $pid ; done ; } &
 	# On commence par faire le ménage de ceux restés orphelins d'une précédente exécution coupée.
 	ssh mb -o ConnectTimeout=8 'LC_ALL=C ps axwwo pid,ppid,command | awk '\''/sleep 60/&&$2==1{print$1}'\'' | xargs kill'
 	ssh mb -R 9898:localhost:22 -o ServerAliveInterval=79 \
