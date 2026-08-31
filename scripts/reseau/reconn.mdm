@@ -7,7 +7,19 @@ do
 	{ sleep 20 ; ps axwwo pid,ppid,command | grep 'ssh.*sleep.*xargs.*[k]ill' | while read pid ppid commande ; do kill $pid ; done ; } &
 	# On commence par faire le ménage de ceux restés orphelins d'une précédente exécution coupée.
 	ssh mb -o ConnectTimeout=8 'LC_ALL=C ps axwwo pid,ppid,command | awk '\''/sleep 60/&&$2==1{print$1}'\'' | xargs kill'
+	
+	# Le SSH est branché sur une surveillance qu'il nous cause bien à intervalles réguliers, car mon patinage de connexion fin août 2026 (une fourmilière installée dans le modem 5G?) gèle parfois la connexion SSH sans que le ServerAliveInterval parvienne à y mettre un terme (à moins que ce soit uniquement la partie ouverture de connexion qui pose problème, comme pour le ssh ci-dessus? En tout cas ce blindage-ci se veut universel).
 	ssh mb -R 9898:localhost:22 -o ServerAliveInterval=79 \
-		'while true ; do date ; sleep 60 ; done'
+		'while true ; do date ; sleep 60 ; done' |
+	bash -c \
+	'
+		# On utilise bash car read n''a pas l''option -t (timeout) dans le sh BusyBox de Raspbian.
+		while read -t 85 bla
+		do
+			echo "$bla"
+		done
+		echo argh pas de réponse
+		ps axwwo pid,command | grep "ssh.*AliveInterval=79.*[d]ate" | while read pid commande ; do kill $pid ; done
+	'
 	sleep 60
 done
