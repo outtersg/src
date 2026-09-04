@@ -57,6 +57,8 @@ memeprojet_zero
 # Ces commandes sont juste des amorces qui doivent être remplacées par une implémentation spécifique via DANSPROJETS_TESTI.
 
 # Pousse-projet, ou pousse-passé.
+# Pour remettre à zéro la date virtuelle entre deux pp (par exemple on est en train de versionner un dossier dont on n'a que les photos au cours du temps, donc pour que nos modifs soient correctement datées on souhaite faire des bonds dans le temps entre deux modifs à versionner):
+#   unset pp_decalage ; unset PROJET
 pp()
 {
 	memeprojet || { [ $? = 2 ] && pp "$@" ; return ; }
