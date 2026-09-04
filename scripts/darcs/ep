@@ -71,7 +71,7 @@ ep()
 	[ "x$1" = x-t ] && tiquette=1 && shift || true
 	ep_nom="$1" ; shift
 	ep_descr="$1" ; shift
-	[ ! -z "$ep_decalage" ] || ep_init
+	[ ! -z "$pp_decalage" ] || ep_init
 	local ep_maintenant="`pp_maintenant`"
 	ep_maintenant="`TZ=GMT datesend $ep_maintenant +%Y%m%d%H%M%S`"
 	local s3="`printf '\003'`"
@@ -89,7 +89,6 @@ ep()
 testi_darcs_pp()
 {
 	pp_decalage=
-	ep_decalage=
 	
 	# Pousse-projet, ou pousse-passé.
 	pp()

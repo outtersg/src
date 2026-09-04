@@ -104,8 +104,8 @@ pp_decalage()
 	ep_date="`echo "$ep_dateRef" | sed -e "s/$ep_expr_date/$ep_date\1/"`"
 	ep_a_ce_moment="`datedens "$ep_date"`"
 	ep_maintenant="`date +%s`"
-	ep_decalage="`expr $ep_maintenant - $ep_a_ce_moment`"
-	pp_decalage="$ep_decalage"
+	pp_decalage="`expr $ep_maintenant - $ep_a_ce_moment`"
+	ep_decalage="$pp_decalage"
 }
 
 pp_maintenant()
