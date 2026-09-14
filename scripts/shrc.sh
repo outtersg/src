@@ -89,6 +89,14 @@ NR==1{ posCommande = match($0, /COMMAND/) - 1; print; next; }
 		fs[$3,0] = $2;
 }
 END{
+	# Dans un jail FreeBSD (et peut-être d autres solutions de conteneurisation), le processus racine contenu voir son PPID, mais aucune entrée n apparaît à ce PID.
+	# On les promeut alors source.
+	for(p in ps)
+		if(ps[p] && !ls[ps[p]])
+		{
+			ps[p] = ""; # À FAIRE?: garder trace qu il est contenu?
+			fs[p,0] = p;
+		}
 	# Les sources (init, etc.) laissent leur fils prendre leur envol (se détacher d eux) tout en gardant un œil sur eux (les gardant comme fils).
 	# De cette manière:
 	# - si on attaque par le fils (avec un filtre, pour recherche par exemple tous les vim), la source n apparaîtra pas
