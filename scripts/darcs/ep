@@ -63,6 +63,8 @@ _epomp()
 	set -o noglob # Sur un bash 4.2.45, sans cette option, les ? et * de $paramsOmp sont interprétés. Bien dommage quand le propre de notre omp est de répondre à des questions.
 	IFS="$sep"
 	tifs omp - $paramsOmp . "$@"
+	# À FAIRE: s'il y a un --ask, à chaque "Shall I depend on this patch?", intercepter /<un terme> et répondre non jusqu'à tomber sur ce terme.
+	#   Ou alors utiliser un --ask=MODERNITE, et dans ce cas répondre non à tout ce qui ne contient pas ce terme.
 }
 
 ep()
