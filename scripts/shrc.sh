@@ -195,9 +195,14 @@ repapa0()
 
 filtrer()
 {
+	local preserve=
+	case "$1" in -p) preserve=1 ; shift ;; esac
+	
 	fichier="$1"
 	shift
-	"$@" < "$fichier" > /tmp/temp.$$.filtrer && cat /tmp/temp.$$.filtrer > "$fichier"
+	"$@" < "$fichier" > "$fichier.filtrer.temp" || { local r=$? ; rm -f "$fichier.filtrer.temp" ; return $r ; }
+	case "$preserve" in 1) touch -r "$fichier" "$fichier.filtrer.temp" ;; esac
+	mv "$fichier.filtrer.temp" "$fichier"
 }
 
 # incruster [-c|-d] <incruste> <dans> <début> <fin>
