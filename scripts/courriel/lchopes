@@ -33,7 +33,11 @@ do
 		'
 			oui && ! /^[ \t]|^$/ { print oui; exit; }
 			/^$/ { exit; }
-			oui { oui = oui""substr($0, 2); }
+			# Dans une nouvelle ligne poursuivant l en-tête de la ligne précédente (en commençant par un espace plutôt qu un nouvel en-tête),
+			# l espace:
+			# - est significatif en temps normal (l en-tête a été scindé sur espaces)
+			# - est technique si l en-tête, encodé base64, est scindé entre deux balises base64
+			oui { oui = oui""(substr(oui, length(oui) - 1) == "?=" && substr($0, 2, 2) == "=?" ? "" : " ")substr($0, 2); }
 			/^Subject: / { oui = substr($0, 10); }
 			END { if(!oui) print "---"; }
 		'
