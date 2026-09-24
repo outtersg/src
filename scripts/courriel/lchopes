@@ -29,7 +29,14 @@ do
 	do
 		printf "%s\t" "$n"
 		ls -l "$f" | awk '{printf("%s\t%s\t%s\t%s\t%s\t",$5,$6,$7,$8,$9)}'
-		awk 'oui&&!/^[ \t]|^$/{print oui;exit}/^$/{exit}oui{oui=oui""substr($0,2)}/^Subject: /{oui=substr($0,10)}END{if(!oui)print"---"}' < "$f"
+		awk < "$f" \
+		'
+			oui && ! /^[ \t]|^$/ { print oui; exit; }
+			/^$/ { exit; }
+			oui { oui = oui""substr($0, 2); }
+			/^Subject: / { oui = substr($0, 10); }
+			END { if(!oui) print "---"; }
+		'
 	done
 done < $t.fichiers | /tmp/tmp/src/scripts/texte/derfc822
 
