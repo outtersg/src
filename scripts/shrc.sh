@@ -202,6 +202,7 @@ filtrer()
 	shift
 	cp -p "$fichier" "$fichier.filtrer.temp" # Pour conserver notamment les permissions. Dommage si c'est un gros fichier, mais c'est plus simple que de jongler avec stat (stat -f %OLp sur FreeBSD; stat -c %a sur Raspbian), qui en outre couvrirait sans doute moins que l'ensemble des arcanes gérées par cp -p.
 	"$@" < "$fichier" > "$fichier.filtrer.temp" || { local r=$? ; rm -f "$fichier.filtrer.temp" ; return $r ; }
+	if diff -q "$fichier.filtrer.temp" "$fichier" > /dev/null ; then rm -f "$fichier.filtrer.temp" ; return 0 ; fi
 	case "$preserve" in 1) touch -r "$fichier" "$fichier.filtrer.temp" ;; esac
 	mv "$fichier.filtrer.temp" "$fichier"
 }
