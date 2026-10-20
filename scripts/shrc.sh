@@ -410,6 +410,7 @@ li()
 	do
 		echo "$f"
 		magick "$f" -geometry 256\> sixel:-
+		echo
 	done
 }
 
