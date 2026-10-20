@@ -409,7 +409,7 @@ li()
 	for f in "$@"
 	do
 		echo "$f"
-		magick "$f" -geometry 256 sixel:-
+		magick "$f" -geometry 256\> sixel:-
 	done
 }
 
