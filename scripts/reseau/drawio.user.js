@@ -12,7 +12,7 @@ var DrawIo =
 		// Les éléments de menu sont construits dynamiquement. On les chope donc à la première ouverture.
 		let attraper = function()
 		{
-			document.querySelectorAll('.mxPopupMenuItem').forEach(function(x)
+			document.querySelectorAll('.mxPopupMenuItem[role="menuitem"]').forEach(function(x)
 			{
 				if(/Périph/.test(x.innerText))
 				{
