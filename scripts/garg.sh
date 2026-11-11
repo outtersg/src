@@ -55,7 +55,7 @@ garg()
 		shift
 		eval garg_contenu=\"\$$garg_var\"
 		garg_sep_dernier "$garg_contenu"
-		set -f # Une * ou un ? dans les paramètres, s'ils ont été préservés par tout ce qui est arrivé en amont, doivent être passés tels quels.
+		set -f # Une * ou un ? dans les paramètres, s'ils ont été préservés par tout ce qui est arrivé en amont, doivent être passés tels quels. # À FAIRE: éviter les effets de bord. On colle un set +f à la fin, mais c'est risqué. Le mieux serait peut-être d'avoir une fonction intermédiaire à la tifs (réinitialisation de l'IFS). Et ceci dit pour les sous-shells printf ça n'est même pas nécessaire.
 		if [ $garg_mode = ajoute ] ; then
 			garg_sep0="$garg_sep"
 			garg_sep="`IFS="$garg_sep" ; sep $garg_contenu "$@"`"
@@ -66,6 +66,7 @@ garg()
 			IFS="$garg_sep"
 			garg -l "$@" $garg_contenu
 		fi
+		set +f # Et on contrebalance le set -f pour revenir dans le mode habituel des shells.
 	fi
 }
 
