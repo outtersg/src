@@ -55,6 +55,7 @@ garg()
 		shift
 		eval garg_contenu=\"\$$garg_var\"
 		garg_sep_dernier "$garg_contenu"
+		set -f # Une * ou un ? dans les paramètres, s'ils ont été préservés par tout ce qui est arrivé en amont, doivent être passés tels quels.
 		if [ $garg_mode = ajoute ] ; then
 			garg_sep0="$garg_sep"
 			garg_sep="`IFS="$garg_sep" ; sep $garg_contenu "$@"`"
