@@ -405,11 +405,13 @@ vi()
 li()
 {
 	local f
+	local t=256
 	# À FAIRE: dans tmux, une séance d'échappement supplémentaire?
 	for f in "$@"
 	do
+		case "$f" in *[^0-9]*) true ;; [1-9]*) t="$f" ; continue ;; esac
 		echo "$f"
-		magick "$f" -geometry 256\> sixel:-
+		magick "$f" -geometry $t\> sixel:-
 		echo
 	done
 }
