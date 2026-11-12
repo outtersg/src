@@ -12,6 +12,7 @@ marche()
 	case $# in 0) # Si on nous appelle avec un --essaie-quand-même-d-accrocher-un-réseau, on laisse tourner le wpa_supplicant en tâche de fond.
 	sudo service wpa_supplicant stop wlan0
 	;; esac
+	sudo ifconfig wlan0 inet -alias # Si wlan0 a encore une IP sur un sous-réseau commun avec ue0, la route par défaut risque d'être créée sur cette interface pourtant toute arrêtée.
 	sudo route delete default
 	sudo service dhclient restart ue0
 }
