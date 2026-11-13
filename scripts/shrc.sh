@@ -399,6 +399,22 @@ vi()
 	titrer
 }
 
+# Définition de cop, col, et leur variante s (= souris) qui correspond au "primaire".
+case "$WAYLAND_DISPLAY" in
+	?*)
+		alias cop=wl-copy
+		alias col=wl-paste
+		alias cops="wl-copy -p"
+		alias cols="wl-paste -p"
+		;;
+	"")
+		alias cop="xclip -selection clipboard"
+		alias col="xclip -o -selection clipboard"
+		alias cops="xclip"
+		alias cols="xclip -o"
+		;;
+esac
+
 #- Terminal --------------------------------------------------------------------
 
 # ls images
