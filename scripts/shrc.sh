@@ -66,7 +66,11 @@ function faire(i, ind, numf) {
 	{
 		aff = ls[i];
 		if(((RLENGTH = posCommande) >= 0) || match(aff, /^[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +[^ ]+ +/))
-			aff = substr(aff, 1, RLENGTH)""ind""substr(aff, 1 + RLENGTH);
+		{
+			comm = substr(aff, 1 + RLENGTH);
+			sub(/^[^ ]*/, "\033[36m&\033[0m", comm);
+			aff = substr(aff, 1, RLENGTH)""ind""comm;
+		}
 		print aff;
 	}
 	if(nfs[i])
