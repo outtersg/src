@@ -5,6 +5,12 @@ poubelle()
 	pfctl -t pourriture -T add "$@"
 }
 
+joliepoubelle()
+{
+	local ip="$1" n="$2" quoi="$3"
+	poubelle "$ip" 2>&1 | grep -q "1/1 addresses" && echo "=== $ip: $n $quoi ===" # On n'affiche pas si le gugusse était déjà poubellisé d'une précédente passe (auquel cas "0/1 addresses added").
+}
+
 derniers()
 {
 njours=11
