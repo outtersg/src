@@ -30,6 +30,18 @@ do
 done
 }
 
+sshd()
+{
+	# À FAIRE: explorer plus loin que le jour actuel.
+	local ntentatives=5
+	grep sshd.\*Invalid /var/log/auth.log \
+	| sed -e 's/.* //' | sort | awk 'function aff(){if(n>='$ntentatives')print n" "prec;prec=$0;n=0}$0!=prec{aff()}{++n}END{aff()}' \
+	| while read n ip
+	do
+		joliepoubelle "$ip" "$n" SSH
+	done
+}
+
 # Pour ensuite repérer les blocs d'IP:
 blocs()
 {
@@ -44,5 +56,6 @@ case "$1" in
 	?*) blocs "$@" ;;
 	"")
 		derniers
+		sshd
 		;;
 esac
