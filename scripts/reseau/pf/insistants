@@ -42,5 +42,7 @@ blocs()
 
 case "$1" in
 	?*) blocs "$@" ;;
-	"") derniers ;;
+	"")
+		derniers
+		;;
 esac
