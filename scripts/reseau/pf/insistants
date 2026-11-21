@@ -26,7 +26,7 @@ sed -e "1,/^$jn/d" < /home/jails/mel/usr/local/var/spool/exim/log/mainlog \
 | sort -n \
 | while read n ip
 do
-	poubelle "$ip" 2>&1 | grep -q "1/1 addresses" && echo "=== $ip: $n ===" # On n'affiche pas si le gugusse était déjà poubellisé d'une précédente passe (auquel cas "0/1 addresses added").
+		joliepoubelle "$ip" "$n" SMTP
 done
 }
 
